@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}我的记录 - FishLog{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="mb-0"><i class="fas fa-list"></i> 我的出钓记录</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="/logs/create" class="btn btn-success">
+            <i class="fas fa-plus"></i> 新建记录
+        </a>
+    </div>
+</div>
+
+<div id="logsList">
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('请先登录');
+            window.location.href = '/login';
+            return;
+        }
+
+        loadLogs();
+    });
+
+    async function loadLogs() {
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/logs', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load logs');
+            }
+
+            const logs = await response.json();
+            const logsList = document.getElementById('logsList');
+
+            if (logs.length === 0) {
+                logsList.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 您还没有任何记录，<a href="/logs/create">创建第一条记录</a>
+                    </div>
+                `;
+                return;
+            }
+
+            logsList.innerHTML = logs.map(log => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5 class="card-title mb-2">
+                                    <i class="fas fa-fish"></i>
+                                    ${log.species || '未知鱼种'}
+                                    <span class="badge bg-secondary">${log.quantity || 0}条</span>
+                                </h5>
+                                <p class="card-text text-muted mb-2">
+                                    <small>
+                                        <i class="fas fa-calendar"></i>
+                                        ${new Date(log.fishing_at).toLocaleString('zh-CN')}
+                                    </small>
+                                </p>
+                                <p class="card-text">
+                                    <small>
+                                        <i class="fas fa-hourglass-end"></i> 作钓时长: ${log.duration}分钟
+                                        ${log.bait ? `| <i class="fas fa-worm"></i> 饵料: ${log.bait}` : ''}
+                                    </small>
+                                </p>
+                                ${log.note ? `<p class="card-text"><small>${log.note}</small></p>` : ''}
+                                <div class="weather-info mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-cloud"></i> ${log.temperature || '?'}°C |
+                                        <i class="fas fa-wind"></i> ${log.wind_speed || '?'} m/s |
+                                        <i class="fas fa-gauge"></i> ${log.pressure || '?'} hPa
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-sm btn-primary" onclick="editLog(${log.id})">
+                                    <i class="fas fa-edit"></i> 编辑
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteLog(${log.id})">
+                                    <i class="fas fa-trash"></i> 删除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('logsList').innerHTML = '<div class="alert alert-danger">加载失败</div>';
+        }
+    }
+
+    async function deleteLog(logId) {
+        if (!confirm('确认删除此记录？')) {
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/logs/${logId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                alert('记录已删除');
+                loadLogs();
+            } else {
+                alert('删除失败');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('删除失败');
+        }
+    }
+
+    function editLog(logId) {
+        window.location.href = `/logs/${logId}/edit`;
+    }
+</script>
+{% endblock %}

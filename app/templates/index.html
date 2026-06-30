@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}AnglrLog - 钓鱼人的个人数据中心{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div style="background: linear-gradient(135deg, #1a5f7a 0%, #2d8fa3 100%); border-radius: 15px; padding: 60px 30px; margin-bottom: 40px; color: white; text-align: center;">
+    <h1 style="font-size: 3rem; font-weight: bold; margin-bottom: 15px;">
+        <i class="fas fa-fish" style="color: #2ecc71;"></i> AnglrLog
+    </h1>
+    <p style="font-size: 1.3rem; margin-bottom: 10px;">钓鱼人的个人数据中心</p>
+    <p style="font-size: 1rem; opacity: 0.9;">记录每一次出钓，让经验沉淀为数据</p>
+</div>
+
+<!-- 四个特性 -->
+<div style="margin-bottom: 35px;">
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; color: #2d8fa3; margin-bottom: 10px;">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h6 style="color: #1a5f7a; margin-bottom: 5px; font-weight: 600; font-size: 0.95rem;">探索钓点</h6>
+                <p style="color: #666; margin: 0; font-size: 0.85rem;">发现最佳钓鱼地点</p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; color: #2ecc71; margin-bottom: 10px;">
+                    <i class="fas fa-cloud"></i>
+                </div>
+                <h6 style="color: #1a5f7a; margin-bottom: 5px; font-weight: 600; font-size: 0.95rem;">实时天气</h6>
+                <p style="color: #666; margin: 0; font-size: 0.85rem;">获取最新天气数据</p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; color: #3498db; margin-bottom: 10px;">
+                    <i class="fas fa-pen"></i>
+                </div>
+                <h6 style="color: #1a5f7a; margin-bottom: 5px; font-weight: 600; font-size: 0.95rem;">记录出钓</h6>
+                <p style="color: #666; margin: 0; font-size: 0.85rem;">详细记录每次收获</p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; color: #e74c3c; margin-bottom: 10px;">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h6 style="color: #1a5f7a; margin-bottom: 5px; font-weight: 600; font-size: 0.95rem;">论坛交流</h6>
+                <p style="color: #666; margin: 0; font-size: 0.85rem;">分享钓鱼经验</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 钓点列表 -->
+<div style="margin-top: 40px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="color: #1a5f7a; margin-bottom: 0; font-size: 1.3rem;">
+            <i class="fas fa-location-dot" style="margin-right: 8px; color: #2ecc71;"></i>全国钓点
+        </h3>
+        <a href="/spots" class="btn btn-sm btn-primary" id="addSpotLink" style="display: none;">
+            <i class="fas fa-plus"></i> 新增钓点
+        </a>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <button class="btn btn-sm" id="locateBtn" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 0.9rem; font-weight: 500;">
+            <i class="fas fa-location-dot"></i> 定位位置
+        </button>
+    </div>
+</div>
+
+<div class="row" id="spots-list">
+    <div class="col-md-12">
+        <div class="text-center" style="padding: 50px 20px;">
+            <div class="spinner-border" role="status" style="color: #2d8fa3; width: 2.5rem; height: 2.5rem;">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <p class="mt-3 text-muted" style="font-size: 0.9rem;">加载钓点中...</p>
+        </div>
+    </div>
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+    <a href="/spots" class="btn btn-primary" style="background: linear-gradient(135deg, #1a5f7a 0%, #2d8fa3 100%); color: white; border: none;">
+        <i class="fas fa-arrow-right"></i> 查看全部钓点
+    </a>
+</div>
+
+<!-- 最新帖子 -->
+<div style="margin-top: 60px;">
+    <h3 style="color: #1a5f7a; margin-bottom: 20px; font-size: 1.3rem;">
+        <i class="fas fa-comments" style="margin-right: 8px; color: #2ecc71;"></i>最新讨论
+    </h3>
+</div>
+
+<div class="row" id="latest-posts">
+    <div class="col-md-12">
+        <div class="text-center" style="padding: 50px 20px;">
+            <div class="spinner-border" role="status" style="color: #2d8fa3; width: 2.5rem; height: 2.5rem;">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <p class="mt-3 text-muted" style="font-size: 0.9rem;">加载帖子中...</p>
+        </div>
+    </div>
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+    <a href="/forum" class="btn btn-primary" style="background: linear-gradient(135deg, #1a5f7a 0%, #2d8fa3 100%); color: white; border: none;">
+        <i class="fas fa-arrow-right"></i> 进入论坛
+    </a>
+</div>
+
+<!-- 核心使命 -->
+<div style="margin-top: 60px; padding: 50px 30px; background: linear-gradient(135deg, #1a5f7a 0%, #2d8fa3 100%); border-radius: 15px; color: white; text-align: center;">
+    <p style="font-size: 1.3rem; margin: 0; line-height: 1.9; font-weight: 500;">
+        我们专注一件事：<br>
+        <strong style="font-size: 1.5rem;">帮助钓鱼人建立属于自己的钓鱼数据库</strong><br><br>
+        <span style="font-size: 1.1rem; font-weight: 400; opacity: 0.95;">
+            记录每一次出钓，积累沉淀数据资产，通过复盘分析规律，用经验辅助决策。
+        </span>
+    </p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('zh-CN');
+    }
+
+    function truncateContent(content, length = 100) {
+        if (content.length > length) {
+            return content.substring(0, length) + '...';
+        }
+        return content;
+    }
+
+    function loadSpots() {
+        fetch('/api/spots')
+            .then(response => response.json())
+            .then(spots => {
+                const spotsList = document.getElementById('spots-list');
+                spotsList.innerHTML = '';
+
+                if (spots.length === 0) {
+                    spotsList.innerHTML = '<div class="col-md-12"><div class="alert alert-info">暂无钓点</div></div>';
+                    return;
+                }
+
+                // 显示前6个钓点
+                spots.slice(0, 6).forEach((spot) => {
+                    const card = document.createElement('div');
+                    card.className = 'col-md-6 col-lg-4 mb-4';
+
+                    const waterTypeIcon = {
+                        'sea': '🌊',
+                        'river': '🏞️',
+                        'lake': '💧',
+                        'reservoir': '🏊',
+                        'pond': '🪨'
+                    }[spot.water_type] || '🐟';
+
+                    const waterTypeName = {
+                        'sea': '海钓',
+                        'river': '河钓',
+                        'lake': '湖钓',
+                        'reservoir': '水库钓',
+                        'pond': '池塘钓'
+                    }[spot.water_type] || '未知';
+
+                    // 显示创建者信息（如果是用户创建的）
+                    const creatorInfo = spot.user_nickname ? `<p style="color: #999; font-size: 0.8rem; margin: 8px 0 0 0;">
+                        <i class="fas fa-user-circle"></i> ${spot.user_nickname} 的钓点
+                    </p>` : '';
+
+                    card.innerHTML = `
+                        <div class="card h-100" style="border: none; overflow: hidden; box-shadow: 0 2px 8px rgba(26, 95, 122, 0.1); transition: all 0.3s ease;">
+                            <div style="background: linear-gradient(135deg, #1a5f7a 0%, #2d8fa3 100%); color: white; padding: 15px; text-align: center;">
+                                <div style="font-size: 2.5rem; margin-bottom: 10px;">${waterTypeIcon}</div>
+                                <h6 style="margin: 0; font-weight: 600;">${spot.name}</h6>
+                            </div>
+                            <div class="card-body" style="padding: 15px;">
+                                <p style="color: #999; font-size: 0.85rem; margin: 0 0 10px 0;">
+                                    <i class="fas fa-map"></i> ${spot.province || ''} ${spot.city || ''}
+                                </p>
+                                <span style="display: inline-block; background: #ecf4f7; color: #2d8fa3; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 500; margin-bottom: 10px;">
+                                    ${waterTypeName}
+                                </span>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0 0 12px 0; line-height: 1.5;">
+                                    ${spot.description ? spot.description.substring(0, 60) + (spot.description.length > 60 ? '...' : '') : '用户共享的钓点'}
+                                </p>
+                                ${creatorInfo}
+                                <a href="/spots/${spot.id}" style="color: #2d8fa3; text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+                                    查看详情 →
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    spotsList.appendChild(card);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('spots-list').innerHTML = '<div class="col-md-12"><div class="alert alert-danger">加载失败</div></div>';
+            });
+    }
+
+    function loadLatestPosts() {
+        fetch('/api/forum/posts?skip=0&limit=10')
+            .then(response => response.json())
+            .then(posts => {
+                const postsList = document.getElementById('latest-posts');
+                postsList.innerHTML = '';
+
+                if (posts.length === 0) {
+                    postsList.innerHTML = '<div class="col-md-12"><div class="alert alert-info">暂无帖子</div></div>';
+                    return;
+                }
+
+                // 只显示前3篇帖子
+                posts.slice(0, 3).forEach((post) => {
+                    const postDiv = document.createElement('div');
+                    postDiv.className = 'col-md-6 col-lg-4 mb-4';
+
+                    postDiv.innerHTML = `
+                        <div class="card h-100" style="border: none; overflow: hidden; box-shadow: 0 2px 8px rgba(26, 95, 122, 0.1); transition: all 0.3s ease; cursor: pointer;" onclick="window.location.href='/forum/posts/${post.id}'">
+                            <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 15px;">
+                                <h6 style="margin: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${post.title}</h6>
+                            </div>
+                            <div class="card-body" style="padding: 15px;">
+                                <p style="color: #555; font-size: 0.9rem; margin: 0 0 12px 0; line-height: 1.5; max-height: 60px; overflow: hidden;">
+                                    ${truncateContent(post.content, 80)}
+                                </p>
+                                <p style="color: #999; font-size: 0.85rem; margin: 0; line-height: 1.4;">
+                                    <i class="fas fa-user"></i> ${post.user_nickname}<br>
+                                    <i class="fas fa-clock"></i> ${formatDate(post.created_at)}<br>
+                                    <i class="fas fa-comments"></i> ${post.comment_count} 条评论
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    postsList.appendChild(postDiv);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('latest-posts').innerHTML = '<div class="col-md-12"><div class="alert alert-danger">加载失败</div></div>';
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 检查用户是否已登录
+        const token = localStorage.getItem('token');
+        const addSpotLink = document.getElementById('addSpotLink');
+        if (token && addSpotLink) {
+            addSpotLink.style.display = 'inline-block';
+        }
+
+        loadSpots();
+        loadLatestPosts();
+
+        document.getElementById('locateBtn').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        alert(`位置: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`);
+                    },
+                    function(error) {
+                        alert('定位失败，请检查权限');
+                    }
+                );
+            }
+        });
+    });
+</script>
+{% endblock %}
+

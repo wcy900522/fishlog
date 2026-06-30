@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}注册 - AnglrLog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" style="min-height: 500px; align-items: center;">
+    <div class="col-md-5 col-lg-4">
+        <div style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(26, 95, 122, 0.15);">
+            <!-- 头部 -->
+            <div style="background: linear-gradient(135deg, #1a5f7a 0%, #2d8fa3 100%); color: white; padding: 40px 20px; text-align: center;">
+                <div style="font-size: 3.5rem; margin-bottom: 15px;">
+                    <i class="fas fa-fish"></i>
+                </div>
+                <h3 style="margin: 0;">创建钓鱼账户</h3>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">加入钓鱼人社区</p>
+            </div>
+
+            <!-- 表单 -->
+            <div style="padding: 35px 25px;">
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <label for="nickname" class="form-label" style="font-weight: 600; color: #1a5f7a;">
+                            <i class="fas fa-user"></i> 昵称
+                        </label>
+                        <input type="text" class="form-control" id="nickname" name="nickname" placeholder="输入您的昵称" required
+                               style="border-radius: 8px; padding: 10px 12px; border: 2px solid #e0e0e0;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label" style="font-weight: 600; color: #1a5f7a;">
+                            <i class="fas fa-phone"></i> 手机号
+                        </label>
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="输入手机号" required
+                               style="border-radius: 8px; padding: 10px 12px; border: 2px solid #e0e0e0;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label" style="font-weight: 600; color: #1a5f7a;">
+                            <i class="fas fa-lock"></i> 密码
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="设置密码" required
+                               style="border-radius: 8px; padding: 10px 12px; border: 2px solid #e0e0e0;">
+                    </div>
+                    <div class="mb-4">
+                        <label for="confirmPassword" class="form-label" style="font-weight: 600; color: #1a5f7a;">
+                            <i class="fas fa-check-circle"></i> 确认密码
+                        </label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="确认密码" required
+                               style="border-radius: 8px; padding: 10px 12px; border: 2px solid #e0e0e0;">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100"
+                            style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); border: none; padding: 12px; font-weight: 600; border-radius: 8px;">
+                        <i class="fas fa-user-plus"></i> 注册账户
+                    </button>
+                </form>
+
+                <div style="margin-top: 20px; text-align: center; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <p class="text-muted mb-0">已有账户？</p>
+                    <a href="/login" style="color: #2d8fa3; font-weight: 600; text-decoration: none;">
+                        <i class="fas fa-sign-in-alt"></i> 点击登录
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const nickname = document.getElementById('nickname').value;
+        const phone = document.getElementById('phone').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+            alert('❌ 两次输入的密码不一致');
+            return;
+        }
+
+        if (password.length < 6) {
+            alert('❌ 密码长度不能少于6位');
+            return;
+        }
+
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 注册中...';
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nickname, phone, password })
+            });
+
+            if (response.ok) {
+                alert('✅ 注册成功！请登录');
+                window.location.href = '/login';
+            } else if (response.status === 400) {
+                alert('❌ 该手机号已被注册');
+            } else {
+                alert('❌ 注册失败，请重试');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('❌ 注册失败，请重试');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+</script>
+{% endblock %}

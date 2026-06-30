@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}论坛 - AnglrLog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .post-card {
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .post-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .post-title {
+        color: var(--primary-blue);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .post-title:hover {
+        color: var(--secondary-blue);
+        text-decoration: underline;
+    }
+
+    .post-meta {
+        font-size: 0.9rem;
+        color: #999;
+    }
+
+    .post-content-preview {
+        color: #555;
+        margin: 10px 0;
+        line-height: 1.6;
+    }
+
+    .search-box {
+        margin-bottom: 30px;
+    }
+
+    .posts-container {
+        gap: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="page-title">
+        <i class="fas fa-comments"></i> 论坛讨论
+    </h1>
+    <p class="page-subtitle">分享钓鱼经验，交流技术技巧</p>
+</div>
+
+<div class="search-box">
+    <div class="input-group">
+        <input type="text" class="form-control" id="searchInput" placeholder="搜索帖子标题或内容...">
+        <button class="btn btn-primary" type="button" onclick="searchPosts()">搜索</button>
+    </div>
+</div>
+
+<div class="mb-3">
+    <a href="/forum/create" class="btn btn-success" id="createPostBtn" style="display:none;">
+        <i class="fas fa-plus"></i> 发布新帖
+    </a>
+</div>
+
+<div id="postsContainer" class="posts-container">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">加载中...</span>
+    </div>
+</div>
+
+<script>
+    let currentPage = 0;
+    const postsPerPage = 10;
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('zh-CN');
+    }
+
+    function truncateContent(content, length = 100) {
+        if (content.length > length) {
+            return content.substring(0, length) + '...';
+        }
+        return content;
+    }
+
+    async function loadPosts(page = 0, keyword = null) {
+        try {
+            const url = keyword
+                ? `/api/forum/posts/search?keyword=${encodeURIComponent(keyword)}&skip=${page * postsPerPage}&limit=${postsPerPage}`
+                : `/api/forum/posts?skip=${page * postsPerPage}&limit=${postsPerPage}`;
+
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to fetch posts');
+
+            const posts = await response.json();
+            const container = document.getElementById('postsContainer');
+
+            if (posts.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">暂无帖子</div>';
+                return;
+            }
+
+            let html = '';
+            posts.forEach(post => {
+                html += `
+                    <div class="card post-card" onclick="window.location.href='/forum/posts/${post.id}'">
+                        <div class="card-body">
+                            <h5 class="card-title post-title">${post.title}</h5>
+                            <p class="post-meta">
+                                <i class="fas fa-user"></i> ${post.user_nickname}
+                                <i class="fas fa-clock ms-3"></i> ${formatDate(post.created_at)}
+                                <i class="fas fa-comments ms-3"></i> ${post.comment_count} 条评论
+                            </p>
+                            <p class="post-content-preview">${truncateContent(post.content)}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Error loading posts:', error);
+            document.getElementById('postsContainer').innerHTML = '<div class="alert alert-danger">加载失败</div>';
+        }
+    }
+
+    function searchPosts() {
+        const keyword = document.getElementById('searchInput').value.trim();
+        currentPage = 0;
+        loadPosts(currentPage, keyword);
+    }
+
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchPosts();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = localStorage.getItem('token');
+        if (token) {
+            document.getElementById('createPostBtn').style.display = 'block';
+        }
+        loadPosts(0);
+    });
+</script>
+{% endblock %}

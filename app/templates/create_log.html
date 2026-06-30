@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}新建记录 - FishLog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-pen"></i> 记录一次出钓</h4>
+            </div>
+            <div class="card-body">
+                <form id="logForm">
+                    <div class="mb-3">
+                        <label for="spot" class="form-label">钓点 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="spot" name="spot_id" required>
+                            <option value="">请选择钓点</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="fishing_at" class="form-label">出钓时间 <span class="text-danger">*</span></label>
+                                <input type="datetime-local" class="form-control" id="fishing_at" name="fishing_at" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duration" class="form-label">作钓时长(分钟) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="duration" name="duration" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="species" class="form-label">鱼种</label>
+                                <input type="text" class="form-control" id="species" name="species" placeholder="如：鲤鱼、草鱼">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bait" class="form-label">饵料</label>
+                                <input type="text" class="form-control" id="bait" name="bait" placeholder="如：玉米、蚯蚓">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">渔获数量</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="0" placeholder="条数">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="note" class="form-label">备注</label>
+                        <textarea class="form-control" id="note" name="note" rows="3" placeholder="记录更多细节..."></textarea>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 提交后，系统将自动记录天气数据（温度、气压、风速）
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存记录
+                        </button>
+                        <a href="/" class="btn btn-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('请先登录');
+            window.location.href = '/login';
+            return;
+        }
+
+        // Load spots
+        fetch('/api/spots')
+            .then(response => response.json())
+            .then(spots => {
+                const spotSelect = document.getElementById('spot');
+                spots.forEach(spot => {
+                    const option = document.createElement('option');
+                    option.value = spot.id;
+                    option.textContent = `${spot.name} (${spot.city || '未知'})`;
+                    spotSelect.appendChild(option);
+                });
+
+                // Set default spot if from spot detail page
+                const params = new URLSearchParams(window.location.search);
+                const spotId = params.get('spot_id');
+                if (spotId) {
+                    spotSelect.value = spotId;
+                }
+            });
+
+        // Set default datetime to now
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const date = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('fishing_at').value = `${year}-${month}-${date}T${hours}:${minutes}`;
+
+        // Form submission
+        document.getElementById('logForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const spotId = parseInt(document.getElementById('spot').value);
+            const fishingAt = document.getElementById('fishing_at').value;
+            const duration = parseInt(document.getElementById('duration').value);
+            const species = document.getElementById('species').value;
+            const bait = document.getElementById('bait').value;
+            const quantity = document.getElementById('quantity').value ? parseInt(document.getElementById('quantity').value) : null;
+            const note = document.getElementById('note').value;
+
+            const payload = {
+                spot_id: spotId,
+                fishing_at: new Date(fishingAt).toISOString(),
+                duration: duration,
+                species: species || null,
+                bait: bait || null,
+                quantity: quantity,
+                note: note || null
+            };
+
+            try {
+                const response = await fetch('/api/logs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('记录保存成功！');
+                    window.location.href = '/logs';
+                } else {
+                    alert('保存失败，请重试');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('保存失败，请重试');
+            }
+        });
+    });
+</script>
+{% endblock %}

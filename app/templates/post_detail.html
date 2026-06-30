@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}帖子详情 - AnglrLog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .post-header {
+        background: linear-gradient(135deg, #f5f9fc 0%, #e8f4f8 100%);
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        border-left: 4px solid var(--primary-blue);
+    }
+
+    .post-title {
+        color: var(--primary-blue);
+        font-weight: bold;
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    .post-meta {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .post-content {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: #333;
+        margin: 30px 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .comments-section {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 2px solid #e0e0e0;
+    }
+
+    .comment {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        border-left: 3px solid var(--accent-green);
+    }
+
+    .comment-author {
+        font-weight: 600;
+        color: var(--primary-blue);
+        margin-bottom: 5px;
+    }
+
+    .comment-meta {
+        font-size: 0.85rem;
+        color: #999;
+        margin-bottom: 10px;
+    }
+
+    .comment-content {
+        color: #555;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .comment-delete-btn {
+        font-size: 0.8rem;
+        margin-top: 10px;
+    }
+
+    .new-comment-form {
+        background: #f5f9fc;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+    .post-actions {
+        margin-bottom: 20px;
+    }
+
+    .post-actions .btn {
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="postContent">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">加载中...</span>
+    </div>
+</div>
+
+<script>
+    const postId = {{ post_id }};
+    let currentUserId = null;
+    let postUserId = null;
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('zh-CN');
+    }
+
+    async function loadPost() {
+        try {
+            const response = await fetch(`/api/forum/posts/${postId}`);
+            if (!response.ok) throw new Error('Failed to load post');
+
+            const post = await response.json();
+            postUserId = post.user_id;
+
+            let html = `
+                <div class="post-header">
+                    <h1 class="post-title">${post.title}</h1>
+                    <div class="post-meta">
+                        <i class="fas fa-user"></i> ${post.user_nickname}
+                        <i class="fas fa-clock ms-3"></i> ${formatDate(post.created_at)}
+            `;
+
+            const token = localStorage.getItem('token');
+            if (token && currentUserId === postUserId) {
+                html += `
+                    <div class="post-actions mt-3">
+                        <button class="btn btn-sm btn-warning" onclick="editPost()">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deletePost()">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+
+                <div class="post-content">${post.content}</div>
+
+                <div class="comments-section">
+                    <h3><i class="fas fa-comments"></i> 评论 (${post.comments.length})</h3>
+                    <div class="divider"></div>
+            `;
+
+            if (token) {
+                html += `
+                    <div class="new-comment-form">
+                        <div class="mb-3">
+                            <label for="newComment" class="form-label">发表评论</label>
+                            <textarea class="form-control" id="newComment" rows="3" placeholder="输入你的评论..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="submitComment()">
+                            <i class="fas fa-comment"></i> 发表评论
+                        </button>
+                    </div>
+                `;
+            }
+
+            if (post.comments.length === 0) {
+                html += '<p class="text-muted">还没有评论，成为第一个评论者吧！</p>';
+            } else {
+                post.comments.forEach(comment => {
+                    html += `
+                        <div class="comment">
+                            <div class="comment-author">${comment.user_nickname}</div>
+                            <div class="comment-meta">${formatDate(comment.created_at)}</div>
+                            <div class="comment-content">${comment.content}</div>
+                    `;
+
+                    if (token && currentUserId === comment.user_id) {
+                        html += `
+                            <button class="btn btn-sm btn-danger comment-delete-btn" onclick="deleteComment(${comment.id})">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                        `;
+                    }
+
+                    html += '</div>';
+                });
+            }
+
+            html += '</div>';
+
+            document.getElementById('postContent').innerHTML = html;
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('postContent').innerHTML = '<div class="alert alert-danger">加载失败</div>';
+        }
+    }
+
+    async function submitComment() {
+        const content = document.getElementById('newComment').value.trim();
+        const token = localStorage.getItem('token');
+
+        if (!content) {
+            alert('评论内容不能为空');
+            return;
+        }
+
+        if (!token) {
+            alert('请先登录');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/forum/posts/${postId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ content: content })
+            });
+
+            if (!response.ok) throw new Error('Failed to submit comment');
+
+            document.getElementById('newComment').value = '';
+            loadPost();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('评论失败');
+        }
+    }
+
+    async function deleteComment(commentId) {
+        if (!confirm('确定要删除这条评论吗？')) return;
+
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/forum/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Failed to delete comment');
+
+            loadPost();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('删除失败');
+        }
+    }
+
+    async function deletePost() {
+        if (!confirm('确定要删除这个帖子吗？')) return;
+
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/forum/posts/${postId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Failed to delete post');
+
+            alert('帖子已删除');
+            window.location.href = '/forum';
+        } catch (error) {
+            console.error('Error:', error);
+            alert('删除失败');
+        }
+    }
+
+    function editPost() {
+        alert('编辑功能开发中');
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const me = await response.json();
+                    currentUserId = me.id;
+                }
+            } catch (e) {
+                console.error('Failed to fetch current user');
+            }
+        }
+        loadPost();
+    });
+</script>
+{% endblock %}

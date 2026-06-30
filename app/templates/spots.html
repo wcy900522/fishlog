@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}钓点管理 - AnglrLog{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="page-title">
+        <i class="fas fa-map-location-dot"></i> 钓点管理
+    </div>
+    <p class="page-subtitle">添加和管理你的钓点</p>
+
+    <!-- 创建新钓点按钮 -->
+    <div class="mb-4">
+        <button class="btn btn-primary btn-lg" id="addSpotBtn" data-bs-toggle="modal" data-bs-target="#spotModal">
+            <i class="fas fa-plus"></i> 新增钓点
+        </button>
+    </div>
+
+    <!-- 我的钓点列表 -->
+    <div class="row" id="mySpots">
+        <div class="col-12">
+            <div class="text-center py-5">
+                <p class="text-muted">
+                    <i class="fas fa-spinner fa-spin"></i> 加载中...
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 钓点编辑/新增 Modal -->
+<div class="modal fade" id="spotModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="spotModalTitle">
+                    <i class="fas fa-plus"></i> 新增钓点
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="spotForm">
+                    <!-- 省份和城市选择 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-map"></i> 省份 <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="provinceSelect" required>
+                                <option value="">-- 选择省份 --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-city"></i> 城市 <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="citySelect" required>
+                                <option value="">-- 先选择省份 --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 钓点名称 -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-signature"></i> 钓点名称 <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="spotName" placeholder="例如：某某河、某某湖" required>
+                        <small class="form-text text-muted">给你的钓点起个名字</small>
+                    </div>
+
+                    <!-- 水体类型 -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-water"></i> 水体类型 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="waterType" required>
+                            <option value="">-- 选择水体类型 --</option>
+                            <option value="river">河流</option>
+                            <option value="lake">湖泊</option>
+                            <option value="reservoir">水库</option>
+                            <option value="sea">海水</option>
+                            <option value="pond">池塘</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+
+                    <!-- 地理坐标 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-globe"></i> 纬度 <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="latitude" step="0.0001" placeholder="例如：30.2741" required>
+                            <small class="form-text text-muted">可在地图上标记</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-globe"></i> 经度 <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="longitude" step="0.0001" placeholder="例如：120.1551" required>
+                        </div>
+                    </div>
+
+                    <!-- 钓点描述 -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-pen"></i> 钓点描述
+                        </label>
+                        <textarea class="form-control" id="spotDesc" rows="4" placeholder="描述钓点的特点、通常能钓到的鱼种、最佳钓鱼时间等..."></textarea>
+                        <small class="form-text text-muted">可选，但详细的描述能帮助你以后更好地规划钓鱼</small>
+                    </div>
+
+                    <!-- 提示信息 -->
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>提示：</strong>坐标可以通过高德地图或其他地图应用获取。如不知道精确坐标，可先填写省市，以后再修改。
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveSpotBtn">
+                    <i class="fas fa-save"></i> 保存钓点
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const token = localStorage.getItem('token');
+let currentSpotId = null;
+let provinces = [];
+
+// 初始化
+document.addEventListener('DOMContentLoaded', async function() {
+    if (!token) {
+        alert('请先登录');
+        window.location.href = '/login';
+        return;
+    }
+
+    // 加载省份数据
+    await loadProvinces();
+
+    // 加载用户的钓点
+    await loadMySpots();
+
+    // 绑定事件
+    document.getElementById('provinceSelect').addEventListener('change', updateCities);
+    document.getElementById('addSpotBtn').addEventListener('click', resetForm);
+    document.getElementById('saveSpotBtn').addEventListener('click', saveSpot);
+});
+
+// 加载省份数据
+async function loadProvinces() {
+    try {
+        const response = await fetch('/api/provinces');
+        if (!response.ok) throw new Error('Failed to load provinces');
+
+        const data = await response.json();
+        provinces = data.provinces;
+
+        const select = document.getElementById('provinceSelect');
+        provinces.forEach(province => {
+            const option = document.createElement('option');
+            option.value = province.name;
+            option.textContent = province.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading provinces:', error);
+        alert('加载省份列表失败');
+    }
+}
+
+// 更新城市列表
+function updateCities() {
+    const provinceSelect = document.getElementById('provinceSelect');
+    const citySelect = document.getElementById('citySelect');
+    const selectedProvince = provinceSelect.value;
+
+    citySelect.innerHTML = '<option value="">-- 选择城市 --</option>';
+
+    if (!selectedProvince) return;
+
+    const province = provinces.find(p => p.name === selectedProvince);
+    if (province) {
+        province.cities.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            citySelect.appendChild(option);
+        });
+    }
+}
+
+// 重置表单
+function resetForm() {
+    currentSpotId = null;
+    document.getElementById('spotForm').reset();
+    document.getElementById('spotModalTitle').innerHTML = '<i class="fas fa-plus"></i> 新增钓点';
+    document.getElementById('citySelect').innerHTML = '<option value="">-- 先选择省份 --</option>';
+}
+
+// 保存钓点
+async function saveSpot() {
+    const name = document.getElementById('spotName').value;
+    const province = document.getElementById('provinceSelect').value;
+    const city = document.getElementById('citySelect').value;
+    const waterType = document.getElementById('waterType').value;
+    const latitude = parseFloat(document.getElementById('latitude').value);
+    const longitude = parseFloat(document.getElementById('longitude').value);
+    const description = document.getElementById('spotDesc').value;
+
+    if (!name || !province || !city || !waterType || !latitude || !longitude) {
+        alert('请填写所有必填项');
+        return;
+    }
+
+    const spotData = {
+        name,
+        province,
+        city,
+        water_type: waterType,
+        latitude,
+        longitude,
+        description
+    };
+
+    try {
+        let url = '/api/spots';
+        let method = 'POST';
+
+        if (currentSpotId) {
+            url = `/api/spots/${currentSpotId}`;
+            method = 'PUT';
+        }
+
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(spotData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            alert('保存失败: ' + (error.detail || '未知错误'));
+            return;
+        }
+
+        alert('保存成功！');
+        bootstrap.Modal.getInstance(document.getElementById('spotModal')).hide();
+        await loadMySpots();
+    } catch (error) {
+        console.error('Error saving spot:', error);
+        alert('保存失败: ' + error.message);
+    }
+}
+
+// 加载用户的钓点
+async function loadMySpots() {
+    try {
+        const response = await fetch('/api/spots', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to load spots');
+
+        const spots = await response.json();
+        const container = document.getElementById('mySpots');
+
+        if (spots.length === 0) {
+            container.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-inbox"></i>
+                        <p>还没有添加钓点，<a href="#" onclick="document.getElementById('addSpotBtn').click()">立即新增</a></p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = spots.map(spot => `
+            <div class="col-md-6 col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-location-dot"></i> ${spot.name}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <strong><i class="fas fa-map"></i> 位置：</strong>
+                            ${spot.province} ${spot.city}
+                        </p>
+                        <p class="mb-2">
+                            <strong><i class="fas fa-water"></i> 水体：</strong>
+                            ${getWaterTypeLabel(spot.water_type)}
+                        </p>
+                        <p class="mb-2">
+                            <strong><i class="fas fa-globe"></i> 坐标：</strong>
+                            ${spot.latitude}, ${spot.longitude}
+                        </p>
+                        ${spot.description ? `
+                            <p class="mb-2">
+                                <strong><i class="fas fa-pen"></i> 描述：</strong><br>
+                                <small>${spot.description}</small>
+                            </p>
+                        ` : ''}
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> ${new Date(spot.created_at).toLocaleDateString('zh-CN')}
+                        </small>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <button class="btn btn-sm btn-primary" onclick="editSpot(${spot.id})">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSpot(${spot.id})">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading spots:', error);
+        alert('加载钓点失败');
+    }
+}
+
+// 水体类型标签
+function getWaterTypeLabel(type) {
+    const labels = {
+        'river': '河流 <i class="fas fa-water"></i>',
+        'lake': '湖泊 <i class="fas fa-water"></i>',
+        'reservoir': '水库 <i class="fas fa-water"></i>',
+        'sea': '海水 <i class="fas fa-water"></i>',
+        'pond': '池塘 <i class="fas fa-water"></i>',
+        'other': '其他'
+    };
+    return labels[type] || type;
+}
+
+// 编辑钓点
+async function editSpot(spotId) {
+    try {
+        const response = await fetch(`/api/spots/${spotId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to load spot');
+
+        const spot = await response.json();
+
+        currentSpotId = spotId;
+        document.getElementById('spotName').value = spot.name;
+        document.getElementById('provinceSelect').value = spot.province;
+        await new Promise(r => setTimeout(r, 100)); // 等待城市列表更新
+        updateCities();
+        document.getElementById('citySelect').value = spot.city;
+        document.getElementById('waterType').value = spot.water_type;
+        document.getElementById('latitude').value = spot.latitude;
+        document.getElementById('longitude').value = spot.longitude;
+        document.getElementById('spotDesc').value = spot.description || '';
+
+        document.getElementById('spotModalTitle').innerHTML = '<i class="fas fa-edit"></i> 编辑钓点';
+        new bootstrap.Modal(document.getElementById('spotModal')).show();
+    } catch (error) {
+        console.error('Error loading spot:', error);
+        alert('加载钓点信息失败');
+    }
+}
+
+// 删除钓点
+async function deleteSpot(spotId) {
+    if (!confirm('确定要删除这个钓点吗？')) return;
+
+    try {
+        const response = await fetch(`/api/spots/${spotId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to delete spot');
+
+        alert('删除成功！');
+        await loadMySpots();
+    } catch (error) {
+        console.error('Error deleting spot:', error);
+        alert('删除失败: ' + error.message);
+    }
+}
+</script>
+{% endblock %}
