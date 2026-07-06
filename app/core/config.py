@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from pydantic_settings import BaseSettings
+from typing import Optional
 import os
 
 class Settings(BaseSettings):
@@ -10,6 +11,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     OPEN_METEO_API_URL: str = "https://api.open-meteo.com/v1"
+    WECHAT_APP_ID: Optional[str] = os.getenv("WECHAT_APP_ID")
+    WECHAT_APP_SECRET: Optional[str] = os.getenv("WECHAT_APP_SECRET")
+    WECHAT_REDIRECT_URI: Optional[str] = os.getenv("WECHAT_REDIRECT_URI")
 
     class Config:
         env_file = ".env"

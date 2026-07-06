@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}钓点管理 - AnglrLog{% endblock %}
+{% block title %}钓点管理 - 渔迹录{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
@@ -102,6 +102,15 @@
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="useCurrentLocationBtn">
+                            <i class="fas fa-location-crosshairs"></i> 使用当前位置
+                        </button>
+                        <small class="form-text text-muted d-block mt-2" id="locationStatus">
+                            将使用浏览器定位，并自动转换为高德地图坐标。
+                        </small>
+                    </div>
+
                     <!-- 钓点描述 -->
                     <div class="mb-3">
                         <label class="form-label">
@@ -136,6 +145,31 @@ const token = localStorage.getItem('token');
 let currentSpotId = null;
 let provinces = [];
 
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+function renderSpotsMessage(type, title, detail = '') {
+    const container = document.getElementById('mySpots');
+    const stateClass = type === 'error' ? 'error-state' : 'empty-state';
+    const icon = type === 'error' ? 'fa-triangle-exclamation' : 'fa-inbox';
+    container.innerHTML = `
+        <div class="col-12">
+            <div class="${stateClass}">
+                <i class="fas ${icon} fa-2x mb-3"></i>
+                <h5>${escapeHTML(title)}</h5>
+                ${detail ? `<p class="mb-0">${escapeHTML(detail)}</p>` : ''}
+            </div>
+        </div>
+    `;
+}
+
 // 初始化
 document.addEventListener('DOMContentLoaded', async function() {
     if (!token) {
@@ -154,16 +188,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('provinceSelect').addEventListener('change', updateCities);
     document.getElementById('addSpotBtn').addEventListener('click', resetForm);
     document.getElementById('saveSpotBtn').addEventListener('click', saveSpot);
+    document.getElementById('useCurrentLocationBtn').addEventListener('click', fillCurrentLocation);
 });
 
 // 加载省份数据
 async function loadProvinces() {
     try {
-        const response = await fetch('/api/provinces');
-        if (!response.ok) throw new Error('Failed to load provinces');
-
-        const data = await response.json();
-        provinces = data.provinces;
+        const data = await apiFetch('/api/provinces');
+        provinces = Array.isArray(data.provinces) ? data.provinces : [];
 
         const select = document.getElementById('provinceSelect');
         provinces.forEach(province => {
@@ -174,7 +206,7 @@ async function loadProvinces() {
         });
     } catch (error) {
         console.error('Error loading provinces:', error);
-        alert('加载省份列表失败');
+        alert('加载省份列表失败：' + error.message);
     }
 }
 
@@ -205,6 +237,48 @@ function resetForm() {
     document.getElementById('spotForm').reset();
     document.getElementById('spotModalTitle').innerHTML = '<i class="fas fa-plus"></i> 新增钓点';
     document.getElementById('citySelect').innerHTML = '<option value="">-- 先选择省份 --</option>';
+    document.getElementById('locationStatus').textContent = '将使用浏览器定位，并自动转换为高德地图坐标。';
+}
+
+async function fillCurrentLocation() {
+    const status = document.getElementById('locationStatus');
+    if (!navigator.geolocation) {
+        status.textContent = '当前浏览器不支持定位。';
+        return;
+    }
+
+    if (!AnglrMap.canPromptForLocation()) {
+        status.textContent = '浏览器只会在 HTTPS 或 localhost 页面拉起定位授权。当前页面不是安全上下文，请使用 HTTPS 访问，或手动填写高德经纬度。';
+        return;
+    }
+
+    const permissionState = await AnglrMap.getLocationPermissionState();
+    if (permissionState === 'denied') {
+        status.textContent = '当前站点定位权限已被浏览器拒绝。请点击地址栏左侧的站点设置，把“位置”改为允许后重试。';
+        return;
+    }
+
+    status.textContent = '正在获取当前位置...';
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const converted = AnglrMap.wgs84ToGcj02(position.coords.latitude, position.coords.longitude);
+            document.getElementById('latitude').value = converted.lat.toFixed(6);
+            document.getElementById('longitude').value = converted.lng.toFixed(6);
+            status.textContent = `已填入当前位置，精度约 ${Math.round(position.coords.accuracy || 0)} 米；坐标已按高德地图校准。`;
+        },
+        function(error) {
+            status.textContent = {
+                1: '定位权限被拒绝。请在地址栏左侧的站点设置中允许“位置”，或手动填写高德经纬度。',
+                2: '暂时无法获取当前位置，请检查网络或定位服务。',
+                3: '定位超时，请移动到信号更好的位置后重试。'
+            }[error.code] || '定位失败，请稍后重试。';
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 12000,
+            maximumAge: 60000
+        }
+    );
 }
 
 // 保存钓点
@@ -217,7 +291,7 @@ async function saveSpot() {
     const longitude = parseFloat(document.getElementById('longitude').value);
     const description = document.getElementById('spotDesc').value;
 
-    if (!name || !province || !city || !waterType || !latitude || !longitude) {
+    if (!name || !province || !city || !waterType || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         alert('请填写所有必填项');
         return;
     }
@@ -241,48 +315,37 @@ async function saveSpot() {
             method = 'PUT';
         }
 
-        const response = await fetch(url, {
+        await apiFetch(url, {
             method,
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(spotData)
         });
-
-        if (!response.ok) {
-            const error = await response.json();
-            alert('保存失败: ' + (error.detail || '未知错误'));
-            return;
-        }
 
         alert('保存成功！');
         bootstrap.Modal.getInstance(document.getElementById('spotModal')).hide();
         await loadMySpots();
     } catch (error) {
         console.error('Error saving spot:', error);
-        alert('保存失败: ' + error.message);
+        if (error.message.includes('登录状态已失效')) {
+            redirectToLogin(error.message);
+            return;
+        }
+        alert('保存失败：' + error.message);
     }
 }
 
 // 加载用户的钓点
 async function loadMySpots() {
     try {
-        const response = await fetch('/api/spots', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) throw new Error('Failed to load spots');
-
-        const spots = await response.json();
+        const spots = await apiFetch('/api/spots/mine');
         const container = document.getElementById('mySpots');
 
         if (spots.length === 0) {
             container.innerHTML = `
                 <div class="col-12">
-                    <div class="alert alert-info text-center">
+                    <div class="empty-state">
                         <i class="fas fa-inbox"></i>
                         <p>还没有添加钓点，<a href="#" onclick="document.getElementById('addSpotBtn').click()">立即新增</a></p>
                     </div>
@@ -296,18 +359,24 @@ async function loadMySpots() {
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
-                            <i class="fas fa-location-dot"></i> ${spot.name}
+                            <i class="fas fa-location-dot"></i> ${escapeHTML(spot.name)}
                         </h5>
                     </div>
                     <div class="card-body">
                         <p class="mb-2">
                             <strong><i class="fas fa-map"></i> 位置：</strong>
-                            ${spot.province} ${spot.city}
+                            ${escapeHTML(spot.province || '未知')} ${escapeHTML(spot.city || '')}
                         </p>
                         <p class="mb-2">
                             <strong><i class="fas fa-water"></i> 水体：</strong>
                             ${getWaterTypeLabel(spot.water_type)}
                         </p>
+                        ${spot.user_nickname ? `
+                            <p class="mb-2">
+                                <strong><i class="fas fa-user"></i> 创建者：</strong>
+                                ${escapeHTML(spot.user_nickname)}
+                            </p>
+                        ` : ''}
                         <p class="mb-2">
                             <strong><i class="fas fa-globe"></i> 坐标：</strong>
                             ${spot.latitude}, ${spot.longitude}
@@ -315,7 +384,7 @@ async function loadMySpots() {
                         ${spot.description ? `
                             <p class="mb-2">
                                 <strong><i class="fas fa-pen"></i> 描述：</strong><br>
-                                <small>${spot.description}</small>
+                                <small>${escapeHTML(spot.description)}</small>
                             </p>
                         ` : ''}
                         <small class="text-muted">
@@ -335,7 +404,11 @@ async function loadMySpots() {
         `).join('');
     } catch (error) {
         console.error('Error loading spots:', error);
-        alert('加载钓点失败');
+        if (error.message.includes('登录状态已失效')) {
+            redirectToLogin(error.message);
+            return;
+        }
+        renderSpotsMessage('error', '加载钓点失败', error.message);
     }
 }
 
@@ -355,20 +428,11 @@ function getWaterTypeLabel(type) {
 // 编辑钓点
 async function editSpot(spotId) {
     try {
-        const response = await fetch(`/api/spots/${spotId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) throw new Error('Failed to load spot');
-
-        const spot = await response.json();
+        const spot = await apiFetch(`/api/spots/${spotId}`);
 
         currentSpotId = spotId;
         document.getElementById('spotName').value = spot.name;
         document.getElementById('provinceSelect').value = spot.province;
-        await new Promise(r => setTimeout(r, 100)); // 等待城市列表更新
         updateCities();
         document.getElementById('citySelect').value = spot.city;
         document.getElementById('waterType').value = spot.water_type;
@@ -380,7 +444,11 @@ async function editSpot(spotId) {
         new bootstrap.Modal(document.getElementById('spotModal')).show();
     } catch (error) {
         console.error('Error loading spot:', error);
-        alert('加载钓点信息失败');
+        if (error.message.includes('登录状态已失效')) {
+            redirectToLogin(error.message);
+            return;
+        }
+        alert('加载钓点信息失败：' + error.message);
     }
 }
 
@@ -389,20 +457,19 @@ async function deleteSpot(spotId) {
     if (!confirm('确定要删除这个钓点吗？')) return;
 
     try {
-        const response = await fetch(`/api/spots/${spotId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+        await apiFetch(`/api/spots/${spotId}`, {
+            method: 'DELETE'
         });
-
-        if (!response.ok) throw new Error('Failed to delete spot');
 
         alert('删除成功！');
         await loadMySpots();
     } catch (error) {
         console.error('Error deleting spot:', error);
-        alert('删除失败: ' + error.message);
+        if (error.message.includes('登录状态已失效')) {
+            redirectToLogin(error.message);
+            return;
+        }
+        alert('删除失败：' + error.message);
     }
 }
 </script>

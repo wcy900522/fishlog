@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}我的记录 - FishLog{% endblock %}
+{% block title %}我的记录 - 渔迹录{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <h1 class="mb-0"><i class="fas fa-list"></i> 我的出钓记录</h1>
+        <h1 class="page-title mb-0"><i class="fas fa-list"></i> 我的出钓记录</h1>
     </div>
     <div class="col-md-4 text-end">
         <a href="/logs/create" class="btn btn-success">
@@ -37,25 +37,24 @@
         loadLogs();
     });
 
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
+    }
+
     async function loadLogs() {
-        const token = localStorage.getItem('token');
         try {
-            const response = await fetch('/api/logs', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to load logs');
-            }
-
-            const logs = await response.json();
+            const logs = await apiFetch('/api/logs');
             const logsList = document.getElementById('logsList');
 
             if (logs.length === 0) {
                 logsList.innerHTML = `
-                    <div class="alert alert-info">
+                    <div class="empty-state">
                         <i class="fas fa-info-circle"></i> 您还没有任何记录，<a href="/logs/create">创建第一条记录</a>
                     </div>
                 `;
@@ -69,22 +68,23 @@
                             <div class="col-md-8">
                                 <h5 class="card-title mb-2">
                                     <i class="fas fa-fish"></i>
-                                    ${log.species || '未知鱼种'}
+                                    ${escapeHTML(log.species || '未知鱼种')}
                                     <span class="badge bg-secondary">${log.quantity || 0}条</span>
                                 </h5>
                                 <p class="card-text text-muted mb-2">
                                     <small>
                                         <i class="fas fa-calendar"></i>
                                         ${new Date(log.fishing_at).toLocaleString('zh-CN')}
+                                        ${log.user_nickname ? ` <span class="ms-3"><i class="fas fa-user"></i> ${escapeHTML(log.user_nickname)}</span>` : ''}
                                     </small>
                                 </p>
                                 <p class="card-text">
                                     <small>
                                         <i class="fas fa-hourglass-end"></i> 作钓时长: ${log.duration}分钟
-                                        ${log.bait ? `| <i class="fas fa-worm"></i> 饵料: ${log.bait}` : ''}
+                                        ${log.bait ? `| <i class="fas fa-worm"></i> 饵料: ${escapeHTML(log.bait)}` : ''}
                                     </small>
                                 </p>
-                                ${log.note ? `<p class="card-text"><small>${log.note}</small></p>` : ''}
+                                ${log.note ? `<p class="card-text"><small>${escapeHTML(log.note)}</small></p>` : ''}
                                 <div class="weather-info mt-2">
                                     <small class="text-muted">
                                         <i class="fas fa-cloud"></i> ${log.temperature || '?'}°C |
@@ -107,7 +107,11 @@
             `).join('');
         } catch (error) {
             console.error('Error:', error);
-            document.getElementById('logsList').innerHTML = '<div class="alert alert-danger">加载失败</div>';
+            if (error.message.includes('登录状态已失效')) {
+                redirectToLogin(error.message);
+                return;
+            }
+            document.getElementById('logsList').innerHTML = `<div class="error-state">加载失败：${escapeHTML(error.message)}</div>`;
         }
     }
 
@@ -116,24 +120,20 @@
             return;
         }
 
-        const token = localStorage.getItem('token');
         try {
-            const response = await fetch(`/api/logs/${logId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            await apiFetch(`/api/logs/${logId}`, {
+                method: 'DELETE'
             });
 
-            if (response.ok) {
-                alert('记录已删除');
-                loadLogs();
-            } else {
-                alert('删除失败');
-            }
+            alert('记录已删除');
+            loadLogs();
         } catch (error) {
             console.error('Error:', error);
-            alert('删除失败');
+            if (error.message.includes('登录状态已失效')) {
+                redirectToLogin(error.message);
+                return;
+            }
+            alert('删除失败：' + error.message);
         }
     }
 

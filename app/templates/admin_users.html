@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}用户管理 - 渔迹录{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .admin-summary__item {
+        padding: 20px;
+        border: 1px solid var(--border-soft);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .admin-summary__item span {
+        color: var(--text-muted);
+        font-size: 0.88rem;
+    }
+
+    .admin-summary__item strong {
+        display: block;
+        margin-top: 6px;
+        color: var(--brand-deep);
+        font-size: 1.7rem;
+    }
+
+    .user-table {
+        vertical-align: middle;
+    }
+
+    .user-table th {
+        color: var(--brand-deep);
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .user-table td {
+        color: var(--text-dark);
+    }
+
+    .user-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        background: var(--surface-tint);
+        color: var(--brand-teal);
+    }
+
+    .status-pill--danger {
+        background: rgba(200, 90, 66, 0.12);
+        color: var(--brand-coral);
+    }
+
+    .status-pill--admin {
+        background: rgba(217, 164, 65, 0.16);
+        color: #9a6b12;
+    }
+
+    @media (max-width: 992px) {
+        .admin-summary {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 576px) {
+        .admin-summary {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="adminGate" class="empty-state">
+    <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+    <h5>正在验证管理员权限...</h5>
+</div>
+
+<div id="adminContent" hidden>
+    <div class="page-title">
+        <i class="fas fa-user-shield"></i> 用户管理
+    </div>
+    <p class="page-subtitle">查看注册用户数量，并管理账号状态、发言权限和管理员权限。</p>
+
+    <div class="admin-summary" id="adminSummary">
+        <div class="admin-summary__item">
+            <span>注册用户</span>
+            <strong id="totalUsers">-</strong>
+        </div>
+        <div class="admin-summary__item">
+            <span>管理员</span>
+            <strong id="adminUsers">-</strong>
+        </div>
+        <div class="admin-summary__item">
+            <span>已禁用</span>
+            <strong id="disabledUsers">-</strong>
+        </div>
+        <div class="admin-summary__item">
+            <span>已禁言</span>
+            <strong id="mutedUsers">-</strong>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-users-cog"></i> 用户列表</h5>
+            <button class="btn btn-sm btn-outline-secondary" type="button" onclick="loadUsers()">
+                <i class="fas fa-rotate"></i> 刷新
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="usersState" class="text-center py-4 text-muted">
+                <i class="fas fa-spinner fa-spin"></i> 正在加载用户...
+            </div>
+            <div class="table-responsive" id="usersTableWrap" hidden>
+                <table class="table user-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户</th>
+                            <th>状态</th>
+                            <th>内容</th>
+                            <th>注册时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentUser = null;
+
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    const gate = document.getElementById('adminGate');
+    const content = document.getElementById('adminContent');
+    try {
+        currentUser = await apiFetch('/api/auth/me');
+        if (!currentUser.is_admin) {
+            gate.className = 'error-state';
+            gate.innerHTML = '<i class="fas fa-lock fa-2x mb-3"></i><h5>需要管理员权限</h5><p class="mb-0">当前账号不能查看用户管理页面。</p>';
+            return;
+        }
+        gate.hidden = true;
+        content.hidden = false;
+        await loadUsers();
+    } catch (error) {
+        if (error.message.includes('登录状态已失效')) {
+            redirectToLogin(error.message);
+            return;
+        }
+        gate.className = 'error-state';
+        gate.innerHTML = `<i class="fas fa-triangle-exclamation fa-2x mb-3"></i><h5>无法进入用户管理</h5><p class="mb-0">${escapeHTML(error.message)}</p>`;
+    }
+});
+
+async function loadUsers() {
+    const state = document.getElementById('usersState');
+    const wrap = document.getElementById('usersTableWrap');
+    state.hidden = false;
+    state.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在加载用户...';
+    wrap.hidden = true;
+
+    try {
+        const data = await apiFetch('/api/admin/users');
+        const users = data.users || [];
+        document.getElementById('totalUsers').textContent = data.total ?? users.length;
+        document.getElementById('adminUsers').textContent = users.filter(user => user.is_admin).length;
+        document.getElementById('disabledUsers').textContent = users.filter(user => user.is_disabled).length;
+        document.getElementById('mutedUsers').textContent = users.filter(user => !user.can_post).length;
+        renderUsers(users);
+        state.hidden = true;
+        wrap.hidden = false;
+    } catch (error) {
+        if (error.message.includes('登录状态已失效')) {
+            redirectToLogin(error.message);
+            return;
+        }
+        state.innerHTML = `<div class="error-state">加载用户失败：${escapeHTML(error.message)}</div>`;
+    }
+}
+
+function renderUsers(users) {
+    const tbody = document.getElementById('usersTable');
+    tbody.innerHTML = users.map(user => {
+        const isSelf = currentUser && currentUser.id === user.id;
+        const identity = user.phone || user.wechat_openid || '未绑定手机号';
+        const statuses = [
+            user.is_admin ? '<span class="status-pill status-pill--admin"><i class="fas fa-user-shield"></i> 管理员</span>' : '',
+            user.is_disabled ? '<span class="status-pill status-pill--danger"><i class="fas fa-ban"></i> 已禁用</span>' : '<span class="status-pill"><i class="fas fa-circle-check"></i> 正常</span>',
+            user.can_post ? '<span class="status-pill"><i class="fas fa-comment"></i> 可发言</span>' : '<span class="status-pill status-pill--danger"><i class="fas fa-comment-slash"></i> 已禁言</span>'
+        ].filter(Boolean).join(' ');
+
+        return `
+            <tr>
+                <td>${user.id}</td>
+                <td>
+                    <strong>${escapeHTML(user.nickname)}</strong>
+                    ${isSelf ? '<span class="badge badge-primary ms-1">当前账号</span>' : ''}
+                    <div class="text-muted small">${escapeHTML(identity)}</div>
+                </td>
+                <td>${statuses}</td>
+                <td class="small text-muted">
+                    帖子 ${user.post_count || 0} · 评论 ${user.comment_count || 0}<br>
+                    钓点 ${user.spot_count || 0} · 记录 ${user.log_count || 0}
+                </td>
+                <td>${new Date(user.created_at).toLocaleString('zh-CN')}</td>
+                <td>
+                    <div class="user-actions">
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleUser(${user.id}, 'can_post', ${!user.can_post})">
+                            ${user.can_post ? '禁言' : '解禁发言'}
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleUser(${user.id}, 'is_disabled', ${!user.is_disabled})" ${isSelf ? 'disabled' : ''}>
+                            ${user.is_disabled ? '启用' : '禁用'}
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleUser(${user.id}, 'is_admin', ${!user.is_admin})" ${isSelf ? 'disabled' : ''}>
+                            ${user.is_admin ? '取消管理员' : '设为管理员'}
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="resetPassword(${user.id})">
+                            重置密码
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id}, '${escapeHTML(user.nickname)}')" ${isSelf ? 'disabled' : ''}>
+                            删除
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function toggleUser(userId, field, value) {
+    try {
+        await apiFetch(`/api/admin/users/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [field]: value })
+        });
+        await loadUsers();
+    } catch (error) {
+        alert(`操作失败：${error.message}`);
+    }
+}
+
+async function resetPassword(userId) {
+    const password = prompt('请输入新密码（至少8位，必须同时包含字母和数字）：');
+    if (!password) return;
+
+    try {
+        await apiFetch(`/api/admin/users/${userId}/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+        alert('密码已重置');
+    } catch (error) {
+        alert(`重置失败：${error.message}`);
+    }
+}
+
+async function deleteUser(userId, nickname) {
+    if (!confirm(`确定删除用户「${nickname}」吗？该用户的帖子、评论、钓点和记录会一并删除。`)) {
+        return;
+    }
+
+    try {
+        await apiFetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+        await loadUsers();
+    } catch (error) {
+        alert(`删除失败：${error.message}`);
+    }
+}
+</script>
+{% endblock %}

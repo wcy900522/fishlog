@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}编辑记录 - FishLog{% endblock %}
+{% block title %}编辑记录 - 渔迹录{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header">
                 <h4 class="mb-0"><i class="fas fa-pen"></i> 编辑出钓记录</h4>
             </div>
             <div class="card-body">
@@ -85,60 +85,59 @@
             return;
         }
 
-        loadLogData();
-        loadSpots();
+        loadPageData();
     });
 
-    function loadSpots() {
-        fetch('/api/spots')
-            .then(response => response.json())
-            .then(spots => {
-                const spotSelect = document.getElementById('spot');
-                spots.forEach(spot => {
-                    const option = document.createElement('option');
-                    option.value = spot.id;
-                    option.textContent = `${spot.name} (${spot.city || '未知'})`;
-                    spotSelect.appendChild(option);
-                });
-            });
+    async function loadPageData() {
+        try {
+            const [spots, log] = await Promise.all([
+                apiFetch('/api/spots'),
+                apiFetch(`/api/logs/${logId}`)
+            ]);
+            renderSpots(spots);
+            renderLog(log);
+        } catch (error) {
+            console.error('Error:', error);
+            if (error.message.includes('登录状态已失效')) {
+                redirectToLogin(error.message);
+                return;
+            }
+            alert('加载记录失败：' + error.message);
+            window.location.href = '/logs';
+        }
     }
 
-    function loadLogData() {
-        const token = localStorage.getItem('token');
-        fetch(`/api/logs/${logId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        })
-        .then(response => response.json())
-        .then(log => {
-            document.getElementById('spot').value = log.spot_id;
-
-            const date = new Date(log.fishing_at);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            document.getElementById('fishing_at').value = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-            document.getElementById('duration').value = log.duration;
-            document.getElementById('species').value = log.species || '';
-            document.getElementById('bait').value = log.bait || '';
-            document.getElementById('quantity').value = log.quantity || '';
-            document.getElementById('note').value = log.note || '';
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('加载记录失败');
-            window.location.href = '/logs';
+    function renderSpots(spots) {
+        const spotSelect = document.getElementById('spot');
+        spots.forEach(spot => {
+            const option = document.createElement('option');
+            option.value = spot.id;
+            option.textContent = `${spot.name} (${spot.city || '未知'})`;
+            spotSelect.appendChild(option);
         });
+    }
+
+    function renderLog(log) {
+        document.getElementById('spot').value = log.spot_id;
+
+        const date = new Date(log.fishing_at);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        document.getElementById('fishing_at').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        document.getElementById('duration').value = log.duration;
+        document.getElementById('species').value = log.species || '';
+        document.getElementById('bait').value = log.bait || '';
+        document.getElementById('quantity').value = log.quantity || '';
+        document.getElementById('note').value = log.note || '';
     }
 
     document.getElementById('editForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const token = localStorage.getItem('token');
         const spotId = parseInt(document.getElementById('spot').value);
         const fishingAt = document.getElementById('fishing_at').value;
         const duration = parseInt(document.getElementById('duration').value);
@@ -158,24 +157,23 @@
         };
 
         try {
-            const response = await fetch(`/api/logs/${logId}`, {
+            await apiFetch(`/api/logs/${logId}`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
 
-            if (response.ok) {
-                alert('记录已更新！');
-                window.location.href = '/logs';
-            } else {
-                alert('更新失败，请重试');
-            }
+            alert('记录已更新！');
+            window.location.href = '/logs';
         } catch (error) {
             console.error('Error:', error);
-            alert('更新失败，请重试');
+            if (error.message.includes('登录状态已失效')) {
+                redirectToLogin(error.message);
+                return;
+            }
+            alert('更新失败：' + error.message);
         }
     });
 </script>

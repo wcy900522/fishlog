@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, VARCHAR, DECIMAL, DateTime, Text, ForeignKey, func, JSON
+from sqlalchemy import Column, Integer, String, VARCHAR, DECIMAL, DateTime, Text, ForeignKey, func, JSON, Boolean
 from sqlalchemy.orm import relationship
 from app.core.config import Base
 from datetime import datetime
@@ -11,6 +11,11 @@ class User(Base):
     avatar = Column(VARCHAR(255), nullable=True)
     phone = Column(VARCHAR(20), nullable=True, unique=True)
     password_hash = Column(VARCHAR(255), nullable=False)
+    wechat_openid = Column(VARCHAR(128), nullable=True, unique=True)
+    wechat_unionid = Column(VARCHAR(128), nullable=True, unique=True)
+    is_admin = Column(Boolean, default=False, nullable=False)
+    is_disabled = Column(Boolean, default=False, nullable=False)
+    can_post = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     catch_logs = relationship("CatchLog", back_populates="user", cascade="all, delete-orphan")
@@ -62,6 +67,7 @@ class Post(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     title = Column(VARCHAR(255), nullable=False)
+    tag = Column(VARCHAR(20), nullable=False, default="野钓")
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

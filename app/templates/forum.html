@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}论坛 - AnglrLog{% endblock %}
+{% block title %}讨论专区 - 渔迹录{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -42,15 +42,49 @@
     .posts-container {
         gap: 20px;
     }
+
+    .tag-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 24px;
+    }
+
+    .tag-filter .btn {
+        border-radius: 20px;
+        padding: 6px 16px;
+    }
+
+    .post-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 14px;
+        background: #e8f4f8;
+        color: var(--primary-blue);
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="mb-4">
     <h1 class="page-title">
-        <i class="fas fa-comments"></i> 论坛讨论
+        <i class="fas fa-comments"></i> 讨论专区
     </h1>
     <p class="page-subtitle">分享钓鱼经验，交流技术技巧</p>
+</div>
+
+<div class="tag-filter" id="tagFilter">
+    <button type="button" class="btn btn-primary active" data-tag="" onclick="selectTag('')">全部</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="海钓" onclick="selectTag('海钓')">海钓</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="路亚" onclick="selectTag('路亚')">路亚</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="台钓" onclick="selectTag('台钓')">台钓</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="飞钓" onclick="selectTag('飞钓')">飞钓</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="黑坑" onclick="selectTag('黑坑')">黑坑</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="野钓" onclick="selectTag('野钓')">野钓</button>
 </div>
 
 <div class="search-box">
@@ -74,11 +108,24 @@
 
 <script>
     let currentPage = 0;
+    let currentTag = '';
     const postsPerPage = 10;
 
     function formatDate(dateString) {
         const date = new Date(dateString);
         return date.toLocaleString('zh-CN');
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, function(char) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char];
+        });
     }
 
     function truncateContent(content, length = 100) {
@@ -90,9 +137,16 @@
 
     async function loadPosts(page = 0, keyword = null) {
         try {
+            const params = new URLSearchParams({
+                skip: page * postsPerPage,
+                limit: postsPerPage
+            });
+            if (currentTag) params.append('tag', currentTag);
+            if (keyword) params.append('keyword', keyword);
+
             const url = keyword
-                ? `/api/forum/posts/search?keyword=${encodeURIComponent(keyword)}&skip=${page * postsPerPage}&limit=${postsPerPage}`
-                : `/api/forum/posts?skip=${page * postsPerPage}&limit=${postsPerPage}`;
+                ? `/api/forum/posts/search?${params.toString()}`
+                : `/api/forum/posts?${params.toString()}`;
 
             const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to fetch posts');
@@ -110,13 +164,14 @@
                 html += `
                     <div class="card post-card" onclick="window.location.href='/forum/posts/${post.id}'">
                         <div class="card-body">
-                            <h5 class="card-title post-title">${post.title}</h5>
+                            <span class="post-tag">${escapeHTML(post.tag || '野钓')}</span>
+                            <h5 class="card-title post-title">${escapeHTML(post.title)}</h5>
                             <p class="post-meta">
-                                <i class="fas fa-user"></i> ${post.user_nickname}
+                                <i class="fas fa-user"></i> ${escapeHTML(post.user_nickname || '未知用户')}
                                 <i class="fas fa-clock ms-3"></i> ${formatDate(post.created_at)}
                                 <i class="fas fa-comments ms-3"></i> ${post.comment_count} 条评论
                             </p>
-                            <p class="post-content-preview">${truncateContent(post.content)}</p>
+                            <p class="post-content-preview">${escapeHTML(truncateContent(post.content))}</p>
                         </div>
                     </div>
                 `;
@@ -133,6 +188,18 @@
         const keyword = document.getElementById('searchInput').value.trim();
         currentPage = 0;
         loadPosts(currentPage, keyword);
+    }
+
+    function selectTag(tag) {
+        currentTag = tag;
+        currentPage = 0;
+        document.querySelectorAll('#tagFilter button').forEach(button => {
+            const isActive = button.dataset.tag === tag;
+            button.classList.toggle('active', isActive);
+            button.classList.toggle('btn-primary', isActive);
+            button.classList.toggle('btn-outline-primary', !isActive);
+        });
+        loadPosts(0, document.getElementById('searchInput').value.trim());
     }
 
     document.getElementById('searchInput').addEventListener('keypress', function(e) {

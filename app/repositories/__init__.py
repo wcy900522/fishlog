@@ -1,9 +1,10 @@
 from __future__ import annotations
 from sqlalchemy import select, desc
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import User, FishingSpot, CatchLog, Post, Comment
 from app.core.security import SecurityService
-from app.schemas import UserRegister, CatchLogCreate, CatchLogUpdate, PostCreate, PostUpdate, CommentCreate, FishingSpotCreate
+from app.schemas import UserRegister, CatchLogCreate, CatchLogUpdate, PostCreate, PostUpdate, CommentCreate, CommentUpdate, FishingSpotCreate
 from typing import Optional, List
 
 class UserRepository:
@@ -25,6 +26,11 @@ class UserRepository:
         return result.scalar_one_or_none()
 
     @staticmethod
+    async def get_user_by_wechat_openid(session: AsyncSession, openid: str) -> Optional[User]:
+        result = await session.execute(select(User).where(User.wechat_openid == openid))
+        return result.scalar_one_or_none()
+
+    @staticmethod
     async def get_user_by_id(session: AsyncSession, user_id: int) -> Optional[User]:
         result = await session.execute(select(User).where(User.id == user_id))
         return result.scalar_one_or_none()
@@ -33,6 +39,15 @@ class FishingSpotRepository:
     @staticmethod
     async def get_all_spots(session: AsyncSession) -> List[FishingSpot]:
         result = await session.execute(select(FishingSpot))
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_spots_by_user(session: AsyncSession, user_id: int) -> List[FishingSpot]:
+        result = await session.execute(
+            select(FishingSpot)
+            .where(FishingSpot.user_id == user_id)
+            .order_by(FishingSpot.created_at.desc())
+        )
         return result.scalars().all()
 
     @staticmethod
@@ -65,9 +80,9 @@ class FishingSpotRepository:
             spot.province = spot_data.province
         if spot_data.city:
             spot.city = spot_data.city
-        if spot_data.latitude:
+        if spot_data.latitude is not None:
             spot.latitude = spot_data.latitude
-        if spot_data.longitude:
+        if spot_data.longitude is not None:
             spot.longitude = spot_data.longitude
         if spot_data.water_type:
             spot.water_type = spot_data.water_type
@@ -79,7 +94,7 @@ class FishingSpotRepository:
 
     @staticmethod
     async def delete_spot(session: AsyncSession, spot: FishingSpot) -> None:
-        session.delete(spot)
+        await session.delete(spot)
         await session.commit()
 
 class CatchLogRepository:
@@ -112,10 +127,20 @@ class CatchLogRepository:
         return result.scalars().all()
 
     @staticmethod
-    async def get_log_by_id(session: AsyncSession, log_id: int, user_id: int) -> Optional[CatchLog]:
+    async def get_all_logs(session: AsyncSession) -> List[CatchLog]:
         result = await session.execute(
-            select(CatchLog).where((CatchLog.id == log_id) & (CatchLog.user_id == user_id))
+            select(CatchLog)
+            .options(selectinload(CatchLog.user))
+            .order_by(CatchLog.fishing_at.desc())
         )
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_log_by_id(session: AsyncSession, log_id: int, user_id: Optional[int] = None) -> Optional[CatchLog]:
+        query = select(CatchLog).where(CatchLog.id == log_id)
+        if user_id is not None:
+            query = query.where(CatchLog.user_id == user_id)
+        result = await session.execute(query)
         return result.scalar_one_or_none()
 
     @staticmethod
@@ -145,7 +170,7 @@ class CatchLogRepository:
 
     @staticmethod
     async def delete_log(session: AsyncSession, log: CatchLog) -> None:
-        session.delete(log)
+        await session.delete(log)
         await session.commit()
 
 class PostRepository:
@@ -154,6 +179,7 @@ class PostRepository:
         post = Post(
             user_id=user_id,
             title=post_data.title,
+            tag=post_data.tag,
             content=post_data.content
         )
         session.add(post)
@@ -186,6 +212,8 @@ class PostRepository:
     async def update_post(session: AsyncSession, post: Post, post_data: PostUpdate) -> Post:
         if post_data.title:
             post.title = post_data.title
+        if post_data.tag:
+            post.tag = post_data.tag
         if post_data.content:
             post.content = post_data.content
         await session.commit()
@@ -194,7 +222,7 @@ class PostRepository:
 
     @staticmethod
     async def delete_post(session: AsyncSession, post: Post) -> None:
-        session.delete(post)
+        await session.delete(post)
         await session.commit()
 
 class CommentRepository:
@@ -223,7 +251,13 @@ class CommentRepository:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def delete_comment(session: AsyncSession, comment: Comment) -> None:
-        session.delete(comment)
+    async def update_comment(session: AsyncSession, comment: Comment, comment_data: CommentUpdate) -> Comment:
+        comment.content = comment_data.content
         await session.commit()
+        await session.refresh(comment)
+        return comment
 
+    @staticmethod
+    async def delete_comment(session: AsyncSession, comment: Comment) -> None:
+        await session.delete(comment)
+        await session.commit()

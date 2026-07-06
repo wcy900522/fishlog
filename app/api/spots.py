@@ -1,35 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
 from app.core.config import get_db
-from app.core.security import SecurityService
+from app.core.deps import can_manage_user_content, get_current_user, is_admin_user
 from app.schemas import FishingSpotResponse, FishingSpotCreate, CatchLogResponse
-from app.repositories import FishingSpotRepository, CatchLogRepository, UserRepository
+from app.repositories import FishingSpotRepository, CatchLogRepository
 from app.services import WeatherService
 from app.models import CatchLog, FishingSpot
 
 router = APIRouter(prefix="/api/spots", tags=["spots"])
-
-async def get_current_user(authorization: Optional[str] = Header(None), session: AsyncSession = Depends(get_db)):
-    if not authorization:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-
-    parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token format")
-
-    token = parts[1]
-    payload = SecurityService.decode_token(token)
-    if not payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-    phone = payload.get("sub")
-    user = await UserRepository.get_user_by_phone(session, phone)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    return user
+PUBLISHER_DISPLAY_NAME = "管理员发布"
 
 @router.get("", response_model=List[FishingSpotResponse])
 async def get_all_spots(session: AsyncSession = Depends(get_db)):
@@ -54,9 +35,39 @@ async def get_all_spots(session: AsyncSession = Depends(get_db)):
             "water_type": spot.water_type,
             "description": spot.description,
             "created_at": spot.created_at,
-            "user_nickname": spot.user.nickname if spot.user else None
+            "user_nickname": PUBLISHER_DISPLAY_NAME
         })
     return spots_data
+
+@router.get("/mine", response_model=List[FishingSpotResponse])
+async def get_my_spots(user = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    from sqlalchemy.orm import selectinload
+    query = (
+        select(FishingSpot)
+        .options(selectinload(FishingSpot.user))
+        .order_by(FishingSpot.created_at.desc())
+    )
+    if not is_admin_user(user):
+        query = query.where(FishingSpot.user_id == user.id)
+    result = await session.execute(query)
+    spots = result.scalars().all()
+
+    return [
+        {
+            "id": spot.id,
+            "user_id": spot.user_id,
+            "name": spot.name,
+            "province": spot.province,
+            "city": spot.city,
+            "latitude": float(spot.latitude),
+            "longitude": float(spot.longitude),
+            "water_type": spot.water_type,
+            "description": spot.description,
+            "created_at": spot.created_at,
+            "user_nickname": spot.user.nickname if spot.user else "未知用户",
+        }
+        for spot in spots
+    ]
 
 @router.get("/{spot_id}", response_model=FishingSpotResponse)
 async def get_spot(spot_id: int, session: AsyncSession = Depends(get_db)):
@@ -81,7 +92,7 @@ async def get_spot(spot_id: int, session: AsyncSession = Depends(get_db)):
         "water_type": spot.water_type,
         "description": spot.description,
         "created_at": spot.created_at,
-        "user_nickname": spot.user.nickname if spot.user else None
+        "user_nickname": PUBLISHER_DISPLAY_NAME
     }
 
 @router.post("", response_model=FishingSpotResponse)
@@ -99,7 +110,7 @@ async def create_spot(spot_data: FishingSpotCreate, user = Depends(get_current_u
         "water_type": spot.water_type,
         "description": spot.description,
         "created_at": spot.created_at,
-        "user_nickname": user.nickname
+        "user_nickname": PUBLISHER_DISPLAY_NAME
     }
 
 @router.put("/{spot_id}", response_model=FishingSpotResponse)
@@ -108,7 +119,7 @@ async def update_spot(spot_id: int, spot_data: FishingSpotCreate, user = Depends
     spot = await FishingSpotRepository.get_spot_by_id(session, spot_id)
     if not spot:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Spot not found")
-    if spot.user_id != user.id:
+    if not can_manage_user_content(user, spot.user_id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this spot")
 
     updated_spot = await FishingSpotRepository.update_spot(session, spot, spot_data)
@@ -123,7 +134,7 @@ async def update_spot(spot_id: int, spot_data: FishingSpotCreate, user = Depends
         "water_type": updated_spot.water_type,
         "description": updated_spot.description,
         "created_at": updated_spot.created_at,
-        "user_nickname": user.nickname
+        "user_nickname": PUBLISHER_DISPLAY_NAME
     }
 
 @router.delete("/{spot_id}")
@@ -132,7 +143,7 @@ async def delete_spot(spot_id: int, user = Depends(get_current_user), session: A
     spot = await FishingSpotRepository.get_spot_by_id(session, spot_id)
     if not spot:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Spot not found")
-    if spot.user_id != user.id:
+    if not can_manage_user_content(user, spot.user_id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this spot")
 
     await FishingSpotRepository.delete_spot(session, spot)

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}新建记录 - FishLog{% endblock %}
+{% block title %}新建记录 - 渔迹录{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header">
                 <h4 class="mb-0"><i class="fas fa-pen"></i> 记录一次出钓</h4>
             </div>
             <div class="card-body">
@@ -83,25 +83,7 @@
             return;
         }
 
-        // Load spots
-        fetch('/api/spots')
-            .then(response => response.json())
-            .then(spots => {
-                const spotSelect = document.getElementById('spot');
-                spots.forEach(spot => {
-                    const option = document.createElement('option');
-                    option.value = spot.id;
-                    option.textContent = `${spot.name} (${spot.city || '未知'})`;
-                    spotSelect.appendChild(option);
-                });
-
-                // Set default spot if from spot detail page
-                const params = new URLSearchParams(window.location.search);
-                const spotId = params.get('spot_id');
-                if (spotId) {
-                    spotSelect.value = spotId;
-                }
-            });
+        loadSpots();
 
         // Set default datetime to now
         const now = new Date();
@@ -135,26 +117,51 @@
             };
 
             try {
-                const response = await fetch('/api/logs', {
+                await apiFetch('/api/logs', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
 
-                if (response.ok) {
-                    alert('记录保存成功！');
-                    window.location.href = '/logs';
-                } else {
-                    alert('保存失败，请重试');
-                }
+                alert('记录保存成功！');
+                window.location.href = '/logs';
             } catch (error) {
                 console.error('Error:', error);
-                alert('保存失败，请重试');
+                if (error.message.includes('登录状态已失效')) {
+                    redirectToLogin(error.message);
+                    return;
+                }
+                alert('保存失败：' + error.message);
             }
         });
     });
+
+    async function loadSpots() {
+        try {
+            const spots = await apiFetch('/api/spots');
+            const spotSelect = document.getElementById('spot');
+            spots.forEach(spot => {
+                const option = document.createElement('option');
+                option.value = spot.id;
+                option.textContent = `${spot.name} (${spot.city || '未知'})`;
+                spotSelect.appendChild(option);
+            });
+
+            const params = new URLSearchParams(window.location.search);
+            const spotId = params.get('spot_id');
+            if (spotId) {
+                spotSelect.value = spotId;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            if (error.message.includes('登录状态已失效')) {
+                redirectToLogin(error.message);
+                return;
+            }
+            alert('加载钓点失败：' + error.message);
+        }
+    }
 </script>
 {% endblock %}

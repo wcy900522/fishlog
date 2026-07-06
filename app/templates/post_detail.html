@@ -1,33 +1,45 @@
 {% extends "base.html" %}
 
-{% block title %}帖子详情 - AnglrLog{% endblock %}
+{% block title %}帖子详情 - 渔迹录{% endblock %}
 
 {% block extra_css %}
 <style>
     .post-header {
-        background: linear-gradient(135deg, #f5f9fc 0%, #e8f4f8 100%);
+        background: linear-gradient(135deg, var(--surface), var(--surface-tint));
         padding: 30px;
-        border-radius: 15px;
+        border-radius: 18px;
         margin-bottom: 30px;
-        border-left: 4px solid var(--primary-blue);
+        border-left: 4px solid var(--brand-teal);
     }
 
     .post-title {
-        color: var(--primary-blue);
+        color: var(--brand-deep);
         font-weight: bold;
         font-size: 2rem;
         margin-bottom: 10px;
     }
 
     .post-meta {
-        color: #666;
+        color: var(--text-muted);
         font-size: 0.95rem;
+    }
+
+    .post-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 14px;
+        background: var(--surface-tint);
+        color: var(--brand-teal);
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 12px;
     }
 
     .post-content {
         font-size: 1.1rem;
         line-height: 1.8;
-        color: #333;
+        color: var(--text-dark);
         margin: 30px 0;
         white-space: pre-wrap;
         word-wrap: break-word;
@@ -36,31 +48,31 @@
     .comments-section {
         margin-top: 40px;
         padding-top: 30px;
-        border-top: 2px solid #e0e0e0;
+        border-top: 2px solid var(--border-soft);
     }
 
     .comment {
-        background: #f9f9f9;
+        background: var(--surface-soft);
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 15px;
-        border-left: 3px solid var(--accent-green);
+        border-left: 3px solid var(--brand-mint);
     }
 
     .comment-author {
         font-weight: 600;
-        color: var(--primary-blue);
+        color: var(--brand-deep);
         margin-bottom: 5px;
     }
 
     .comment-meta {
         font-size: 0.85rem;
-        color: #999;
+        color: var(--text-muted);
         margin-bottom: 10px;
     }
 
     .comment-content {
-        color: #555;
+        color: var(--text-dark);
         line-height: 1.6;
         white-space: pre-wrap;
         word-wrap: break-word;
@@ -72,7 +84,7 @@
     }
 
     .new-comment-form {
-        background: #f5f9fc;
+        background: var(--surface-soft);
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 30px;
@@ -89,6 +101,12 @@
 {% endblock %}
 
 {% block content %}
+<div class="mb-4">
+    <a href="/forum" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left"></i> 返回讨论列表
+    </a>
+</div>
+
 <div id="postContent">
     <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">加载中...</span>
@@ -98,11 +116,25 @@
 <script>
     const postId = {{ post_id }};
     let currentUserId = null;
+    let currentUserIsAdmin = false;
     let postUserId = null;
+    let currentPost = null;
 
     function formatDate(dateString) {
         const date = new Date(dateString);
         return date.toLocaleString('zh-CN');
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, function(char) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char];
+        });
     }
 
     async function loadPost() {
@@ -111,18 +143,21 @@
             if (!response.ok) throw new Error('Failed to load post');
 
             const post = await response.json();
+            currentPost = post;
             postUserId = post.user_id;
 
             let html = `
                 <div class="post-header">
-                    <h1 class="post-title">${post.title}</h1>
+                    <span class="post-tag">${escapeHTML(post.tag || '野钓')}</span>
+                    <h1 class="post-title">${escapeHTML(post.title)}</h1>
                     <div class="post-meta">
-                        <i class="fas fa-user"></i> ${post.user_nickname}
+                        <i class="fas fa-user"></i> ${escapeHTML(post.user_nickname || '未知用户')}
                         <i class="fas fa-clock ms-3"></i> ${formatDate(post.created_at)}
             `;
 
             const token = localStorage.getItem('token');
-            if (token && currentUserId === postUserId) {
+            const isLoggedIn = Boolean(token && currentUserId);
+            if (isLoggedIn && (currentUserId === postUserId || currentUserIsAdmin)) {
                 html += `
                     <div class="post-actions mt-3">
                         <button class="btn btn-sm btn-warning" onclick="editPost()">
@@ -139,14 +174,14 @@
                     </div>
                 </div>
 
-                <div class="post-content">${post.content}</div>
+                <div class="post-content">${escapeHTML(post.content)}</div>
 
                 <div class="comments-section">
                     <h3><i class="fas fa-comments"></i> 评论 (${post.comments.length})</h3>
                     <div class="divider"></div>
             `;
 
-            if (token) {
+            if (isLoggedIn) {
                 html += `
                     <div class="new-comment-form">
                         <div class="mb-3">
@@ -158,21 +193,35 @@
                         </button>
                     </div>
                 `;
+            } else {
+                html += `
+                    <div class="alert alert-info">
+                        <i class="fas fa-right-to-bracket"></i>
+                        <a href="/login">登录后评论</a>
+                    </div>
+                `;
             }
 
             if (post.comments.length === 0) {
-                html += '<p class="text-muted">还没有评论，成为第一个评论者吧！</p>';
+                if (isLoggedIn) {
+                    html += '<p class="text-muted">还没有评论，成为第一个评论者吧！</p>';
+                } else {
+                    html += '<p class="text-muted">还没有评论，<a href="/login">登录后评论</a>。</p>';
+                }
             } else {
                 post.comments.forEach(comment => {
                     html += `
                         <div class="comment">
-                            <div class="comment-author">${comment.user_nickname}</div>
+                            <div class="comment-author">${escapeHTML(comment.user_nickname || '未知用户')}</div>
                             <div class="comment-meta">${formatDate(comment.created_at)}</div>
-                            <div class="comment-content">${comment.content}</div>
+                            <div class="comment-content">${escapeHTML(comment.content)}</div>
                     `;
 
-                    if (token && currentUserId === comment.user_id) {
+                    if (isLoggedIn && (currentUserId === comment.user_id || currentUserIsAdmin)) {
                         html += `
+                            <button class="btn btn-sm btn-warning comment-delete-btn" onclick="editComment(${comment.id})">
+                                <i class="fas fa-edit"></i> 编辑
+                            </button>
                             <button class="btn btn-sm btn-danger comment-delete-btn" onclick="deleteComment(${comment.id})">
                                 <i class="fas fa-trash"></i> 删除
                             </button>
@@ -245,6 +294,39 @@
         }
     }
 
+    async function editComment(commentId) {
+        const comment = currentPost?.comments?.find(item => item.id === commentId);
+        if (!comment) return;
+
+        const content = prompt('修改评论内容', comment.content);
+        if (content === null) return;
+
+        const trimmedContent = content.trim();
+        if (!trimmedContent) {
+            alert('评论内容不能为空');
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/forum/comments/${commentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ content: trimmedContent })
+            });
+
+            if (!response.ok) throw new Error('Failed to update comment');
+
+            loadPost();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('修改失败');
+        }
+    }
+
     async function deletePost() {
         if (!confirm('确定要删除这个帖子吗？')) return;
 
@@ -266,7 +348,50 @@
     }
 
     function editPost() {
-        alert('编辑功能开发中');
+        if (!currentPost) return;
+
+        const title = prompt('修改帖子标题', currentPost.title);
+        if (title === null) return;
+        const content = prompt('修改帖子内容', currentPost.content);
+        if (content === null) return;
+        const tag = prompt('修改帖子标签（海钓、路亚、台钓、飞钓、黑坑、野钓）', currentPost.tag || '野钓');
+        if (tag === null) return;
+
+        updatePost({
+            title: title.trim(),
+            content: content.trim(),
+            tag: tag.trim()
+        });
+    }
+
+    async function updatePost(postData) {
+        if (!postData.title || !postData.content) {
+            alert('标题和内容不能为空');
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch(`/api/forum/posts/${postId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(postData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to update post');
+            }
+
+            alert('帖子已更新');
+            loadPost();
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`更新失败：${error.message}`);
+        }
     }
 
     document.addEventListener('DOMContentLoaded', async function() {
@@ -279,6 +404,9 @@
                 if (response.ok) {
                     const me = await response.json();
                     currentUserId = me.id;
+                    currentUserIsAdmin = Boolean(me.is_admin);
+                } else {
+                    localStorage.removeItem('token');
                 }
             } catch (e) {
                 console.error('Failed to fetch current user');
