@@ -84,6 +84,9 @@
     }
 
     function formatRegisterError(payload) {
+        if (payload && typeof payload.message === 'string') {
+            return payload.message;
+        }
         if (payload && Array.isArray(payload.detail)) {
             const passwordError = payload.detail.find(item => Array.isArray(item.loc) && item.loc.includes('password'));
             if (passwordError && passwordError.msg) {

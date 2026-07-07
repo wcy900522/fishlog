@@ -8,6 +8,8 @@ from app.core.security import SecurityService
 from app.models import User
 from app.repositories import UserRepository
 
+SUPER_ADMIN_PHONE = "18610137321"
+
 
 async def get_current_user(
     authorization: Optional[str] = Header(None),
@@ -48,6 +50,10 @@ async def get_current_user(
 
 def is_admin_user(user: User) -> bool:
     return bool(getattr(user, "is_admin", False))
+
+
+def is_super_admin_user(user: User) -> bool:
+    return getattr(user, "phone", None) == SUPER_ADMIN_PHONE
 
 
 def can_manage_user_content(user: User, owner_id: int | None) -> bool:

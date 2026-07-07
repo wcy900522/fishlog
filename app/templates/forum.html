@@ -66,6 +66,19 @@
         font-weight: 600;
         margin-bottom: 8px;
     }
+
+    .level-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(13, 164, 166, 0.12);
+        color: var(--brand-teal);
+        font-size: 0.78rem;
+        font-weight: 700;
+        margin-left: 8px;
+    }
 </style>
 {% endblock %}
 
@@ -85,6 +98,9 @@
     <button type="button" class="btn btn-outline-primary" data-tag="飞钓" onclick="selectTag('飞钓')">飞钓</button>
     <button type="button" class="btn btn-outline-primary" data-tag="黑坑" onclick="selectTag('黑坑')">黑坑</button>
     <button type="button" class="btn btn-outline-primary" data-tag="野钓" onclick="selectTag('野钓')">野钓</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="技术分享" onclick="selectTag('技术分享')">技术分享</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="装备评测" onclick="selectTag('装备评测')">装备评测</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="钓点攻略" onclick="selectTag('钓点攻略')">钓点攻略</button>
 </div>
 
 <div class="search-box">
@@ -168,8 +184,11 @@
                             <h5 class="card-title post-title">${escapeHTML(post.title)}</h5>
                             <p class="post-meta">
                                 <i class="fas fa-user"></i> ${escapeHTML(post.user_nickname || '未知用户')}
+                                <span class="level-chip">Lv${post.user_level || 1} ${escapeHTML(post.user_title || '初学钓手')}</span>
                                 <i class="fas fa-clock ms-3"></i> ${formatDate(post.created_at)}
                                 <i class="fas fa-comments ms-3"></i> ${post.comment_count} 条评论
+                                <i class="fas fa-heart ms-3"></i> ${post.like_count || 0}
+                                ${post.is_featured ? '<i class="fas fa-star ms-3 text-warning"></i> 精华' : ''}
                             </p>
                             <p class="post-content-preview">${escapeHTML(truncateContent(post.content))}</p>
                         </div>

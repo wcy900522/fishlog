@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}我的等级 - 渔迹录{% endblock %}
+
+{% block extra_css %}
+<style>
+    .level-hero {
+        background:
+            radial-gradient(circle at 18% 20%, rgba(103, 232, 249, 0.28), transparent 32%),
+            linear-gradient(135deg, rgba(6, 17, 22, 0.96), rgba(9, 72, 78, 0.9));
+        color: #fff;
+        border-radius: 30px;
+        padding: clamp(28px, 5vw, 54px);
+        box-shadow: var(--shadow-strong);
+        margin-bottom: 28px;
+    }
+
+    .level-rank {
+        font-size: clamp(2.4rem, 7vw, 5rem);
+        font-weight: 900;
+        line-height: 1;
+        color: var(--brand-electric);
+    }
+
+    .level-title {
+        font-size: clamp(1.4rem, 3vw, 2.2rem);
+        font-weight: 800;
+    }
+
+    .level-progress {
+        height: 18px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+        overflow: hidden;
+    }
+
+    .level-progress span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, var(--brand-electric), var(--brand-mint));
+        border-radius: inherit;
+    }
+
+    .badge-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid var(--border-soft);
+        margin: 5px;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="page-title"><i class="fas fa-ranking-star"></i> 我的等级</h1>
+    <p class="page-subtitle">等级来自真实出钓记录、技术分享和社区贡献。</p>
+</div>
+
+<section class="level-hero" id="levelHero">
+    <p class="mb-2">加载等级信息...</p>
+</section>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="shell-card p-4">
+            <h4 class="mb-3"><i class="fas fa-award"></i> 已获勋章</h4>
+            <div id="badgeList" class="text-muted">加载中...</div>
+        </div>
+        <div class="shell-card p-4 mt-4">
+            <h4 class="mb-3"><i class="fas fa-key"></i> 当前权益</h4>
+            <div id="benefitList" class="text-muted">加载中...</div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="shell-card p-4">
+            <h4 class="mb-3"><i class="fas fa-clock-rotate-left"></i> 经验记录</h4>
+            <div id="xpLogs" class="text-muted">加载中...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+function formatReason(reason) {
+    return {
+        catch_log: '出钓记录',
+        post: '发布帖子',
+        comment: '有效回复',
+        post_like: '帖子获赞',
+        comment_like: '评论获赞',
+        featured_post: '精华推荐',
+        catch_log_streak: '连续出钓'
+    }[reason] || reason;
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const [level, logs] = await Promise.all([
+            apiFetch('/api/users/me/level'),
+            apiFetch('/api/users/me/xp-logs?limit=30')
+        ]);
+
+        document.getElementById('levelHero').innerHTML = `
+            <div class="row align-items-end g-4">
+                <div class="col-md-4">
+                    <div class="level-rank">Lv${level.level}</div>
+                    <div class="level-title">${escapeHTML(level.title)}</div>
+                </div>
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>${level.xp} XP</strong>
+                        <span>${level.next_level_xp ? `距下一级还需 ${level.xp_to_next} XP` : '已满级'}</span>
+                    </div>
+                    <div class="level-progress"><span style="width:${level.progress_percent}%"></span></div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('badgeList').innerHTML = level.badges.length
+            ? level.badges.map(badge => `<span class="badge-chip">${escapeHTML(badge.icon)} ${escapeHTML(badge.name)}</span>`).join('')
+            : '<p class="mb-0">还没有解锁勋章，先记录一次出钓吧。</p>';
+
+        document.getElementById('benefitList').innerHTML = level.benefits.length
+            ? level.benefits.map(item => `<span class="badge-chip"><i class="fas fa-check"></i> ${escapeHTML(item)}</span>`).join('')
+            : '<p class="mb-0">暂无权益。</p>';
+
+        document.getElementById('xpLogs').innerHTML = logs.length
+            ? logs.map(log => `
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span>${escapeHTML(formatReason(log.reason))}</span>
+                    <strong>+${log.xp_delta} XP</strong>
+                </div>
+            `).join('')
+            : '<p class="mb-0">暂无经验记录。</p>';
+    } catch (error) {
+        if (error.message.includes('登录状态已失效')) {
+            redirectToLogin(error.message);
+            return;
+        }
+        document.getElementById('levelHero').innerHTML = `<p class="mb-0">加载失败：${escapeHTML(error.message)}</p>`;
+    }
+});
+</script>
+{% endblock %}

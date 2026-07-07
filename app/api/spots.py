@@ -1,20 +1,40 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import List, Optional
+from sqlalchemy import inspect as sa_inspect, select
+from sqlalchemy.orm import selectinload
+from typing import List
 from app.core.config import get_db
 from app.core.deps import can_manage_user_content, get_current_user, is_admin_user
-from app.schemas import FishingSpotResponse, FishingSpotCreate, CatchLogResponse
-from app.repositories import FishingSpotRepository, CatchLogRepository
+from app.schemas import FishingSpotResponse, FishingSpotCreate
+from app.repositories import FishingSpotRepository
 from app.services import WeatherService
 from app.models import CatchLog, FishingSpot
 
 router = APIRouter(prefix="/api/spots", tags=["spots"])
 PUBLISHER_DISPLAY_NAME = "管理员发布"
 
+
+def build_spot_response(spot: FishingSpot) -> dict:
+    user = None
+    if "user" not in sa_inspect(spot).unloaded:
+        user = spot.user
+
+    return {
+        "id": spot.id,
+        "user_id": spot.user_id,
+        "name": spot.name,
+        "province": spot.province,
+        "city": spot.city,
+        "latitude": float(spot.latitude),
+        "longitude": float(spot.longitude),
+        "water_type": spot.water_type,
+        "description": spot.description,
+        "created_at": spot.created_at,
+        "user_nickname": user.nickname if user else PUBLISHER_DISPLAY_NAME,
+    }
+
 @router.get("", response_model=List[FishingSpotResponse])
 async def get_all_spots(session: AsyncSession = Depends(get_db)):
-    from sqlalchemy.orm import selectinload
     result = await session.execute(
         select(FishingSpot)
         .options(selectinload(FishingSpot.user))
@@ -22,26 +42,10 @@ async def get_all_spots(session: AsyncSession = Depends(get_db)):
     )
     spots = result.scalars().all()
 
-    spots_data = []
-    for spot in spots:
-        spots_data.append({
-            "id": spot.id,
-            "user_id": spot.user_id,
-            "name": spot.name,
-            "province": spot.province,
-            "city": spot.city,
-            "latitude": float(spot.latitude),
-            "longitude": float(spot.longitude),
-            "water_type": spot.water_type,
-            "description": spot.description,
-            "created_at": spot.created_at,
-            "user_nickname": PUBLISHER_DISPLAY_NAME
-        })
-    return spots_data
+    return [build_spot_response(spot) for spot in spots]
 
 @router.get("/mine", response_model=List[FishingSpotResponse])
 async def get_my_spots(user = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
-    from sqlalchemy.orm import selectinload
     query = (
         select(FishingSpot)
         .options(selectinload(FishingSpot.user))
@@ -52,26 +56,10 @@ async def get_my_spots(user = Depends(get_current_user), session: AsyncSession =
     result = await session.execute(query)
     spots = result.scalars().all()
 
-    return [
-        {
-            "id": spot.id,
-            "user_id": spot.user_id,
-            "name": spot.name,
-            "province": spot.province,
-            "city": spot.city,
-            "latitude": float(spot.latitude),
-            "longitude": float(spot.longitude),
-            "water_type": spot.water_type,
-            "description": spot.description,
-            "created_at": spot.created_at,
-            "user_nickname": spot.user.nickname if spot.user else "未知用户",
-        }
-        for spot in spots
-    ]
+    return [build_spot_response(spot) for spot in spots]
 
 @router.get("/{spot_id}", response_model=FishingSpotResponse)
 async def get_spot(spot_id: int, session: AsyncSession = Depends(get_db)):
-    from sqlalchemy.orm import selectinload
     result = await session.execute(
         select(FishingSpot)
         .where(FishingSpot.id == spot_id)
@@ -81,61 +69,31 @@ async def get_spot(spot_id: int, session: AsyncSession = Depends(get_db)):
     if not spot:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Spot not found")
 
-    return {
-        "id": spot.id,
-        "user_id": spot.user_id,
-        "name": spot.name,
-        "province": spot.province,
-        "city": spot.city,
-        "latitude": float(spot.latitude),
-        "longitude": float(spot.longitude),
-        "water_type": spot.water_type,
-        "description": spot.description,
-        "created_at": spot.created_at,
-        "user_nickname": PUBLISHER_DISPLAY_NAME
-    }
+    return build_spot_response(spot)
 
 @router.post("", response_model=FishingSpotResponse)
 async def create_spot(spot_data: FishingSpotCreate, user = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
     """创建用户自定义钓点"""
     spot = await FishingSpotRepository.create_spot(session, user.id, spot_data)
-    return {
-        "id": spot.id,
-        "user_id": spot.user_id,
-        "name": spot.name,
-        "province": spot.province,
-        "city": spot.city,
-        "latitude": float(spot.latitude),
-        "longitude": float(spot.longitude),
-        "water_type": spot.water_type,
-        "description": spot.description,
-        "created_at": spot.created_at,
-        "user_nickname": PUBLISHER_DISPLAY_NAME
-    }
+    spot.user = user
+    return build_spot_response(spot)
 
 @router.put("/{spot_id}", response_model=FishingSpotResponse)
 async def update_spot(spot_id: int, spot_data: FishingSpotCreate, user = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
     """更新用户自定义钓点"""
-    spot = await FishingSpotRepository.get_spot_by_id(session, spot_id)
+    result = await session.execute(
+        select(FishingSpot)
+        .where(FishingSpot.id == spot_id)
+        .options(selectinload(FishingSpot.user))
+    )
+    spot = result.scalar_one_or_none()
     if not spot:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Spot not found")
     if not can_manage_user_content(user, spot.user_id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this spot")
 
     updated_spot = await FishingSpotRepository.update_spot(session, spot, spot_data)
-    return {
-        "id": updated_spot.id,
-        "user_id": updated_spot.user_id,
-        "name": updated_spot.name,
-        "province": updated_spot.province,
-        "city": updated_spot.city,
-        "latitude": float(updated_spot.latitude),
-        "longitude": float(updated_spot.longitude),
-        "water_type": updated_spot.water_type,
-        "description": updated_spot.description,
-        "created_at": updated_spot.created_at,
-        "user_nickname": PUBLISHER_DISPLAY_NAME
-    }
+    return build_spot_response(updated_spot)
 
 @router.delete("/{spot_id}")
 async def delete_spot(spot_id: int, user = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
@@ -166,7 +124,6 @@ async def get_spot_logs(spot_id: int, session: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Spot not found")
 
     # 获取该钓点的所有记录，按时间倒序排列
-    from sqlalchemy.orm import selectinload
     result = await session.execute(
         select(CatchLog)
         .where(CatchLog.spot_id == spot_id)

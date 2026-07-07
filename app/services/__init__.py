@@ -1,36 +1,26 @@
-import httpx
-from typing import Optional, Dict, Any
-from app.core.config import settings
+from __future__ import annotations
 
-class WeatherService:
-    @staticmethod
-    async def get_current_weather(latitude: float, longitude: float) -> Dict[str, Any]:
-        """获取当前天气数据"""
-        url = f"{settings.OPEN_METEO_API_URL}/forecast"
-        params = {
-            "latitude": latitude,
-            "longitude": longitude,
-            "current": "temperature_2m,wind_speed_10m,pressure_msl",
-            "timezone": "Asia/Shanghai"
-        }
+from typing import Any
 
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(url, params=params, timeout=10.0)
-                response.raise_for_status()
-                data = response.json()
 
-                current = data.get("current", {})
-                return {
-                    "temperature": current.get("temperature_2m"),
-                    "wind_speed": current.get("wind_speed_10m"),
-                    "pressure": current.get("pressure_msl"),
-                    "raw_json": data
-                }
-        except Exception as e:
-            return {
-                "temperature": None,
-                "wind_speed": None,
-                "pressure": None,
-                "raw_json": {"error": str(e)}
-            }
+def __getattr__(name: str) -> Any:
+    if name == "WeatherService":
+        from app.services.weather_service import WeatherService
+
+        return WeatherService
+    if name == "LevelService":
+        from app.services.level_service import LevelService
+
+        return LevelService
+    if name == "ExperienceService":
+        from app.services.experience_service import ExperienceService
+
+        return ExperienceService
+    if name == "BadgeService":
+        from app.services.badge_service import BadgeService
+
+        return BadgeService
+    raise AttributeError(f"module 'app.services' has no attribute {name!r}")
+
+
+__all__ = ["BadgeService", "ExperienceService", "LevelService", "WeatherService"]

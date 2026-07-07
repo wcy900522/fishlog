@@ -144,6 +144,7 @@
 const token = localStorage.getItem('token');
 let currentSpotId = null;
 let provinces = [];
+let isSavingSpot = false;
 
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -178,6 +179,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
+    const spotModal = document.getElementById('spotModal');
+    if (spotModal && spotModal.parentElement !== document.body) {
+        document.body.appendChild(spotModal);
+    }
+
     // 加载省份数据
     await loadProvinces();
 
@@ -195,10 +201,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 async function loadProvinces() {
     try {
         const data = await apiFetch('/api/provinces');
-        provinces = Array.isArray(data.provinces) ? data.provinces : [];
+        provinces = Array.isArray(data?.provinces) ? data.provinces : (Array.isArray(data) ? data : []);
 
         const select = document.getElementById('provinceSelect');
+        select.innerHTML = '<option value="">-- 选择省份 --</option>';
         provinces.forEach(province => {
+            if (!province || !province.name) return;
             const option = document.createElement('option');
             option.value = province.name;
             option.textContent = province.name;
@@ -211,17 +219,31 @@ async function loadProvinces() {
 }
 
 // 更新城市列表
-function updateCities() {
+function appendMissingOption(select, value) {
+    if (!value || Array.from(select.options).some(option => option.value === value)) {
+        return;
+    }
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+}
+
+function updateCities(selectedCity = '') {
     const provinceSelect = document.getElementById('provinceSelect');
     const citySelect = document.getElementById('citySelect');
     const selectedProvince = provinceSelect.value;
 
     citySelect.innerHTML = '<option value="">-- 选择城市 --</option>';
 
-    if (!selectedProvince) return;
+    if (!selectedProvince) {
+        appendMissingOption(citySelect, selectedCity);
+        citySelect.value = selectedCity;
+        return;
+    }
 
     const province = provinces.find(p => p.name === selectedProvince);
-    if (province) {
+    if (province && Array.isArray(province.cities)) {
         province.cities.forEach(city => {
             const option = document.createElement('option');
             option.value = city;
@@ -229,6 +251,8 @@ function updateCities() {
             citySelect.appendChild(option);
         });
     }
+    appendMissingOption(citySelect, selectedCity);
+    citySelect.value = selectedCity;
 }
 
 // 重置表单
@@ -283,13 +307,17 @@ async function fillCurrentLocation() {
 
 // 保存钓点
 async function saveSpot() {
-    const name = document.getElementById('spotName').value;
-    const province = document.getElementById('provinceSelect').value;
-    const city = document.getElementById('citySelect').value;
+    if (isSavingSpot) return;
+
+    const saveBtn = document.getElementById('saveSpotBtn');
+    const originalText = saveBtn.innerHTML;
+    const name = document.getElementById('spotName').value.trim();
+    const province = document.getElementById('provinceSelect').value.trim();
+    const city = document.getElementById('citySelect').value.trim();
     const waterType = document.getElementById('waterType').value;
     const latitude = parseFloat(document.getElementById('latitude').value);
     const longitude = parseFloat(document.getElementById('longitude').value);
-    const description = document.getElementById('spotDesc').value;
+    const description = document.getElementById('spotDesc').value.trim();
 
     if (!name || !province || !city || !waterType || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         alert('请填写所有必填项');
@@ -307,6 +335,10 @@ async function saveSpot() {
     };
 
     try {
+        isSavingSpot = true;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+
         let url = '/api/spots';
         let method = 'POST';
 
@@ -324,7 +356,7 @@ async function saveSpot() {
         });
 
         alert('保存成功！');
-        bootstrap.Modal.getInstance(document.getElementById('spotModal')).hide();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('spotModal')).hide();
         await loadMySpots();
     } catch (error) {
         console.error('Error saving spot:', error);
@@ -333,6 +365,10 @@ async function saveSpot() {
             return;
         }
         alert('保存失败：' + error.message);
+    } finally {
+        isSavingSpot = false;
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
     }
 }
 
@@ -431,17 +467,17 @@ async function editSpot(spotId) {
         const spot = await apiFetch(`/api/spots/${spotId}`);
 
         currentSpotId = spotId;
-        document.getElementById('spotName').value = spot.name;
-        document.getElementById('provinceSelect').value = spot.province;
-        updateCities();
-        document.getElementById('citySelect').value = spot.city;
-        document.getElementById('waterType').value = spot.water_type;
-        document.getElementById('latitude').value = spot.latitude;
-        document.getElementById('longitude').value = spot.longitude;
+        appendMissingOption(document.getElementById('provinceSelect'), spot.province);
+        document.getElementById('spotName').value = spot.name || '';
+        document.getElementById('provinceSelect').value = spot.province || '';
+        updateCities(spot.city || '');
+        document.getElementById('waterType').value = spot.water_type || '';
+        document.getElementById('latitude').value = spot.latitude ?? '';
+        document.getElementById('longitude').value = spot.longitude ?? '';
         document.getElementById('spotDesc').value = spot.description || '';
 
         document.getElementById('spotModalTitle').innerHTML = '<i class="fas fa-edit"></i> 编辑钓点';
-        new bootstrap.Modal(document.getElementById('spotModal')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('spotModal')).show();
     } catch (error) {
         console.error('Error loading spot:', error);
         if (error.message.includes('登录状态已失效')) {

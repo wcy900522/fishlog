@@ -5,7 +5,7 @@ from app.core.config import get_db
 from app.core.deps import get_current_user, is_admin_user
 from app.schemas import CatchLogResponse, CatchLogCreate, CatchLogUpdate
 from app.repositories import CatchLogRepository, FishingSpotRepository
-from app.services import WeatherService
+from app.services import BadgeService, ExperienceService, WeatherService
 
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 
@@ -58,6 +58,8 @@ async def create_log(
 
     weather = await WeatherService.get_current_weather(float(spot.latitude), float(spot.longitude))
     catch_log = await CatchLogRepository.create_log(session, user.id, log_data, weather)
+    await ExperienceService.award_catch_log(session, user, catch_log)
+    await BadgeService.unlock_eligible_badges(session, user.id)
     return catch_log
 
 @router.get("/{log_id}", response_model=CatchLogResponse)

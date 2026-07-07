@@ -21,7 +21,7 @@ def is_sequential_password(password: str) -> bool:
     return any(lowered in sequence for sequence in sequences)
 
 WaterType = Literal["river", "lake", "reservoir", "sea", "pond", "other"]
-PostTag = Literal["海钓", "路亚", "台钓", "飞钓", "黑坑", "野钓"]
+PostTag = Literal["海钓", "路亚", "台钓", "飞钓", "黑坑", "野钓", "技术分享", "装备评测", "钓点攻略"]
 
 # User Schemas
 class UserRegister(BaseModel):
@@ -57,6 +57,9 @@ class UserResponse(BaseModel):
     is_admin: bool = False
     is_disabled: bool = False
     can_post: bool = True
+    xp: int = 0
+    level: int = 1
+    title: str = "初学钓手"
     created_at: datetime
 
     class Config:
@@ -88,6 +91,46 @@ class AdminPasswordReset(BaseModel):
     @classmethod
     def validate_password_complexity(cls, password: str) -> str:
         return UserRegister.validate_password_complexity(password)
+
+
+class BadgeResponse(BaseModel):
+    code: str
+    name: str
+    icon: str
+    description: str
+
+
+class UserLevelResponse(BaseModel):
+    level: int
+    title: str
+    xp: int
+    current_level_xp: int
+    next_level_xp: Optional[int] = None
+    xp_to_next: int
+    progress_percent: int
+    badges: List[BadgeResponse] = []
+    benefits: List[str] = []
+
+
+class XPLogResponse(BaseModel):
+    id: int
+    xp_delta: int
+    reason: str
+    target_type: Optional[str] = None
+    target_id: Optional[int] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class LeaderboardUserResponse(BaseModel):
+    user_id: int
+    nickname: str
+    level: int
+    title: str
+    xp: int
+    score: int
 
 # FishingSpot Schemas
 class FishingSpotCreate(BaseModel):
@@ -169,6 +212,9 @@ class CommentResponse(BaseModel):
     content: str
     created_at: datetime
     user_nickname: Optional[str] = None
+    user_level: int = 1
+    user_title: str = "初学钓手"
+    like_count: int = 0
 
     class Config:
         from_attributes = True
@@ -192,7 +238,11 @@ class PostResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     user_nickname: Optional[str] = None
+    user_level: int = 1
+    user_title: str = "初学钓手"
     comment_count: int = 0
+    like_count: int = 0
+    is_featured: bool = False
 
     class Config:
         from_attributes = True
@@ -206,6 +256,10 @@ class PostDetailResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     user_nickname: Optional[str] = None
+    user_level: int = 1
+    user_title: str = "初学钓手"
+    like_count: int = 0
+    is_featured: bool = False
     comments: List[CommentResponse] = []
 
     class Config:

@@ -1,108 +1,617 @@
 {% extends "base.html" %}
 
-{% block title %}关于 渔迹录 - 钓鱼人的个人数据中心{% endblock %}
+{% block title %}关于 渔迹录 - 2026 钓鱼数据中枢{% endblock %}
+
+{% block extra_css %}
+<style>
+    .about-page {
+        max-width: 1480px;
+        margin: clamp(32px, 5vw, 64px) auto 0;
+        padding: 0 clamp(16px, 3vw, 28px);
+        position: relative;
+    }
+
+    .about-page::before,
+    .about-page::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        z-index: -1;
+        border-radius: 999px;
+        filter: blur(2px);
+    }
+
+    .about-page::before {
+        width: 280px;
+        height: 280px;
+        left: -90px;
+        top: 260px;
+        background: radial-gradient(circle, rgba(103, 232, 249, 0.28), transparent 68%);
+        animation: aboutFloat 9s ease-in-out infinite alternate;
+    }
+
+    .about-page::after {
+        width: 360px;
+        height: 360px;
+        right: -120px;
+        bottom: 180px;
+        background: radial-gradient(circle, rgba(56, 240, 160, 0.22), transparent 66%);
+        animation: aboutFloat 12s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes aboutFloat {
+        from { transform: translate3d(0, 0, 0) scale(1); }
+        to { transform: translate3d(36px, -44px, 0) scale(1.1); }
+    }
+
+    .about-hero {
+        min-height: clamp(520px, 68vh, 760px);
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
+        gap: clamp(36px, 6vw, 86px);
+        align-items: center;
+        padding: clamp(42px, 7vw, 86px);
+        border: 1px solid rgba(103, 232, 249, 0.26);
+        border-radius: 38px;
+        color: #fff;
+        overflow: hidden;
+        position: relative;
+        background:
+            linear-gradient(115deg, rgba(6, 17, 22, 0.96), rgba(9, 36, 43, 0.84) 54%, rgba(13, 164, 166, 0.58)),
+            url('/static/beijing-fishing-review-bg.svg') center/cover;
+        box-shadow: var(--shadow-strong);
+    }
+
+    .about-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: 0.24;
+        background-image:
+            linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.13) 1px, transparent 1px);
+        background-size: 58px 58px;
+        mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.85), transparent);
+    }
+
+    .about-hero::after {
+        content: "";
+        position: absolute;
+        width: 520px;
+        height: 520px;
+        right: -130px;
+        top: -120px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(103, 232, 249, 0.24), transparent 62%);
+    }
+
+    .about-hero__content,
+    .about-console {
+        position: relative;
+        z-index: 1;
+    }
+
+    .about-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border: 1px solid rgba(103, 232, 249, 0.38);
+        border-radius: 999px;
+        color: rgba(239, 254, 250, 0.92);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px);
+        font-size: 0.92rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+    }
+
+    .about-hero h1 {
+        margin: 24px 0 18px;
+        font-size: clamp(3.2rem, 8vw, 7.6rem);
+        line-height: 0.92;
+        font-weight: 950;
+        letter-spacing: -0.08em;
+    }
+
+    .about-hero h1 span {
+        display: block;
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(239, 254, 250, 0.58);
+        text-shadow: none;
+    }
+
+    .about-hero__lead {
+        max-width: 720px;
+        margin: 0;
+        color: rgba(239, 254, 250, 0.8);
+        font-size: clamp(1.05rem, 1.7vw, 1.36rem);
+        line-height: 1.85;
+    }
+
+    .about-hero__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 34px;
+    }
+
+    .about-console {
+        padding: 28px;
+        border: 1px solid rgba(103, 232, 249, 0.24);
+        border-radius: 30px;
+        background: rgba(6, 17, 22, 0.54);
+        backdrop-filter: blur(22px) saturate(1.2);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), var(--glow-aqua);
+    }
+
+    .about-console__map {
+        min-height: 260px;
+        border-radius: 24px;
+        position: relative;
+        overflow: hidden;
+        background:
+            radial-gradient(circle at 30% 38%, rgba(103, 232, 249, 0.32), transparent 18%),
+            radial-gradient(circle at 68% 62%, rgba(56, 240, 160, 0.24), transparent 18%),
+            linear-gradient(135deg, rgba(9, 36, 43, 0.98), rgba(13, 164, 166, 0.46));
+    }
+
+    .about-console__map::before {
+        content: "";
+        position: absolute;
+        inset: 24px;
+        border: 1px dashed rgba(239, 254, 250, 0.28);
+        border-radius: 22px;
+    }
+
+    .about-console__map::after {
+        content: "";
+        position: absolute;
+        width: 130px;
+        height: 130px;
+        left: 50%;
+        top: 50%;
+        border-radius: 50%;
+        border: 1px solid rgba(103, 232, 249, 0.45);
+        transform: translate(-50%, -50%);
+        animation: scanPulse 2.8s ease-out infinite;
+    }
+
+    @keyframes scanPulse {
+        from { opacity: 0.8; transform: translate(-50%, -50%) scale(0.42); }
+        to { opacity: 0; transform: translate(-50%, -50%) scale(1.9); }
+    }
+
+    .map-pin {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        color: #061116;
+        background: linear-gradient(135deg, var(--brand-electric), var(--brand-mint));
+        box-shadow: 0 0 28px rgba(103, 232, 249, 0.42);
+    }
+
+    .map-pin:nth-child(1) { left: 24%; top: 32%; }
+    .map-pin:nth-child(2) { right: 22%; top: 46%; animation-delay: 0.4s; }
+    .map-pin:nth-child(3) { left: 52%; bottom: 18%; animation-delay: 0.8s; }
+
+    .about-console__rows {
+        display: grid;
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .about-console__row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        color: rgba(239, 254, 250, 0.84);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .about-console__row strong {
+        color: #fff;
+    }
+
+    .about-section {
+        margin-top: clamp(56px, 8vw, 104px);
+    }
+
+    .about-section__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 28px;
+        margin-bottom: 28px;
+    }
+
+    .about-section__head h2 {
+        margin: 0;
+        color: var(--brand-deep);
+        font-size: clamp(2rem, 4vw, 4.2rem);
+        line-height: 1;
+        font-weight: 950;
+        letter-spacing: -0.06em;
+    }
+
+    .about-section__head p {
+        max-width: 520px;
+        margin: 0;
+        color: var(--text-muted);
+        line-height: 1.8;
+    }
+
+    .about-metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .about-metric,
+    .about-feature,
+    .about-flow__item {
+        border: 1px solid var(--border-soft);
+        background: rgba(255, 255, 255, 0.78);
+        backdrop-filter: blur(20px) saturate(1.12);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .about-metric {
+        min-height: 180px;
+        padding: 24px;
+        border-radius: 28px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .about-metric::after {
+        content: "";
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        right: -36px;
+        top: -36px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(103, 232, 249, 0.22), transparent 68%);
+    }
+
+    .about-metric span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .about-metric strong {
+        display: block;
+        margin-top: 10px;
+        color: var(--brand-deep);
+        font-size: 2.4rem;
+        line-height: 1;
+        font-weight: 950;
+        letter-spacing: -0.06em;
+    }
+
+    .about-metric p {
+        margin: 18px 0 0;
+        color: var(--text-muted);
+        line-height: 1.7;
+    }
+
+    .about-flow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .about-flow__item {
+        padding: 26px;
+        border-radius: 28px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .about-flow__item::before {
+        content: attr(data-step);
+        position: absolute;
+        right: 18px;
+        top: 12px;
+        color: rgba(13, 164, 166, 0.12);
+        font-size: 4.8rem;
+        font-weight: 950;
+        line-height: 1;
+    }
+
+    .about-flow__item i,
+    .about-feature i {
+        display: inline-grid;
+        place-items: center;
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        color: #061116;
+        background: linear-gradient(135deg, var(--brand-electric), var(--brand-mint));
+        box-shadow: var(--glow-aqua);
+        margin-bottom: 20px;
+    }
+
+    .about-flow__item h3,
+    .about-feature h3 {
+        color: var(--brand-deep);
+        font-weight: 900;
+        font-size: 1.18rem;
+    }
+
+    .about-flow__item p,
+    .about-feature p {
+        margin: 0;
+        color: var(--text-muted);
+        line-height: 1.75;
+    }
+
+    .about-features {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .about-feature {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 20px;
+        padding: 28px;
+        border-radius: 30px;
+    }
+
+    .about-feature i {
+        margin-bottom: 0;
+    }
+
+    .about-vision {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 32px;
+        align-items: center;
+        padding: clamp(34px, 6vw, 72px);
+        border-radius: 36px;
+        color: #fff;
+        overflow: hidden;
+        position: relative;
+        background:
+            radial-gradient(circle at 18% 18%, rgba(103, 232, 249, 0.28), transparent 34%),
+            linear-gradient(135deg, rgba(6, 17, 22, 0.96), rgba(9, 36, 43, 0.92));
+        box-shadow: var(--shadow-strong);
+    }
+
+    .about-vision h2 {
+        margin: 0 0 16px;
+        font-size: clamp(2.4rem, 5vw, 5.2rem);
+        font-weight: 950;
+        letter-spacing: -0.08em;
+    }
+
+    .about-vision p {
+        max-width: 760px;
+        margin: 0;
+        color: rgba(239, 254, 250, 0.78);
+        font-size: 1.08rem;
+        line-height: 1.85;
+    }
+
+    .vision-orb {
+        display: grid;
+        place-items: center;
+        width: clamp(150px, 20vw, 240px);
+        height: clamp(150px, 20vw, 240px);
+        border-radius: 50%;
+        border: 1px solid rgba(103, 232, 249, 0.34);
+        background:
+            radial-gradient(circle, rgba(103, 232, 249, 0.22), transparent 62%);
+        box-shadow: var(--glow-aqua);
+    }
+
+    .vision-orb i {
+        color: var(--brand-electric);
+        font-size: clamp(3rem, 6vw, 6rem);
+        filter: drop-shadow(0 0 22px rgba(103, 232, 249, 0.58));
+    }
+
+    @media (max-width: 1100px) {
+        .about-hero,
+        .about-vision {
+            grid-template-columns: 1fr;
+        }
+
+        .about-metrics,
+        .about-flow {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 720px) {
+        .about-hero {
+            padding: 34px 22px;
+            border-radius: 26px;
+        }
+
+        .about-section__head {
+            display: block;
+        }
+
+        .about-section__head p {
+            margin-top: 14px;
+        }
+
+        .about-metrics,
+        .about-flow,
+        .about-features {
+            grid-template-columns: 1fr;
+        }
+
+        .about-feature {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="mx-auto" style="max-width: 980px;">
-    <section class="brand-panel text-center p-5 mb-5">
-        <h1 class="display-5 fw-bold mb-3">
-            <i class="fas fa-fish brand-panel__icon"></i> 渔迹录
-        </h1>
-        <p class="fs-5 mb-0 opacity-75">钓鱼人的个人数据中心</p>
+<div class="about-page bleed">
+    <section class="about-hero" aria-label="渔迹录产品介绍">
+        <div class="about-hero__content">
+            <div class="about-kicker">
+                <i class="fas fa-satellite-dish"></i>
+                2026 FISHING DATA OS
+            </div>
+            <h1>
+                渔迹录
+                <span>AnglrLog</span>
+            </h1>
+            <p class="about-hero__lead">
+                面向年轻钓鱼人的新一代出钓数据中枢。把钓点、天气、水情、鱼获、策略和讨论沉淀成可复盘、可搜索、可判断的个人作钓资产。
+            </p>
+            <div class="about-hero__actions">
+                <a href="/spots" class="btn btn-primary">
+                    <i class="fas fa-map-location-dot"></i> 打开钓点库
+                </a>
+                <a href="/forum" class="btn btn-outline-primary">
+                    <i class="fas fa-comments"></i> 进入讨论区
+                </a>
+            </div>
+        </div>
+
+        <aside class="about-console" aria-label="钓鱼数据控制台示意">
+            <div class="about-console__map">
+                <span class="map-pin"><i class="fas fa-location-dot"></i></span>
+                <span class="map-pin"><i class="fas fa-fish"></i></span>
+                <span class="map-pin"><i class="fas fa-water"></i></span>
+            </div>
+            <div class="about-console__rows">
+                <div class="about-console__row">
+                    <span>实时条件</span>
+                    <strong>天气 / 风速 / 气压</strong>
+                </div>
+                <div class="about-console__row">
+                    <span>钓点资产</span>
+                    <strong>坐标 / 水体 / 城市</strong>
+                </div>
+                <div class="about-console__row">
+                    <span>复盘输出</span>
+                    <strong>策略 / 鱼种 / 命中窗口</strong>
+                </div>
+            </div>
+        </aside>
     </section>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-6">
-            <article class="feature-card">
-                <div class="feature-card__icon"><i class="fas fa-target"></i></div>
-                <h5>一句话定位</h5>
-                <p>帮助钓鱼人记录、管理和复盘每一次出钓的数据工具。</p>
+    <section class="about-section">
+        <div class="about-section__head">
+            <h2>不靠玄学，靠数据。</h2>
+            <p>传统记录只留下“今天钓到了什么”。渔迹录更关注为什么钓到、什么时候更容易钓到、下一次应该怎么选择。</p>
+        </div>
+        <div class="about-metrics">
+            <article class="about-metric">
+                <span>定位</span>
+                <strong>点位资产</strong>
+                <p>省市、水体、坐标统一归档，避免好钓点散落在聊天记录里。</p>
+            </article>
+            <article class="about-metric">
+                <span>条件</span>
+                <strong>天气切片</strong>
+                <p>温度、风速、气压和作钓时间同一层记录，复盘更有依据。</p>
+            </article>
+            <article class="about-metric">
+                <span>结果</span>
+                <strong>鱼获样本</strong>
+                <p>鱼种、数量、饵料和备注持续沉淀，形成自己的鱼情数据库。</p>
+            </article>
+            <article class="about-metric">
+                <span>判断</span>
+                <strong>复盘闭环</strong>
+                <p>把经验从“感觉”变成可对照的记录，下次出钓决策更快。</p>
             </article>
         </div>
-        <div class="col-md-6">
-            <article class="feature-card feature-card--mint">
-                <div class="feature-card__icon"><i class="fas fa-lightbulb"></i></div>
-                <h5>产品理念</h5>
-                <p>不做复杂内容平台，专注建立属于自己的钓鱼数据库。</p>
-            </article>
-        </div>
-    </div>
+    </section>
 
-    <h3 class="page-title justify-content-center fs-3 mb-4">
-        <i class="fas fa-chart-line"></i> 数据流转
-    </h3>
-    <div class="row g-4 mb-5 text-center">
-        <div class="col-md-6 col-lg-3">
-            <article class="feature-card">
-                <div class="feature-card__icon"><i class="fas fa-pen-fancy"></i></div>
-                <h6>记录</h6>
-                <p>每一次出钓过程和结果</p>
+    <section class="about-section">
+        <div class="about-section__head">
+            <h2>一次出钓，四层沉淀。</h2>
+            <p>从出门前选点，到回家后复盘，每一步都对应一个明确的数据层。</p>
+        </div>
+        <div class="about-flow">
+            <article class="about-flow__item" data-step="01">
+                <i class="fas fa-crosshairs"></i>
+                <h3>选点</h3>
+                <p>根据省市、水体、距离和历史记录快速筛选候选钓点。</p>
+            </article>
+            <article class="about-flow__item" data-step="02">
+                <i class="fas fa-cloud-sun"></i>
+                <h3>看天</h3>
+                <p>把温度、气压、风速和时间窗口与实际鱼口关联起来。</p>
+            </article>
+            <article class="about-flow__item" data-step="03">
+                <i class="fas fa-fish"></i>
+                <h3>记录</h3>
+                <p>记录鱼种、数量、饵料、钓法和现场判断，不漏关键细节。</p>
+            </article>
+            <article class="about-flow__item" data-step="04">
+                <i class="fas fa-chart-line"></i>
+                <h3>复盘</h3>
+                <p>对比相同水域、天气和季节，提炼下一次可执行策略。</p>
             </article>
         </div>
-        <div class="col-md-6 col-lg-3">
-            <article class="feature-card feature-card--mint">
-                <div class="feature-card__icon"><i class="fas fa-database"></i></div>
-                <h6>积累</h6>
-                <p>沉淀个人数据资产</p>
-            </article>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <article class="feature-card feature-card--amber">
-                <div class="feature-card__icon"><i class="fas fa-search"></i></div>
-                <h6>复盘</h6>
-                <p>分析历史找规律</p>
-            </article>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <article class="feature-card feature-card--coral">
-                <div class="feature-card__icon"><i class="fas fa-compass"></i></div>
-                <h6>决策</h6>
-                <p>经验辅助下次选择</p>
-            </article>
-        </div>
-    </div>
+    </section>
 
-    <h3 class="page-title justify-content-center fs-3 mb-4">
-        <i class="fas fa-cube"></i> 四个核心功能
-    </h3>
-    <div class="row g-4 mb-5">
-        <div class="col-md-6">
-            <article class="feature-card">
-                <div class="feature-card__icon"><i class="fas fa-map-pin"></i></div>
-                <h5>钓点</h5>
-                <p>浏览精选钓点，查看地理位置和基础信息。</p>
+    <section class="about-section">
+        <div class="about-section__head">
+            <h2>为真实钓鱼场景设计。</h2>
+            <p>不是把表单搬到网页上，而是围绕钓鱼人的行动路径做成一套年轻、直接、可长期使用的工具。</p>
+        </div>
+        <div class="about-features">
+            <article class="about-feature">
+                <i class="fas fa-map"></i>
+                <div>
+                    <h3>地图与钓点联动</h3>
+                    <p>钓点坐标、水体类型、城市信息统一管理，支持从地图和记录两侧回看。</p>
+                </div>
+            </article>
+            <article class="about-feature">
+                <i class="fas fa-gauge-high"></i>
+                <div>
+                    <h3>天气自动入档</h3>
+                    <p>创建记录时自动拉取实时天气，减少手动输入，让复盘数据更完整。</p>
+                </div>
+            </article>
+            <article class="about-feature">
+                <i class="fas fa-comments"></i>
+                <div>
+                    <h3>讨论沉淀经验</h3>
+                    <p>把钓法、窗口期、装备选择和坑口经验沉淀成可检索内容。</p>
+                </div>
+            </article>
+            <article class="about-feature">
+                <i class="fas fa-user-shield"></i>
+                <div>
+                    <h3>社区治理能力</h3>
+                    <p>管理员可以管理用户状态和发言权限，保证内容质量和社区秩序。</p>
+                </div>
             </article>
         </div>
-        <div class="col-md-6">
-            <article class="feature-card feature-card--mint">
-                <div class="feature-card__icon"><i class="fas fa-cloud"></i></div>
-                <h5>天气</h5>
-                <p>获取实时天气数据，记录温度、风速、气压等环境信息。</p>
-            </article>
-        </div>
-        <div class="col-md-6">
-            <article class="feature-card feature-card--amber">
-                <div class="feature-card__icon"><i class="fas fa-pen"></i></div>
-                <h5>出钓记录</h5>
-                <p>记录钓点、时间、饵料、鱼种、渔获和备注。</p>
-            </article>
-        </div>
-        <div class="col-md-6">
-            <article class="feature-card feature-card--coral">
-                <div class="feature-card__icon"><i class="fas fa-history"></i></div>
-                <h5>我的记录</h5>
-                <p>查看所有记录，按钓点、季节和天气表现做复盘。</p>
-            </article>
-        </div>
-    </div>
+    </section>
 
-    <section class="brand-panel text-center p-5">
-        <h3 class="fs-4 mb-3">
-            <i class="fas fa-star brand-panel__icon"></i> 我们的愿景
-        </h3>
-        <p class="fs-5 lh-lg mb-0">
-            打造属于钓鱼人的个人数据中心。让每一次抛竿都有迹可循，让每一次渔获都成为未来的参考依据。
-        </p>
+    <section class="about-section about-vision">
+        <div>
+            <h2>让每一次抛竿，都成为下一次判断的燃料。</h2>
+            <p>
+                渔迹录的目标不是替你决定怎么钓，而是帮你积累足够清晰的个人样本：什么时候开口、什么天气稳定、哪个点位更值得去、哪套装备更有效。经验可以主观，记录必须可靠。
+            </p>
+        </div>
+        <div class="vision-orb" aria-hidden="true">
+            <i class="fas fa-fish"></i>
+        </div>
     </section>
 </div>
 {% endblock %}

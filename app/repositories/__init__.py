@@ -1,8 +1,8 @@
 from __future__ import annotations
-from sqlalchemy import select, desc
+from sqlalchemy import delete, select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import User, FishingSpot, CatchLog, Post, Comment
+from app.models import User, FishingSpot, CatchLog, Post, Comment, XPLog, PostLike, CommentLike
 from app.core.security import SecurityService
 from app.schemas import UserRegister, CatchLogCreate, CatchLogUpdate, PostCreate, PostUpdate, CommentCreate, CommentUpdate, FishingSpotCreate
 from typing import Optional, List
@@ -86,7 +86,7 @@ class FishingSpotRepository:
             spot.longitude = spot_data.longitude
         if spot_data.water_type:
             spot.water_type = spot_data.water_type
-        if spot_data.description:
+        if spot_data.description is not None:
             spot.description = spot_data.description
         await session.commit()
         await session.refresh(spot)
@@ -222,6 +222,9 @@ class PostRepository:
 
     @staticmethod
     async def delete_post(session: AsyncSession, post: Post) -> None:
+        comment_ids = select(Comment.id).where(Comment.post_id == post.id)
+        await session.execute(delete(CommentLike).where(CommentLike.comment_id.in_(comment_ids)))
+        await session.execute(delete(PostLike).where(PostLike.post_id == post.id))
         await session.delete(post)
         await session.commit()
 
@@ -259,5 +262,45 @@ class CommentRepository:
 
     @staticmethod
     async def delete_comment(session: AsyncSession, comment: Comment) -> None:
+        await session.execute(delete(CommentLike).where(CommentLike.comment_id == comment.id))
         await session.delete(comment)
         await session.commit()
+
+
+class XPLogRepository:
+    @staticmethod
+    async def get_logs_by_user(session: AsyncSession, user_id: int, skip: int = 0, limit: int = 20) -> List[XPLog]:
+        result = await session.execute(
+            select(XPLog)
+            .where(XPLog.user_id == user_id)
+            .order_by(XPLog.created_at.desc(), XPLog.id.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return result.scalars().all()
+
+
+class LikeRepository:
+    @staticmethod
+    async def create_post_like(session: AsyncSession, post_id: int, user_id: int) -> Optional[PostLike]:
+        existing = await session.execute(
+            select(PostLike).where(PostLike.post_id == post_id, PostLike.user_id == user_id)
+        )
+        if existing.scalar_one_or_none():
+            return None
+        like = PostLike(post_id=post_id, user_id=user_id)
+        session.add(like)
+        await session.flush()
+        return like
+
+    @staticmethod
+    async def create_comment_like(session: AsyncSession, comment_id: int, user_id: int) -> Optional[CommentLike]:
+        existing = await session.execute(
+            select(CommentLike).where(CommentLike.comment_id == comment_id, CommentLike.user_id == user_id)
+        )
+        if existing.scalar_one_or_none():
+            return None
+        like = CommentLike(comment_id=comment_id, user_id=user_id)
+        session.add(like)
+        await session.flush()
+        return like

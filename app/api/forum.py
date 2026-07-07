@@ -3,15 +3,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List, Optional
 from app.core.config import get_db
-from app.core.deps import can_manage_user_content, get_current_user, require_can_post_user
+from app.core.deps import can_manage_user_content, get_current_user, require_admin_user, require_can_post_user
 from app.schemas import PostResponse, PostCreate, PostUpdate, CommentResponse, CommentCreate, CommentUpdate, PostDetailResponse, PostTag
-from app.repositories import PostRepository, CommentRepository
-from app.models import Post, Comment, User
+from app.repositories import LikeRepository, PostRepository, CommentRepository
+from app.services import BadgeService, ExperienceService
+from app.models import CommentLike, Post, PostLike, Comment, User
 
 router = APIRouter(prefix="/api/forum", tags=["forum"])
 PUBLISHER_DISPLAY_NAME = "管理员发布"
 
-def build_post_response(post: Post, user_nickname: str, comment_count: int) -> dict:
+def build_post_response(post: Post, user: User, comment_count: int, like_count: int = 0) -> dict:
     return {
         "id": post.id,
         "user_id": post.user_id,
@@ -20,18 +21,24 @@ def build_post_response(post: Post, user_nickname: str, comment_count: int) -> d
         "content": post.content,
         "created_at": post.created_at,
         "updated_at": post.updated_at,
-        "user_nickname": user_nickname,
+        "user_nickname": user.nickname,
+        "user_level": user.level,
+        "user_title": user.title,
         "comment_count": comment_count,
+        "like_count": like_count,
+        "is_featured": post.is_featured,
     }
 
 @router.get("/posts", response_model=List[PostResponse])
 async def get_posts(skip: int = 0, limit: int = 10, tag: Optional[PostTag] = None, sort: Optional[str] = None, session: AsyncSession = Depends(get_db)):
-    comment_count_expr = func.count(Comment.id)
+    comment_count_expr = func.count(func.distinct(Comment.id))
+    like_count_expr = func.count(func.distinct(PostLike.id))
     query = (
-        select(Post, User.nickname, comment_count_expr.label("comment_count"))
+        select(Post, User, comment_count_expr.label("comment_count"), like_count_expr.label("like_count"))
         .join(User, User.id == Post.user_id)
         .outerjoin(Comment, Comment.post_id == Post.id)
-        .group_by(Post.id, User.nickname)
+        .outerjoin(PostLike, PostLike.post_id == Post.id)
+        .group_by(Post.id, User.id)
     )
     if tag:
         query = query.where(Post.tag == tag)
@@ -45,18 +52,19 @@ async def get_posts(skip: int = 0, limit: int = 10, tag: Optional[PostTag] = Non
         .limit(limit)
     )
     return [
-        build_post_response(post, PUBLISHER_DISPLAY_NAME, comment_count or 0)
-        for post, nickname, comment_count in result.all()
+        build_post_response(post, user, comment_count or 0, like_count or 0)
+        for post, user, comment_count, like_count in result.all()
     ]
 
 @router.get("/posts/search", response_model=List[PostResponse])
 async def search_posts(keyword: str, skip: int = 0, limit: int = 10, tag: Optional[PostTag] = None, session: AsyncSession = Depends(get_db)):
     query = (
-        select(Post, User.nickname, func.count(Comment.id).label("comment_count"))
+        select(Post, User, func.count(func.distinct(Comment.id)).label("comment_count"), func.count(func.distinct(PostLike.id)).label("like_count"))
         .join(User, User.id == Post.user_id)
         .outerjoin(Comment, Comment.post_id == Post.id)
+        .outerjoin(PostLike, PostLike.post_id == Post.id)
         .where((Post.title.ilike(f"%{keyword}%")) | (Post.content.ilike(f"%{keyword}%")))
-        .group_by(Post.id, User.nickname)
+        .group_by(Post.id, User.id)
     )
     if tag:
         query = query.where(Post.tag == tag)
@@ -67,8 +75,8 @@ async def search_posts(keyword: str, skip: int = 0, limit: int = 10, tag: Option
         .limit(limit)
     )
     return [
-        build_post_response(post, PUBLISHER_DISPLAY_NAME, comment_count or 0)
-        for post, nickname, comment_count in result.all()
+        build_post_response(post, user, comment_count or 0, like_count or 0)
+        for post, user, comment_count, like_count in result.all()
     ]
 
 @router.get("/posts/{post_id}", response_model=PostDetailResponse)
@@ -77,7 +85,12 @@ async def get_post_detail(post_id: int, session: AsyncSession = Depends(get_db))
     result = await session.execute(
         select(Post)
         .where(Post.id == post_id)
-        .options(selectinload(Post.user), selectinload(Post.comments).selectinload(Comment.user))
+        .options(
+            selectinload(Post.user),
+            selectinload(Post.likes),
+            selectinload(Post.comments).selectinload(Comment.user),
+            selectinload(Post.comments).selectinload(Comment.likes),
+        )
     )
     post = result.scalar_one_or_none()
     if not post:
@@ -92,7 +105,10 @@ async def get_post_detail(post_id: int, session: AsyncSession = Depends(get_db))
                 "user_id": comment.user_id,
                 "content": comment.content,
                 "created_at": comment.created_at,
-                "user_nickname": comment.user.nickname if comment.user else "未知用户"
+                "user_nickname": comment.user.nickname if comment.user else "未知用户",
+                "user_level": comment.user.level if comment.user else 1,
+                "user_title": comment.user.title if comment.user else "初学钓手",
+                "like_count": len(comment.likes or []),
             })
 
     return {
@@ -103,13 +119,19 @@ async def get_post_detail(post_id: int, session: AsyncSession = Depends(get_db))
         "content": post.content,
         "created_at": post.created_at,
         "updated_at": post.updated_at,
-        "user_nickname": PUBLISHER_DISPLAY_NAME,
+        "user_nickname": post.user.nickname if post.user else "未知用户",
+        "user_level": post.user.level if post.user else 1,
+        "user_title": post.user.title if post.user else "初学钓手",
+        "like_count": len(post.likes or []),
+        "is_featured": post.is_featured,
         "comments": comments_data
     }
 
 @router.post("/posts", response_model=PostResponse)
 async def create_post(post_data: PostCreate, user = Depends(require_can_post_user), session: AsyncSession = Depends(get_db)):
     post = await PostRepository.create_post(session, user.id, post_data)
+    await ExperienceService.award_post(session, user, post)
+    await BadgeService.unlock_eligible_badges(session, user.id)
     return PostResponse(
         id=post.id,
         user_id=post.user_id,
@@ -118,8 +140,12 @@ async def create_post(post_data: PostCreate, user = Depends(require_can_post_use
         content=post.content,
         created_at=post.created_at,
         updated_at=post.updated_at,
-        user_nickname=PUBLISHER_DISPLAY_NAME,
-        comment_count=0
+        user_nickname=user.nickname,
+        user_level=user.level,
+        user_title=user.title,
+        comment_count=0,
+        like_count=0,
+        is_featured=post.is_featured,
     )
 
 @router.put("/posts/{post_id}", response_model=PostResponse)
@@ -143,8 +169,12 @@ async def update_post(post_id: int, post_data: PostUpdate, user = Depends(get_cu
         content=updated_post.content,
         created_at=updated_post.created_at,
         updated_at=updated_post.updated_at,
-        user_nickname=PUBLISHER_DISPLAY_NAME,
-        comment_count=comment_count
+        user_nickname=user.nickname,
+        user_level=user.level,
+        user_title=user.title,
+        comment_count=comment_count,
+        like_count=0,
+        is_featured=updated_post.is_featured,
     )
 
 @router.delete("/posts/{post_id}")
@@ -165,13 +195,17 @@ async def create_comment(post_id: int, comment_data: CommentCreate, user = Depen
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
     comment = await CommentRepository.create_comment(session, post_id, user.id, comment_data)
+    await ExperienceService.award_comment(session, user, comment)
     return CommentResponse(
         id=comment.id,
         post_id=comment.post_id,
         user_id=comment.user_id,
         content=comment.content,
         created_at=comment.created_at,
-        user_nickname=user.nickname
+        user_nickname=user.nickname,
+        user_level=user.level,
+        user_title=user.title,
+        like_count=0,
     )
 
 @router.put("/comments/{comment_id}", response_model=CommentResponse)
@@ -189,7 +223,10 @@ async def update_comment(comment_id: int, comment_data: CommentUpdate, user = De
         user_id=updated_comment.user_id,
         content=updated_comment.content,
         created_at=updated_comment.created_at,
-        user_nickname=user.nickname
+        user_nickname=user.nickname,
+        user_level=user.level,
+        user_title=user.title,
+        like_count=0,
     )
 
 @router.delete("/comments/{comment_id}")
@@ -202,3 +239,77 @@ async def delete_comment(comment_id: int, user = Depends(get_current_user), sess
 
     await CommentRepository.delete_comment(session, comment)
     return {"message": "Comment deleted successfully"}
+
+
+@router.post("/posts/{post_id}/likes")
+async def like_post(post_id: int, user = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    post = await PostRepository.get_post_by_id(session, post_id)
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    if post.user_id == user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot like your own post")
+
+    like = await LikeRepository.create_post_like(session, post_id, user.id)
+    if not like:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already liked")
+
+    owner = await session.get(User, post.user_id)
+    if owner:
+        await ExperienceService.award_post_like(session, owner, post.id)
+    else:
+        await session.commit()
+    return {"message": "Liked successfully"}
+
+
+@router.post("/comments/{comment_id}/likes")
+async def like_comment(comment_id: int, user = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    comment = await CommentRepository.get_comment_by_id(session, comment_id)
+    if not comment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+    if comment.user_id == user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot like your own comment")
+
+    like = await LikeRepository.create_comment_like(session, comment_id, user.id)
+    if not like:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already liked")
+
+    owner = await session.get(User, comment.user_id)
+    if owner:
+        await ExperienceService.award_comment_like(session, owner, comment.id)
+    else:
+        await session.commit()
+    return {"message": "Liked successfully"}
+
+
+@router.post("/posts/{post_id}/feature", response_model=PostResponse)
+async def feature_post(post_id: int, admin = Depends(require_admin_user), session: AsyncSession = Depends(get_db)):
+    post = await PostRepository.get_post_by_id(session, post_id)
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+
+    owner = await session.get(User, post.user_id)
+    was_featured = post.is_featured
+    post.is_featured = True
+    if owner and not was_featured:
+        await ExperienceService.award_featured_post(session, owner, post.id)
+    else:
+        await session.commit()
+    await session.refresh(post)
+
+    comment_result = await session.execute(select(func.count(Comment.id)).where(Comment.post_id == post.id))
+    like_result = await session.execute(select(func.count(PostLike.id)).where(PostLike.post_id == post.id))
+    return PostResponse(
+        id=post.id,
+        user_id=post.user_id,
+        title=post.title,
+        tag=post.tag or "野钓",
+        content=post.content,
+        created_at=post.created_at,
+        updated_at=post.updated_at,
+        user_nickname=owner.nickname if owner else PUBLISHER_DISPLAY_NAME,
+        user_level=owner.level if owner else 1,
+        user_title=owner.title if owner else "初学钓手",
+        comment_count=comment_result.scalar() or 0,
+        like_count=like_result.scalar() or 0,
+        is_featured=post.is_featured,
+    )

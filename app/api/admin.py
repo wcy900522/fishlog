@@ -3,9 +3,9 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_db
-from app.core.deps import require_admin_user
+from app.core.deps import is_super_admin_user, require_admin_user
 from app.core.security import SecurityService
-from app.models import CatchLog, Comment, FishingSpot, Post, User
+from app.models import CatchLog, Comment, CommentLike, FishingSpot, Post, PostLike, User, UserBadge, XPLog
 from app.schemas import (
     AdminPasswordReset,
     AdminUserListResponse,
@@ -14,6 +14,16 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+def _assert_can_manage_target(admin: User, target: User) -> None:
+    if is_super_admin_user(target) and target.id != admin.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="超级管理员账号不允许被其他管理员管理")
+
+
+def _assert_super_admin(admin: User) -> None:
+    if not is_super_admin_user(admin):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="只有超级管理员可以授权或取消管理员权限")
 
 
 def _user_response(row) -> AdminUserResponse:
@@ -28,6 +38,9 @@ def _user_response(row) -> AdminUserResponse:
         is_admin=user.is_admin,
         is_disabled=user.is_disabled,
         can_post=user.can_post,
+        xp=user.xp,
+        level=user.level,
+        title=user.title,
         created_at=user.created_at,
         post_count=post_count or 0,
         comment_count=comment_count or 0,
@@ -101,6 +114,8 @@ async def update_user_status(
     session: AsyncSession = Depends(get_db),
 ):
     user = await _get_user_or_404(session, user_id)
+    _assert_can_manage_target(admin, user)
+
     if user.id == admin.id:
         if update.is_disabled is True:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot disable your own account")
@@ -108,6 +123,7 @@ async def update_user_status(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot remove your own admin role")
 
     if update.is_admin is not None:
+        _assert_super_admin(admin)
         user.is_admin = update.is_admin
     if update.is_disabled is not None:
         user.is_disabled = update.is_disabled
@@ -126,6 +142,9 @@ async def update_user_status(
         is_admin=user.is_admin,
         is_disabled=user.is_disabled,
         can_post=user.can_post,
+        xp=user.xp,
+        level=user.level,
+        title=user.title,
         created_at=user.created_at,
     )
 
@@ -138,6 +157,7 @@ async def reset_user_password(
     session: AsyncSession = Depends(get_db),
 ):
     user = await _get_user_or_404(session, user_id)
+    _assert_can_manage_target(admin, user)
     user.password_hash = SecurityService.get_password_hash(payload.password)
     await session.commit()
     await session.refresh(user)
@@ -151,6 +171,9 @@ async def reset_user_password(
         is_admin=user.is_admin,
         is_disabled=user.is_disabled,
         can_post=user.can_post,
+        xp=user.xp,
+        level=user.level,
+        title=user.title,
         created_at=user.created_at,
     )
 
@@ -165,9 +188,19 @@ async def delete_user(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete your own account")
 
     user = await _get_user_or_404(session, user_id)
+    _assert_can_manage_target(admin, user)
     user_spot_ids = select(FishingSpot.id).where(FishingSpot.user_id == user.id)
     user_post_ids = select(Post.id).where(Post.user_id == user.id)
+    user_comment_ids = select(Comment.id).where(Comment.user_id == user.id)
+    comments_on_user_posts = select(Comment.id).where(Comment.post_id.in_(user_post_ids))
 
+    await session.execute(delete(XPLog).where(XPLog.user_id == user.id))
+    await session.execute(delete(UserBadge).where(UserBadge.user_id == user.id))
+    await session.execute(delete(PostLike).where(PostLike.post_id.in_(user_post_ids)))
+    await session.execute(delete(PostLike).where(PostLike.user_id == user.id))
+    await session.execute(delete(CommentLike).where(CommentLike.comment_id.in_(comments_on_user_posts)))
+    await session.execute(delete(CommentLike).where(CommentLike.comment_id.in_(user_comment_ids)))
+    await session.execute(delete(CommentLike).where(CommentLike.user_id == user.id))
     await session.execute(delete(Comment).where(Comment.post_id.in_(user_post_ids)))
     await session.execute(delete(Comment).where(Comment.user_id == user.id))
     await session.execute(delete(CatchLog).where(CatchLog.spot_id.in_(user_spot_ids)))

@@ -9,22 +9,27 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <style>
         :root {
-            --brand-ink: #071f24;
-            --brand-deep: #0b3036;
-            --brand-teal: #126c76;
-            --brand-mint: #2fa66f;
-            --brand-amber: #d9a441;
-            --brand-coral: #c85a42;
-            --surface: #ffffff;
-            --surface-soft: #f2f6f1;
-            --surface-tint: #e7f0ea;
-            --border-soft: #d7e3dc;
-            --text-dark: #142529;
-            --text-muted: #63757a;
+            --brand-ink: #061116;
+            --brand-deep: #09242b;
+            --brand-teal: #0da4a6;
+            --brand-mint: #38f0a0;
+            --brand-amber: #f3bd58;
+            --brand-coral: #ff6f59;
+            --brand-electric: #67e8f9;
+            --surface: rgba(255, 255, 255, 0.9);
+            --surface-soft: rgba(232, 249, 239, 0.72);
+            --surface-tint: rgba(103, 232, 249, 0.12);
+            --glass-strong: rgba(255, 255, 255, 0.84);
+            --glass-dark: rgba(6, 17, 22, 0.78);
+            --border-soft: rgba(138, 216, 203, 0.34);
+            --text-dark: #102227;
+            --text-muted: #64777c;
             --primary-blue: var(--brand-teal);
             --secondary-blue: var(--brand-deep);
-            --shadow-soft: 0 18px 48px rgba(7, 31, 36, 0.1);
-            --shadow-strong: 0 28px 80px rgba(7, 31, 36, 0.18);
+            --shadow-soft: 0 20px 56px rgba(6, 17, 22, 0.16);
+            --shadow-strong: 0 32px 92px rgba(6, 17, 22, 0.3);
+            --glow-aqua: 0 0 36px rgba(103, 232, 249, 0.32);
+            --glow-mint: 0 0 34px rgba(56, 240, 160, 0.28);
         }
 
         * {
@@ -36,20 +41,62 @@
         body {
             font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
             background:
-                linear-gradient(180deg, rgba(247, 250, 244, 0.78) 0%, rgba(237, 244, 238, 0.9) 46%, rgba(248, 250, 246, 0.96) 100%),
+                radial-gradient(circle at 15% 10%, rgba(103, 232, 249, 0.24), transparent 32%),
+                radial-gradient(circle at 88% 18%, rgba(56, 240, 160, 0.18), transparent 30%),
+                linear-gradient(180deg, rgba(232, 249, 239, 0.76) 0%, rgba(215, 239, 236, 0.9) 48%, rgba(248, 250, 246, 0.97) 100%),
                 url('/static/fishing-lake-bg.svg') center top / cover fixed no-repeat;
             color: var(--text-dark);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            position: relative;
+            isolation: isolate;
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::before {
+            inset: 0;
+            opacity: 0.34;
+            background-image:
+                linear-gradient(90deg, rgba(9, 36, 43, 0.12) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(9, 36, 43, 0.1) 1px, transparent 1px);
+            background-size: 72px 72px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 70%);
+        }
+
+        body::after {
+            width: 560px;
+            height: 560px;
+            right: -180px;
+            top: 16vh;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle, rgba(103, 232, 249, 0.2), transparent 62%);
+            filter: blur(4px);
+            animation: ambientDrift 14s ease-in-out infinite alternate;
+        }
+
+        @keyframes ambientDrift {
+            from { transform: translate3d(0, 0, 0) scale(1); }
+            to { transform: translate3d(-90px, 80px, 0) scale(1.18); }
         }
 
         /* 导航栏 */
         .navbar {
-            background: rgba(7, 31, 36, 0.96);
-            backdrop-filter: blur(18px);
-            box-shadow: 0 16px 42px rgba(7, 31, 36, 0.2);
-            border-bottom: 1px solid rgba(217, 164, 65, 0.28);
+            position: relative;
+            z-index: 4;
+            background: rgba(6, 17, 22, 0.82);
+            backdrop-filter: blur(22px) saturate(1.25);
+            box-shadow: 0 18px 48px rgba(6, 17, 22, 0.24);
+            border-bottom: 1px solid rgba(103, 232, 249, 0.22);
             min-height: 74px;
         }
 
@@ -70,22 +117,24 @@
         }
 
         .navbar-brand i {
-            color: var(--brand-amber);
+            color: var(--brand-electric);
             font-size: 1.5rem;
+            filter: drop-shadow(0 0 14px rgba(103, 232, 249, 0.58));
         }
 
         .nav-link {
-            color: rgba(255, 255, 255, 0.82) !important;
+            color: rgba(239, 254, 250, 0.82) !important;
             font-weight: 500;
-            transition: color 0.2s ease, background-color 0.2s ease;
+            transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
             position: relative;
-            border-radius: 8px;
+            border-radius: 999px;
             padding: 10px 14px !important;
         }
 
         .nav-link:hover {
             color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(103, 232, 249, 0.1);
+            box-shadow: inset 0 0 0 1px rgba(103, 232, 249, 0.22);
         }
 
         .nav-link::after {
@@ -95,7 +144,7 @@
             height: 2px;
             bottom: -5px;
             left: 0;
-            background-color: var(--brand-amber);
+            background: linear-gradient(90deg, transparent, var(--brand-electric), var(--brand-mint), transparent);
             transition: width 0.2s ease;
         }
 
@@ -108,6 +157,8 @@
             flex: 1;
             padding: 0 0 64px;
             width: 100%;
+            position: relative;
+            z-index: 1;
         }
 
         .container {
@@ -129,7 +180,7 @@
         /* 页面标题 */
         .page-title {
             font-size: clamp(2rem, 4vw, 3.2rem);
-            font-weight: 800;
+            font-weight: 900;
             color: var(--brand-deep);
             margin-bottom: 12px;
             display: flex;
@@ -139,8 +190,9 @@
         }
 
         .page-title i {
-            color: var(--brand-mint);
+            color: var(--brand-teal);
             font-size: 2.8rem;
+            filter: drop-shadow(0 0 16px rgba(103, 232, 249, 0.3));
         }
 
         .page-subtitle {
@@ -152,22 +204,25 @@
         /* 卡片 */
         .card {
             border: 1px solid var(--border-soft);
-            border-radius: 18px;
+            border-radius: 22px;
             box-shadow: var(--shadow-soft);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
             overflow: hidden;
             margin-bottom: 20px;
-            background: var(--surface);
+            background: var(--glass-strong);
+            backdrop-filter: blur(18px) saturate(1.1);
         }
 
         .card:hover {
             transform: translateY(-3px);
             box-shadow: var(--shadow-strong);
-            border-color: rgba(22, 115, 122, 0.28);
+            border-color: rgba(103, 232, 249, 0.45);
         }
 
         .card-header {
-            background: linear-gradient(135deg, var(--brand-deep), var(--brand-teal));
+            background:
+                radial-gradient(circle at 8% 0%, rgba(103, 232, 249, 0.28), transparent 36%),
+                linear-gradient(135deg, var(--brand-ink), var(--brand-teal));
             color: white;
             border: none;
             font-weight: 600;
@@ -180,7 +235,7 @@
 
         /* 按钮 */
         .btn {
-            border-radius: 8px;
+            border-radius: 999px;
             font-weight: 600;
             transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
             border: none;
@@ -188,17 +243,21 @@
         }
 
         .btn-primary {
-            background: var(--brand-teal);
+            color: #061116;
+            background: linear-gradient(135deg, var(--brand-electric), var(--brand-mint));
+            box-shadow: 0 12px 30px rgba(13, 164, 166, 0.22);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 22px rgba(22, 115, 122, 0.24);
-            background: var(--brand-deep);
+            color: #061116;
+            box-shadow: 0 16px 38px rgba(56, 240, 160, 0.3);
+            background: linear-gradient(135deg, #b7fbff, #6df7ba);
         }
 
         .btn-success {
-            background: var(--brand-mint);
+            color: #061116;
+            background: linear-gradient(135deg, var(--brand-mint), #b5f36b);
         }
 
         .btn-success:hover {
@@ -218,8 +277,8 @@
 
         .btn-outline-primary {
             color: var(--brand-teal);
-            border: 1px solid rgba(22, 115, 122, 0.35);
-            background: transparent;
+            border: 1px solid rgba(13, 164, 166, 0.38);
+            background: rgba(255, 255, 255, 0.26);
         }
 
         .btn-outline-primary:hover {
@@ -243,10 +302,11 @@
         /* 输入框 */
         .form-control, .form-select {
             border: 1px solid var(--border-soft);
-            border-radius: 8px;
+            border-radius: 14px;
             padding: 12px 15px;
             font-size: 1rem;
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: rgba(255, 255, 255, 0.84);
         }
 
         .form-control:focus, .form-select:focus {
@@ -254,10 +314,21 @@
             box-shadow: 0 0 0 0.2rem rgba(22, 115, 122, 0.13);
         }
 
+        .modal {
+            z-index: 1080;
+        }
+
+        .modal-backdrop {
+            z-index: 1070;
+        }
+
         /* 底部 */
         footer {
+            position: relative;
+            z-index: 1;
             background:
-                linear-gradient(135deg, rgba(7, 31, 36, 0.98), rgba(12, 57, 62, 0.96));
+                radial-gradient(circle at 14% 0%, rgba(103, 232, 249, 0.18), transparent 26%),
+                linear-gradient(135deg, rgba(6, 17, 22, 0.98), rgba(9, 36, 43, 0.96));
             color: white;
             padding: 42px 20px;
             text-align: center;
@@ -298,7 +369,7 @@
         /* 装饰线 */
         .divider {
             height: 2px;
-            background: linear-gradient(to right, transparent, var(--brand-amber), transparent);
+            background: linear-gradient(to right, transparent, var(--brand-electric), var(--brand-mint), transparent);
             margin: 20px 0;
         }
 
@@ -308,17 +379,20 @@
 
         .brand-panel {
             background:
-                radial-gradient(circle at 12% 18%, rgba(217, 164, 65, 0.24), transparent 30%),
-                linear-gradient(135deg, var(--brand-ink), var(--brand-teal));
-            border: 1px solid rgba(217, 164, 65, 0.28);
-            border-radius: 24px;
+                radial-gradient(circle at 16% 10%, rgba(103, 232, 249, 0.28), transparent 30%),
+                radial-gradient(circle at 88% 18%, rgba(56, 240, 160, 0.22), transparent 30%),
+                linear-gradient(135deg, rgba(6, 17, 22, 0.96), rgba(9, 72, 78, 0.92));
+            border: 1px solid rgba(103, 232, 249, 0.28);
+            border-radius: 30px;
             color: #fff;
             box-shadow: var(--shadow-strong);
             overflow: hidden;
+            position: relative;
         }
 
         .brand-panel__icon {
-            color: var(--brand-amber);
+            color: var(--brand-electric);
+            filter: drop-shadow(0 0 18px rgba(103, 232, 249, 0.48));
         }
 
         .shell-card {
@@ -332,10 +406,11 @@
         .feature-card {
             height: 100%;
             padding: 26px;
-            background: rgba(255, 255, 255, 0.94);
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(18px) saturate(1.12);
             border: 1px solid var(--border-soft);
-            border-top: 4px solid var(--brand-teal);
-            border-radius: 18px;
+            border-top: 4px solid var(--brand-electric);
+            border-radius: 22px;
             box-shadow: var(--shadow-soft);
         }
 
@@ -484,6 +559,11 @@
                             <i class="fas fa-map-location-dot"></i> 我的钓点
                         </a>
                     </li>
+                    <li class="nav-item" id="levelNav" style="display: none;">
+                        <a class="nav-link" href="/level">
+                            <i class="fas fa-ranking-star"></i> 我的等级
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/forum">
                             <i class="fas fa-comments"></i> 讨论专区
@@ -533,6 +613,7 @@
             const token = localStorage.getItem('token');
             const authNav = document.getElementById('authNav');
             const spotsNav = document.getElementById('spotsNav');
+            const levelNav = document.getElementById('levelNav');
             const adminNav = document.getElementById('adminNav');
 
             if (token && authNav) {
@@ -549,6 +630,9 @@
                 if (spotsNav) {
                     spotsNav.style.display = 'block';
                 }
+                if (levelNav) {
+                    levelNav.style.display = 'block';
+                }
                 apiFetch('/api/auth/me')
                     .then(user => {
                         if (adminNav && user.is_admin) {
@@ -564,6 +648,9 @@
                 // 隐藏需要登录的菜单项
                 if (spotsNav) {
                     spotsNav.style.display = 'none';
+                }
+                if (levelNav) {
+                    levelNav.style.display = 'none';
                 }
                 if (adminNav) {
                     adminNav.style.display = 'none';

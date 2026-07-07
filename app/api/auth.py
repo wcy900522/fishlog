@@ -12,6 +12,7 @@ from app.core.security import SecurityService
 from app.schemas import UserRegister, UserLogin, UserResponse, Token
 from app.repositories import UserRepository
 from app.models import User
+from app.core.nickname_validator import NicknameValidationError, NicknameValidator
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -32,8 +33,19 @@ def is_wechat_enabled() -> bool:
     return bool(settings.WECHAT_APP_ID and settings.WECHAT_APP_SECRET)
 
 
+def get_valid_wechat_nickname(raw_nickname: str | None, fallback: str = "微信用户") -> str | None:
+    nickname = raw_nickname or fallback
+    try:
+        NicknameValidator.validate(nickname)
+        return nickname
+    except NicknameValidationError:
+        return None
+
+
 @router.post("/register", response_model=UserResponse)
 async def register(user_data: UserRegister, session: AsyncSession = Depends(get_db)):
+    NicknameValidator.validate(user_data.nickname)
+
     existing_user = await UserRepository.get_user_by_phone(session, user_data.phone)
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone already registered")
@@ -124,9 +136,10 @@ async def wechat_callback(
             return RedirectResponse(f"/login?wechat_error={userinfo.get('errcode')}")
 
     user = await UserRepository.get_user_by_wechat_openid(session, openid)
+    nickname = get_valid_wechat_nickname(userinfo.get("nickname"))
     if not user:
         user = User(
-            nickname=userinfo.get("nickname") or "微信用户",
+            nickname=nickname or "微信用户",
             avatar=userinfo.get("headimgurl"),
             phone=None,
             password_hash=SecurityService.get_password_hash(secrets.token_urlsafe(32)),
@@ -135,7 +148,8 @@ async def wechat_callback(
         )
         session.add(user)
     else:
-        user.nickname = userinfo.get("nickname") or user.nickname
+        if nickname:
+            user.nickname = nickname
         user.avatar = userinfo.get("headimgurl") or user.avatar
         user.wechat_unionid = user.wechat_unionid or userinfo.get("unionid") or token_data.get("unionid")
 

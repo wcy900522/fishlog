@@ -152,6 +152,7 @@
 {% block extra_js %}
 <script>
 let currentUser = null;
+const SUPER_ADMIN_PHONE = '18610137321';
 
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -216,8 +217,14 @@ function renderUsers(users) {
     const tbody = document.getElementById('usersTable');
     tbody.innerHTML = users.map(user => {
         const isSelf = currentUser && currentUser.id === user.id;
+        const isSuperAdmin = user.phone === SUPER_ADMIN_PHONE;
+        const currentUserIsSuperAdmin = currentUser && currentUser.phone === SUPER_ADMIN_PHONE;
+        const protectedFromCurrentAdmin = isSuperAdmin && !isSelf;
+        const canManageAdminRole = currentUserIsSuperAdmin && !isSelf;
+        const canOperate = !protectedFromCurrentAdmin;
         const identity = user.phone || user.wechat_openid || '未绑定手机号';
         const statuses = [
+            isSuperAdmin ? '<span class="status-pill status-pill--admin"><i class="fas fa-crown"></i> 超级管理员</span>' : '',
             user.is_admin ? '<span class="status-pill status-pill--admin"><i class="fas fa-user-shield"></i> 管理员</span>' : '',
             user.is_disabled ? '<span class="status-pill status-pill--danger"><i class="fas fa-ban"></i> 已禁用</span>' : '<span class="status-pill"><i class="fas fa-circle-check"></i> 正常</span>',
             user.can_post ? '<span class="status-pill"><i class="fas fa-comment"></i> 可发言</span>' : '<span class="status-pill status-pill--danger"><i class="fas fa-comment-slash"></i> 已禁言</span>'
@@ -229,6 +236,7 @@ function renderUsers(users) {
                 <td>
                     <strong>${escapeHTML(user.nickname)}</strong>
                     ${isSelf ? '<span class="badge badge-primary ms-1">当前账号</span>' : ''}
+                    ${protectedFromCurrentAdmin ? '<span class="badge badge-success ms-1">受保护</span>' : ''}
                     <div class="text-muted small">${escapeHTML(identity)}</div>
                 </td>
                 <td>${statuses}</td>
@@ -239,19 +247,19 @@ function renderUsers(users) {
                 <td>${new Date(user.created_at).toLocaleString('zh-CN')}</td>
                 <td>
                     <div class="user-actions">
-                        <button class="btn btn-sm btn-outline-primary" onclick="toggleUser(${user.id}, 'can_post', ${!user.can_post})">
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleUser(${user.id}, 'can_post', ${!user.can_post})" ${!canOperate ? 'disabled title="超级管理员账号不允许被其他管理员管理"' : ''}>
                             ${user.can_post ? '禁言' : '解禁发言'}
                         </button>
-                        <button class="btn btn-sm btn-outline-primary" onclick="toggleUser(${user.id}, 'is_disabled', ${!user.is_disabled})" ${isSelf ? 'disabled' : ''}>
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleUser(${user.id}, 'is_disabled', ${!user.is_disabled})" ${isSelf || !canOperate ? 'disabled' : ''}>
                             ${user.is_disabled ? '启用' : '禁用'}
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleUser(${user.id}, 'is_admin', ${!user.is_admin})" ${isSelf ? 'disabled' : ''}>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleUser(${user.id}, 'is_admin', ${!user.is_admin})" ${!canManageAdminRole ? 'disabled title="只有超级管理员可以授权或取消管理员权限"' : ''}>
                             ${user.is_admin ? '取消管理员' : '设为管理员'}
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="resetPassword(${user.id})">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="resetPassword(${user.id})" ${!canOperate ? 'disabled' : ''}>
                             重置密码
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id}, '${escapeHTML(user.nickname)}')" ${isSelf ? 'disabled' : ''}>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id}, '${escapeHTML(user.nickname)}')" ${isSelf || !canOperate ? 'disabled' : ''}>
                             删除
                         </button>
                     </div>
