@@ -20,7 +20,19 @@ def __getattr__(name: str) -> Any:
         from app.services.badge_service import BadgeService
 
         return BadgeService
+    if name == "DashboardService":
+        from app.services.dashboard_service import DashboardService
+
+        return DashboardService
+    if name == "CatalogService":
+        from app.services.catalog_service import CatalogService
+
+        return CatalogService
+    if name == "RecordService":
+        from app.services.record_service import RecordService
+
+        return RecordService
     raise AttributeError(f"module 'app.services' has no attribute {name!r}")
 
 
-__all__ = ["BadgeService", "ExperienceService", "LevelService", "WeatherService"]
+__all__ = ["BadgeService", "CatalogService", "DashboardService", "ExperienceService", "LevelService", "RecordService", "WeatherService"]

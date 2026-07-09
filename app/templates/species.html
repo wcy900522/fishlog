@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}鱼种库 - AnglrLog{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="page-title"><i class="fas fa-fish"></i> 鱼种库</h1>
+    <p class="page-subtitle">沉淀目标鱼种、常见钓法和常用饵料。</p>
+</div>
+
+<div class="shell-card p-4 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label">搜索鱼种</label>
+            <input class="form-control" id="keywordFilter" placeholder="名称、分类关键词">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">分类</label>
+            <input class="form-control" id="categoryFilter" placeholder="如：路亚、淡水、海水">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button class="btn btn-primary flex-fill" onclick="loadSpecies()">筛选</button>
+            <button class="btn btn-outline-secondary" onclick="resetFilters()">重置</button>
+        </div>
+    </div>
+</div>
+
+<div class="shell-card p-4 mb-4" id="adminForm" hidden>
+    <h5 class="mb-3" id="formTitle">新增鱼种</h5>
+    <div class="row g-3">
+        <div class="col-md-3"><input class="form-control" id="name" placeholder="名称"></div>
+        <div class="col-md-3"><input class="form-control" id="category" placeholder="分类"></div>
+        <div class="col-md-6"><input class="form-control" id="imageUrl" placeholder="图片 URL"></div>
+        <div class="col-md-6"><input class="form-control" id="methods" placeholder="常见钓法"></div>
+        <div class="col-md-6"><input class="form-control" id="baits" placeholder="常用饵料"></div>
+        <div class="col-12"><textarea class="form-control" id="description" rows="3" placeholder="介绍"></textarea></div>
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" onclick="saveSpecies()" id="saveBtn">保存</button>
+            <button class="btn btn-outline-secondary" onclick="resetForm()" type="button">取消编辑</button>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4" id="speciesList"></div>
+
+<script>
+let currentUser = null;
+let editingSpeciesId = null;
+
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+
+async function loadCurrentUser() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        currentUser = await apiFetch('/api/auth/me');
+        if (currentUser.is_admin) document.getElementById('adminForm').hidden = false;
+    } catch (error) {
+        currentUser = null;
+    }
+}
+
+async function loadSpecies() {
+    const params = new URLSearchParams();
+    const keyword = document.getElementById('keywordFilter').value.trim();
+    const category = document.getElementById('categoryFilter').value.trim();
+    if (keyword) params.set('keyword', keyword);
+    if (category) params.set('category', category);
+    const rows = await apiFetch(`/api/species${params.toString() ? `?${params}` : ''}`);
+    document.getElementById('speciesList').innerHTML = rows.length ? rows.map(item => `
+        <div class="col-md-6 col-lg-4">
+            <article class="feature-card">
+                ${item.image_url ? `<img src="${escapeHTML(item.image_url)}" alt="${escapeHTML(item.name)}" class="w-100 rounded mb-3" style="height: 180px; object-fit: cover;">` : ''}
+                <h5>${escapeHTML(item.name)}</h5>
+                <p class="mb-2"><strong>${escapeHTML(item.category || '未分类')}</strong></p>
+                <p>${escapeHTML(item.description || '暂无介绍')}</p>
+                ${item.common_methods ? `<p><i class="fas fa-route"></i> ${escapeHTML(item.common_methods)}</p>` : ''}
+                ${item.common_baits ? `<p><i class="fas fa-worm"></i> ${escapeHTML(item.common_baits)}</p>` : ''}
+                ${currentUser?.is_admin ? `
+                    <div class="d-flex gap-2 mt-3">
+                        <button class="btn btn-sm btn-primary" onclick="editSpeciesById(${item.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSpecies(${item.id})">删除</button>
+                    </div>
+                ` : ''}
+            </article>
+        </div>
+    `).join('') : '<div class="empty-state">暂无鱼种数据</div>';
+}
+
+async function editSpeciesById(id) {
+    const item = await apiFetch(`/api/species/${id}`);
+    editSpecies(item);
+}
+
+async function saveSpecies() {
+    const payload = {
+        name: document.getElementById('name').value.trim(),
+        category: document.getElementById('category').value.trim() || null,
+        image_url: document.getElementById('imageUrl').value.trim() || null,
+        common_methods: document.getElementById('methods').value.trim() || null,
+        common_baits: document.getElementById('baits').value.trim() || null,
+        description: document.getElementById('description').value.trim() || null
+    };
+    const url = editingSpeciesId ? `/api/species/${editingSpeciesId}` : '/api/species';
+    await apiFetch(url, {
+        method: editingSpeciesId ? 'PUT' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    resetForm();
+    await loadSpecies();
+}
+
+function editSpecies(item) {
+    editingSpeciesId = item.id;
+    document.getElementById('formTitle').textContent = '编辑鱼种';
+    document.getElementById('saveBtn').textContent = '保存修改';
+    document.getElementById('name').value = item.name || '';
+    document.getElementById('category').value = item.category || '';
+    document.getElementById('imageUrl').value = item.image_url || '';
+    document.getElementById('methods').value = item.common_methods || '';
+    document.getElementById('baits').value = item.common_baits || '';
+    document.getElementById('description').value = item.description || '';
+    document.getElementById('adminForm').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+async function deleteSpecies(id) {
+    if (!confirm('确定删除这个鱼种吗？')) return;
+    await apiFetch(`/api/species/${id}`, {method: 'DELETE'});
+    await loadSpecies();
+}
+
+function resetForm() {
+    editingSpeciesId = null;
+    document.getElementById('formTitle').textContent = '新增鱼种';
+    document.getElementById('saveBtn').textContent = '保存';
+    document.querySelectorAll('#adminForm input, #adminForm textarea').forEach(el => el.value = '');
+}
+
+function resetFilters() {
+    document.getElementById('keywordFilter').value = '';
+    document.getElementById('categoryFilter').value = '';
+    loadSpecies();
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadCurrentUser();
+    await loadSpecies();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}饵料库 - AnglrLog{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="page-title"><i class="fas fa-worm"></i> 饵料库</h1>
+    <p class="page-subtitle">整理常用饵料、适用鱼种和水域。</p>
+</div>
+
+<div class="shell-card p-4 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label">搜索饵料</label>
+            <input class="form-control" id="keywordFilter" placeholder="名称、品牌关键词">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">类型</label>
+            <select class="form-select" id="typeFilter">
+                <option value="">全部类型</option>
+                <option>植物饵</option><option>商品饵</option><option>软饵</option><option>硬饵</option><option>活饵</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button class="btn btn-primary flex-fill" onclick="loadBaits()">筛选</button>
+            <button class="btn btn-outline-secondary" onclick="resetFilters()">重置</button>
+        </div>
+    </div>
+</div>
+
+<div class="shell-card p-4 mb-4" id="adminForm" hidden>
+    <h5 class="mb-3" id="formTitle">新增饵料</h5>
+    <div class="row g-3">
+        <div class="col-md-3"><input class="form-control" id="name" placeholder="名称"></div>
+        <div class="col-md-3">
+            <select class="form-select" id="baitType">
+                <option>植物饵</option><option>商品饵</option><option>软饵</option><option>硬饵</option><option>活饵</option>
+            </select>
+        </div>
+        <div class="col-md-3"><input class="form-control" id="brand" placeholder="品牌"></div>
+        <div class="col-md-3"><input class="form-control" id="waterType" placeholder="适用水域"></div>
+        <div class="col-md-6"><input class="form-control" id="targetSpecies" placeholder="适用鱼种"></div>
+        <div class="col-md-6"><input class="form-control" id="note" placeholder="备注"></div>
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" onclick="saveBait()" id="saveBtn">保存</button>
+            <button class="btn btn-outline-secondary" onclick="resetForm()" type="button">取消编辑</button>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4" id="baitList"></div>
+
+<script>
+let currentUser = null;
+let editingBaitId = null;
+
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+
+async function loadCurrentUser() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        currentUser = await apiFetch('/api/auth/me');
+        if (currentUser.is_admin) document.getElementById('adminForm').hidden = false;
+    } catch (error) {}
+}
+
+async function loadBaits() {
+    const params = new URLSearchParams();
+    const keyword = document.getElementById('keywordFilter').value.trim();
+    const baitType = document.getElementById('typeFilter').value;
+    if (keyword) params.set('keyword', keyword);
+    if (baitType) params.set('bait_type', baitType);
+    const rows = await apiFetch(`/api/baits${params.toString() ? `?${params}` : ''}`);
+    document.getElementById('baitList').innerHTML = rows.length ? rows.map(item => `
+        <div class="col-md-6 col-lg-4">
+            <article class="feature-card">
+                <h5>${escapeHTML(item.name)}</h5>
+                <p><strong>${escapeHTML(item.bait_type)}</strong>${item.brand ? ` · ${escapeHTML(item.brand)}` : ''}</p>
+                ${item.target_species ? `<p><i class="fas fa-fish"></i> ${escapeHTML(item.target_species)}</p>` : ''}
+                ${item.water_type ? `<p><i class="fas fa-water"></i> ${escapeHTML(item.water_type)}</p>` : ''}
+                ${item.note ? `<p>${escapeHTML(item.note)}</p>` : ''}
+                ${currentUser?.is_admin ? `
+                    <div class="d-flex gap-2 mt-3">
+                        <button class="btn btn-sm btn-primary" onclick="editBaitById(${item.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteBait(${item.id})">删除</button>
+                    </div>
+                ` : ''}
+            </article>
+        </div>
+    `).join('') : '<div class="empty-state">暂无饵料数据</div>';
+}
+
+async function saveBait() {
+    const payload = {
+        name: document.getElementById('name').value.trim(),
+        bait_type: document.getElementById('baitType').value,
+        brand: document.getElementById('brand').value.trim() || null,
+        water_type: document.getElementById('waterType').value.trim() || null,
+        target_species: document.getElementById('targetSpecies').value.trim() || null,
+        note: document.getElementById('note').value.trim() || null
+    };
+    const url = editingBaitId ? `/api/baits/${editingBaitId}` : '/api/baits';
+    await apiFetch(url, {
+        method: editingBaitId ? 'PUT' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    resetForm();
+    await loadBaits();
+}
+
+async function editBaitById(id) {
+    const item = await apiFetch(`/api/baits/${id}`);
+    editingBaitId = item.id;
+    document.getElementById('formTitle').textContent = '编辑饵料';
+    document.getElementById('saveBtn').textContent = '保存修改';
+    document.getElementById('name').value = item.name || '';
+    document.getElementById('baitType').value = item.bait_type || '植物饵';
+    document.getElementById('brand').value = item.brand || '';
+    document.getElementById('waterType').value = item.water_type || '';
+    document.getElementById('targetSpecies').value = item.target_species || '';
+    document.getElementById('note').value = item.note || '';
+    document.getElementById('adminForm').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+async function deleteBait(id) {
+    if (!confirm('确定删除这个饵料吗？')) return;
+    await apiFetch(`/api/baits/${id}`, {method: 'DELETE'});
+    await loadBaits();
+}
+
+function resetForm() {
+    editingBaitId = null;
+    document.getElementById('formTitle').textContent = '新增饵料';
+    document.getElementById('saveBtn').textContent = '保存';
+    document.querySelectorAll('#adminForm input').forEach(el => el.value = '');
+    document.getElementById('baitType').value = '植物饵';
+}
+
+function resetFilters() {
+    document.getElementById('keywordFilter').value = '';
+    document.getElementById('typeFilter').value = '';
+    loadBaits();
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadCurrentUser();
+    await loadBaits();
+});
+</script>
+{% endblock %}

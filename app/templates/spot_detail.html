@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}钓点详情 - 渔迹录{% endblock %}
+{% block title %}钓点详情 - AnglrLog{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -112,6 +112,12 @@
         }[char]));
     }
 
+    function formatDurationHours(minutes) {
+        const hours = Number(minutes || 0) / 60;
+        if (!Number.isFinite(hours) || hours <= 0) return '未记录';
+        return `${Number.isInteger(hours) ? hours : hours.toFixed(1).replace(/\.0$/, '')}小时`;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         loadSpotDetails();
         loadWeather();
@@ -126,11 +132,14 @@
                 document.getElementById('spot-province').textContent = spot.province || '未知';
                 document.getElementById('spot-city').textContent = spot.city || '未知';
                 document.getElementById('spot-water-type').textContent = {
-                    'sea': '海钓',
-                    'river': '河钓',
-                    'lake': '湖钓',
-                    'reservoir': '水库钓'
-                }[spot.water_type] || spot.water_type || '未知';
+                    'sea': '海水',
+                    'river': '河流',
+                    'lake': '湖泊',
+                    'reservoir': '水库',
+                    'pond': '池塘',
+                    'pay_pond': '黑坑',
+                    'other': '其他'
+                }[String(spot.water_type || '').toLowerCase()] || spot.water_type || '未知';
                 document.getElementById('spot-lat').textContent = spot.latitude;
                 document.getElementById('spot-lng').textContent = spot.longitude;
                 document.getElementById('spot-description').textContent = spot.description || '暂无介绍';
@@ -170,21 +179,21 @@
                             <div style="font-size: 2.5rem; color: var(--brand-coral); margin-bottom: 10px;">
                                 <i class="fas fa-thermometer-half"></i>
                             </div>
-                            <p style="color: #666;">温度</p>
+                            <p style="color: var(--text-muted);">温度</p>
                             <h4 class="fw-bold" style="color: var(--brand-deep);">${weather.temperature || '?'}°C</h4>
                         </div>
                         <div class="col-md-4">
                             <div style="font-size: 2.5rem; color: var(--brand-teal); margin-bottom: 10px;">
                                 <i class="fas fa-wind"></i>
                             </div>
-                            <p style="color: #666;">风速</p>
+                            <p style="color: var(--text-muted);">风速</p>
                             <h4 class="fw-bold" style="color: var(--brand-deep);">${weather.wind_speed || '?'} m/s</h4>
                         </div>
                         <div class="col-md-4">
                             <div style="font-size: 2.5rem; color: var(--brand-mint); margin-bottom: 10px;">
                                 <i class="fas fa-gauge"></i>
                             </div>
-                            <p style="color: #666;">气压</p>
+                            <p style="color: var(--text-muted);">气压</p>
                             <h4 class="fw-bold" style="color: var(--brand-deep);">${weather.pressure || '?'} hPa</h4>
                         </div>
                     </div>
@@ -203,7 +212,7 @@
 
                 if (logs.length === 0) {
                     communityLogs.innerHTML = `
-                        <div class="text-center" style="padding: 40px; color: #999;">
+                        <div class="text-center" style="padding: 40px; color: var(--text-muted);">
                             <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
                             暂无记录，您可以成为第一个分享者！
                         </div>
@@ -217,26 +226,26 @@
                             <h6 style="margin: 0; color: var(--brand-deep); font-weight: 600;">
                                 <i class="fas fa-user-circle"></i> ${escapeHTML(log.user_nickname || '未知用户')}
                             </h6>
-                            <small style="color: #999;">
+                            <small style="color: var(--text-muted);">
                                 <i class="fas fa-calendar"></i> ${new Date(log.fishing_at).toLocaleDateString('zh-CN')}
                             </small>
                         </div>
 
                         <div style="background: var(--surface-soft); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
-                            <p style="margin: 8px 0; color: #555;">
+                            <p style="margin: 8px 0; color: var(--text-dark);">
                                 <strong style="color: var(--brand-teal);">鱼种：</strong>${escapeHTML(log.species || '未记录')}
                                 <span class="badge badge-success" style="margin-left: 10px;">${log.quantity || 0}条</span>
                             </p>
-                            <p style="margin: 8px 0; color: #555;">
+                            <p style="margin: 8px 0; color: var(--text-dark);">
                                 <strong style="color: var(--brand-teal);">饵料：</strong>${escapeHTML(log.bait || '未记录')}
                             </p>
-                            <p style="margin: 8px 0; color: #555;">
-                                <strong style="color: var(--brand-teal);">时长：</strong>${log.duration}分钟
+                            <p style="margin: 8px 0; color: var(--text-dark);">
+                                <strong style="color: var(--brand-teal);">时长：</strong>${formatDurationHours(log.duration)}
                             </p>
-                            ${log.note ? `<p style="margin: 8px 0; color: #666;"><strong>备注：</strong>${escapeHTML(log.note)}</p>` : ''}
+                            ${log.note ? `<p style="margin: 8px 0; color: var(--text-muted);"><strong>备注：</strong>${escapeHTML(log.note)}</p>` : ''}
                         </div>
 
-                        <div style="display: flex; gap: 15px; font-size: 0.9rem; color: #999;">
+                        <div style="display: flex; gap: 15px; font-size: 0.9rem; color: var(--text-muted);">
                             <span><i class="fas fa-thermometer-half"></i> ${log.temperature || '?'}°C</span>
                             <span><i class="fas fa-wind"></i> ${log.wind_speed || '?'} m/s</span>
                             <span><i class="fas fa-gauge"></i> ${log.pressure || '?'} hPa</span>
@@ -270,13 +279,13 @@
                 let statsHtml = `
                     <div style="text-align: center;">
                         <h4 style="color: var(--brand-teal); font-weight: bold;">${totalFish}</h4>
-                        <p style="color: #666;">总渔获数</p>
+                        <p style="color: var(--text-muted);">总渔获数</p>
                     </div>
                     <hr>
                     ${topSpecies.length > 0 ? `
-                        <p style="color: #666; font-weight: 600; margin-bottom: 10px;">热门鱼种：</p>
+                        <p style="color: var(--text-muted); font-weight: 600; margin-bottom: 10px;">热门鱼种：</p>
                         ${topSpecies.map(([species, count]) => `
-                            <p style="margin: 5px 0; color: #555;">
+                            <p style="margin: 5px 0; color: var(--text-dark);">
                                 <i class="fas fa-fish"></i> ${species}: <strong>${count}</strong>条
                             </p>
                         `).join('')}

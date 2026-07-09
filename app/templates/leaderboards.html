@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}排行榜 - AnglrLog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .leaderboard-card {
+        height: 100%;
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        background: var(--glass-strong);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+    }
+
+    .leaderboard-card__head {
+        padding: 20px 22px 16px;
+        border-bottom: 1px solid var(--border-soft);
+        background: linear-gradient(180deg, rgba(238, 250, 255, 0.9), rgba(255, 255, 255, 0.78));
+    }
+
+    .leaderboard-card__title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .leaderboard-card__title h2 {
+        margin: 0;
+        color: var(--brand-deep);
+        font-size: 1.12rem;
+        font-weight: 900;
+    }
+
+    .leaderboard-card__rule {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.88rem;
+        line-height: 1.6;
+    }
+
+    .leaderboard-list {
+        display: grid;
+        gap: 0;
+    }
+
+    .leaderboard-row {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        min-height: 72px;
+        padding: 13px 18px;
+        border-bottom: 1px solid rgba(89, 169, 188, 0.16);
+    }
+
+    .leaderboard-row:last-child {
+        border-bottom: 0;
+    }
+
+    .leaderboard-rank {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: var(--surface-soft);
+        color: var(--brand-teal);
+        font-weight: 900;
+    }
+
+    .leaderboard-row:nth-child(1) .leaderboard-rank {
+        background: #f7d774;
+        color: #4a3709;
+    }
+
+    .leaderboard-row:nth-child(2) .leaderboard-rank {
+        background: #dce5ea;
+        color: #33444b;
+    }
+
+    .leaderboard-row:nth-child(3) .leaderboard-rank {
+        background: #efc39b;
+        color: #523019;
+    }
+
+    .leaderboard-user {
+        min-width: 0;
+    }
+
+    .leaderboard-user strong {
+        display: block;
+        color: var(--text-dark);
+        line-height: 1.35;
+    }
+
+    .leaderboard-user span {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.84rem;
+        line-height: 1.5;
+    }
+
+    .leaderboard-score {
+        color: var(--brand-deep);
+        font-size: 1.05rem;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .leaderboard-empty {
+        min-height: 138px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 16px;
+        border: 1px dashed rgba(89, 169, 188, 0.28);
+        border-radius: 8px;
+        background: rgba(248, 252, 253, 0.72);
+        color: var(--text-muted);
+        font-size: 0.94rem;
+        font-weight: 700;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="page-title"><i class="fas fa-trophy"></i> 排行榜</h1>
+    <p class="page-subtitle">围绕真实记录、技术分享和钓点贡献的成长排行</p>
+</div>
+
+<div class="row g-4" id="leaderboardGrid">
+    <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const boardConfig = [
+        ['today_active', '今日活跃榜', '今日 XP', '按今日获得的经验值排序，经验相同按总 XP 排序。'],
+        ['month_xp', '本月经验榜', '本月 XP', '按本月累计获得经验值排序，经验相同按总 XP 排序。'],
+        ['year_king', '年度钓王榜', '年度 XP', '按今年累计获得经验值排序，经验相同按总 XP 排序。'],
+        ['catch_streak', '连续记录榜', '连续天数', '按最近 30 天连续出钓记录天数排序，天数相同按总 XP 排序。'],
+        ['tech_authors', '热门技术作者榜', '技术帖', '按技术分享帖数量排序，数量相同按总 XP 排序。'],
+        ['spot_contributors', '热门钓点贡献榜', '钓点数', '按贡献钓点数量排序，数量相同按总 XP 排序。']
+    ];
+
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
+    }
+
+    function renderBoard(title, scoreLabel, rule, rows) {
+        const topRows = rows.slice(0, 5);
+        const list = topRows.length ? topRows.map((item, index) => `
+            <div class="leaderboard-row">
+                <span class="leaderboard-rank">${index + 1}</span>
+                <div class="leaderboard-user">
+                    <strong>${escapeHTML(item.nickname)}</strong>
+                    <span>Lv${item.level} ${escapeHTML(item.title)} · ${item.xp} XP</span>
+                </div>
+                <div class="leaderboard-score">${item.score}</div>
+            </div>
+        `).join('') : '<div class="leaderboard-empty">暂无数据</div>';
+
+        return `
+            <div class="col-lg-6">
+                <article class="leaderboard-card">
+                    <div class="leaderboard-card__head">
+                        <div class="leaderboard-card__title">
+                            <h2>${title}</h2>
+                            <span class="badge bg-info-subtle text-info-emphasis">${scoreLabel}</span>
+                        </div>
+                        <p class="leaderboard-card__rule">${escapeHTML(rule)}</p>
+                    </div>
+                    <div class="leaderboard-list">
+                        ${list}
+                    </div>
+                </article>
+            </div>
+        `;
+    }
+
+    async function loadLeaderboards() {
+        const grid = document.getElementById('leaderboardGrid');
+        try {
+            const response = await fetch('/api/users/leaderboards');
+            if (!response.ok) throw new Error('加载排行榜失败');
+            const data = await response.json();
+            grid.innerHTML = boardConfig
+                .map(([key, title, scoreLabel, rule]) => renderBoard(title, scoreLabel, rule, data[key] || []))
+                .join('');
+        } catch (error) {
+            grid.innerHTML = `<div class="col-12"><div class="alert alert-danger">${escapeHTML(error.message)}</div></div>`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadLeaderboards);
+</script>
+{% endblock %}

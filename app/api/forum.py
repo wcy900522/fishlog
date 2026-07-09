@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List, Optional
+from pathlib import Path
+from uuid import uuid4
 from app.core.config import get_db
-from app.core.deps import can_manage_user_content, get_current_user, require_admin_user, require_can_post_user
+from app.core.deps import can_manage_user_content, get_current_user, is_root_admin_user, require_admin_user, require_can_post_user
 from app.schemas import PostResponse, PostCreate, PostUpdate, CommentResponse, CommentCreate, CommentUpdate, PostDetailResponse, PostTag
 from app.repositories import LikeRepository, PostRepository, CommentRepository
 from app.services import BadgeService, ExperienceService
@@ -11,6 +13,17 @@ from app.models import CommentLike, Post, PostLike, Comment, User
 
 router = APIRouter(prefix="/api/forum", tags=["forum"])
 PUBLISHER_DISPLAY_NAME = "管理员发布"
+ALLOWED_POST_IMAGE_TYPES = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
+MAX_POST_IMAGE_SIZE = 5 * 1024 * 1024
+
+
+def public_user_nickname(user: User | None) -> str:
+    if not user:
+        return "未知用户"
+    if is_root_admin_user(user):
+        return PUBLISHER_DISPLAY_NAME
+    return user.nickname
+
 
 def build_post_response(post: Post, user: User, comment_count: int, like_count: int = 0) -> dict:
     return {
@@ -19,9 +32,11 @@ def build_post_response(post: Post, user: User, comment_count: int, like_count: 
         "title": post.title,
         "tag": post.tag or "野钓",
         "content": post.content,
+        "image_urls": post.image_urls,
+        "view_count": post.view_count or 0,
         "created_at": post.created_at,
         "updated_at": post.updated_at,
-        "user_nickname": user.nickname,
+        "user_nickname": public_user_nickname(user),
         "user_level": user.level,
         "user_title": user.title,
         "comment_count": comment_count,
@@ -95,6 +110,9 @@ async def get_post_detail(post_id: int, session: AsyncSession = Depends(get_db))
     post = result.scalar_one_or_none()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    post.view_count = int(post.view_count or 0) + 1
+    await session.commit()
+    await session.refresh(post)
 
     comments_data = []
     if post.comments:
@@ -105,7 +123,7 @@ async def get_post_detail(post_id: int, session: AsyncSession = Depends(get_db))
                 "user_id": comment.user_id,
                 "content": comment.content,
                 "created_at": comment.created_at,
-                "user_nickname": comment.user.nickname if comment.user else "未知用户",
+                "user_nickname": public_user_nickname(comment.user),
                 "user_level": comment.user.level if comment.user else 1,
                 "user_title": comment.user.title if comment.user else "初学钓手",
                 "like_count": len(comment.likes or []),
@@ -117,9 +135,11 @@ async def get_post_detail(post_id: int, session: AsyncSession = Depends(get_db))
         "title": post.title,
         "tag": post.tag or "野钓",
         "content": post.content,
+        "image_urls": post.image_urls,
+        "view_count": post.view_count or 0,
         "created_at": post.created_at,
         "updated_at": post.updated_at,
-        "user_nickname": post.user.nickname if post.user else "未知用户",
+        "user_nickname": public_user_nickname(post.user),
         "user_level": post.user.level if post.user else 1,
         "user_title": post.user.title if post.user else "初学钓手",
         "like_count": len(post.likes or []),
@@ -138,15 +158,45 @@ async def create_post(post_data: PostCreate, user = Depends(require_can_post_use
         title=post.title,
         tag=post.tag or "野钓",
         content=post.content,
+        image_urls=post.image_urls,
+        view_count=post.view_count or 0,
         created_at=post.created_at,
         updated_at=post.updated_at,
-        user_nickname=user.nickname,
+        user_nickname=public_user_nickname(user),
         user_level=user.level,
         user_title=user.title,
         comment_count=0,
         like_count=0,
         is_featured=post.is_featured,
     )
+
+
+@router.post("/images")
+async def upload_forum_image(
+    image: UploadFile = File(...),
+    user = Depends(require_can_post_user),
+):
+    suffix = ALLOWED_POST_IMAGE_TYPES.get(image.content_type or "")
+    if not suffix:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPG, PNG, and WebP images are supported",
+        )
+
+    content = await image.read()
+    if len(content) > MAX_POST_IMAGE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Image must be 5MB or smaller",
+        )
+
+    upload_dir = Path(__file__).resolve().parents[1] / "static" / "uploads" / "forum"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"{user.id}_{uuid4().hex}{suffix}"
+    file_path = upload_dir / filename
+    file_path.write_bytes(content)
+
+    return {"url": f"/static/uploads/forum/{filename}"}
 
 @router.put("/posts/{post_id}", response_model=PostResponse)
 async def update_post(post_id: int, post_data: PostUpdate, user = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
@@ -167,9 +217,11 @@ async def update_post(post_id: int, post_data: PostUpdate, user = Depends(get_cu
         title=updated_post.title,
         tag=updated_post.tag or "野钓",
         content=updated_post.content,
+        image_urls=updated_post.image_urls,
+        view_count=updated_post.view_count or 0,
         created_at=updated_post.created_at,
         updated_at=updated_post.updated_at,
-        user_nickname=user.nickname,
+        user_nickname=public_user_nickname(user),
         user_level=user.level,
         user_title=user.title,
         comment_count=comment_count,
@@ -202,7 +254,7 @@ async def create_comment(post_id: int, comment_data: CommentCreate, user = Depen
         user_id=comment.user_id,
         content=comment.content,
         created_at=comment.created_at,
-        user_nickname=user.nickname,
+        user_nickname=public_user_nickname(user),
         user_level=user.level,
         user_title=user.title,
         like_count=0,
@@ -223,7 +275,7 @@ async def update_comment(comment_id: int, comment_data: CommentUpdate, user = De
         user_id=updated_comment.user_id,
         content=updated_comment.content,
         created_at=updated_comment.created_at,
-        user_nickname=user.nickname,
+        user_nickname=public_user_nickname(user),
         user_level=user.level,
         user_title=user.title,
         like_count=0,
@@ -304,9 +356,11 @@ async def feature_post(post_id: int, admin = Depends(require_admin_user), sessio
         title=post.title,
         tag=post.tag or "野钓",
         content=post.content,
+        image_urls=post.image_urls,
+        view_count=post.view_count or 0,
         created_at=post.created_at,
         updated_at=post.updated_at,
-        user_nickname=owner.nickname if owner else PUBLISHER_DISPLAY_NAME,
+        user_nickname=public_user_nickname(owner) if owner else PUBLISHER_DISPLAY_NAME,
         user_level=owner.level if owner else 1,
         user_title=owner.title if owner else "初学钓手",
         comment_count=comment_result.scalar() or 0,

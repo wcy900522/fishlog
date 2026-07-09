@@ -1,90 +1,303 @@
 {% extends "base.html" %}
 
-{% block title %}我的等级 - 渔迹录{% endblock %}
+{% block title %}我的等级 - AnglrLog{% endblock %}
 
 {% block extra_css %}
 <style>
+    .level-page {
+        display: grid;
+        gap: 22px;
+    }
+
     .level-hero {
-        background:
-            radial-gradient(circle at 18% 20%, rgba(103, 232, 249, 0.28), transparent 32%),
-            linear-gradient(135deg, rgba(6, 17, 22, 0.96), rgba(9, 72, 78, 0.9));
-        color: #fff;
-        border-radius: 30px;
-        padding: clamp(28px, 5vw, 54px);
-        box-shadow: var(--shadow-strong);
-        margin-bottom: 28px;
+        display: grid;
+        grid-template-columns: minmax(180px, 0.78fr) minmax(0, 1.22fr);
+        gap: clamp(22px, 4vw, 42px);
+        align-items: center;
+        background: linear-gradient(135deg, rgba(242, 248, 247, 0.98), rgba(229, 242, 244, 0.94));
+        color: var(--brand-deep);
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        padding: clamp(24px, 4vw, 42px);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .level-hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -40px -70px auto;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: rgba(221, 173, 86, 0.16);
+        pointer-events: none;
+    }
+
+    .level-hero__rank {
+        position: relative;
+        z-index: 1;
     }
 
     .level-rank {
         font-size: clamp(2.4rem, 7vw, 5rem);
         font-weight: 900;
         line-height: 1;
-        color: var(--brand-electric);
+        color: var(--brand-teal);
     }
 
     .level-title {
         font-size: clamp(1.4rem, 3vw, 2.2rem);
         font-weight: 800;
+        color: var(--brand-deep);
+    }
+
+    .level-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .level-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 11px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.68);
+        border: 1px solid rgba(89, 169, 188, 0.18);
+        color: var(--text-muted);
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .level-hero__progress {
+        position: relative;
+        z-index: 1;
     }
 
     .level-progress {
-        height: 18px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.18);
+        height: 14px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.82);
         overflow: hidden;
+        border: 1px solid rgba(89, 169, 188, 0.18);
     }
 
     .level-progress span {
         display: block;
         height: 100%;
-        background: linear-gradient(90deg, var(--brand-electric), var(--brand-mint));
+        background: linear-gradient(90deg, #2c8f9f, #6ab8a4, #d7a243);
         border-radius: inherit;
+    }
+
+    .level-panel {
+        height: 100%;
+        padding: 22px;
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .level-panel__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .level-panel__head h2 {
+        margin: 0;
+        color: var(--brand-deep);
+        font-size: 1.08rem;
+        font-weight: 900;
+    }
+
+    .level-panel__hint {
+        color: var(--text-muted);
+        font-size: 0.84rem;
+        white-space: nowrap;
     }
 
     .badge-chip {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 9px 14px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.82);
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: rgba(244, 250, 249, 0.96);
         border: 1px solid var(--border-soft);
-        margin: 5px;
         font-weight: 700;
+        color: var(--brand-deep);
+    }
+
+    .chip-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+    }
+
+    .xp-log-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .xp-log-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 14px;
+        border: 1px solid rgba(89, 169, 188, 0.14);
+        border-radius: 8px;
+        background: rgba(248, 252, 253, 0.78);
+    }
+
+    .xp-log-item strong {
+        color: var(--brand-deep);
+        line-height: 1.35;
+    }
+
+    .xp-log-item span {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        margin-top: 2px;
+    }
+
+    .xp-log-score {
+        color: #2d817b;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .level-empty {
+        width: 100%;
+        flex: 1 0 100%;
+        min-height: 92px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px dashed rgba(89, 169, 188, 0.28);
+        border-radius: 8px;
+        background: rgba(248, 252, 253, 0.72);
+        color: var(--text-muted);
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .level-empty--badge {
+        min-height: 128px;
+        flex-direction: column;
+        gap: 8px;
+        padding: 20px;
+    }
+
+    .level-empty--badge i {
+        width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: rgba(89, 169, 188, 0.12);
+        color: var(--brand-teal);
+        font-size: 1.15rem;
+    }
+
+    .level-empty--badge strong {
+        color: var(--brand-deep);
+        font-size: 0.98rem;
+    }
+
+    .level-empty--badge span {
+        color: var(--text-muted);
+        font-size: 0.86rem;
+        font-weight: 600;
+    }
+
+    .xp-log-actions {
+        margin-top: 14px;
+        text-align: center;
+    }
+
+    @media (max-width: 767.98px) {
+        .level-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .level-panel {
+            padding: 16px;
+        }
+
+        .level-panel__head {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .level-panel__hint {
+            white-space: normal;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h1 class="page-title"><i class="fas fa-ranking-star"></i> 我的等级</h1>
-    <p class="page-subtitle">等级来自真实出钓记录、技术分享和社区贡献。</p>
-</div>
-
-<section class="level-hero" id="levelHero">
-    <p class="mb-2">加载等级信息...</p>
-</section>
-
-<div class="row g-4">
-    <div class="col-lg-5">
-        <div class="shell-card p-4">
-            <h4 class="mb-3"><i class="fas fa-award"></i> 已获勋章</h4>
-            <div id="badgeList" class="text-muted">加载中...</div>
-        </div>
-        <div class="shell-card p-4 mt-4">
-            <h4 class="mb-3"><i class="fas fa-key"></i> 当前权益</h4>
-            <div id="benefitList" class="text-muted">加载中...</div>
-        </div>
+<div class="level-page">
+    <div>
+        <h1 class="page-title"><i class="fas fa-ranking-star"></i> 我的等级</h1>
+        <p class="page-subtitle">等级来自真实出钓记录、技术分享和社区贡献。</p>
     </div>
-    <div class="col-lg-7">
-        <div class="shell-card p-4">
-            <h4 class="mb-3"><i class="fas fa-clock-rotate-left"></i> 经验记录</h4>
-            <div id="xpLogs" class="text-muted">加载中...</div>
+
+    <section class="level-hero" id="levelHero">
+        <p class="mb-0">加载等级信息...</p>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="level-panel">
+                <div class="level-panel__head">
+                    <h2><i class="fas fa-award"></i> 已获勋章</h2>
+                    <span class="level-panel__hint" id="badgeCount">--</span>
+                </div>
+                <div id="badgeList" class="chip-grid text-muted">加载中...</div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="level-panel">
+                <div class="level-panel__head">
+                    <h2><i class="fas fa-key"></i> 当前权益</h2>
+                    <span class="level-panel__hint">随等级逐步解锁</span>
+                </div>
+                <div id="benefitList" class="chip-grid text-muted">加载中...</div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="level-panel">
+                <div class="level-panel__head">
+                    <h2><i class="fas fa-clock-rotate-left"></i> 经验记录</h2>
+                    <span class="level-panel__hint" id="xpLogHint">最近记录</span>
+                </div>
+                <div id="xpLogs" class="xp-log-list text-muted">加载中...</div>
+                <div class="xp-log-actions" id="xpLogActions" hidden>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="toggleXpLogsBtn">展开全部</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+const COLLAPSED_XP_LOG_COUNT = 6;
+let xpLogState = {
+    logs: [],
+    expanded: false
+};
+
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
         '&': '&amp;',
@@ -107,6 +320,49 @@ function formatReason(reason) {
     }[reason] || reason;
 }
 
+function formatDate(value) {
+    if (!value) return '';
+    return new Date(value).toLocaleString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function renderXpLogs() {
+    const logs = xpLogState.logs || [];
+    const visibleLogs = xpLogState.expanded ? logs : logs.slice(0, COLLAPSED_XP_LOG_COUNT);
+    const xpLogs = document.getElementById('xpLogs');
+    const actions = document.getElementById('xpLogActions');
+    const toggleBtn = document.getElementById('toggleXpLogsBtn');
+    const hint = document.getElementById('xpLogHint');
+
+    if (!logs.length) {
+        xpLogs.innerHTML = '<div class="level-empty">暂无经验记录</div>';
+        actions.hidden = true;
+        hint.textContent = '最近记录';
+        return;
+    }
+
+    xpLogs.innerHTML = visibleLogs.map(log => `
+        <div class="xp-log-item">
+            <div>
+                <strong>${escapeHTML(formatReason(log.reason))}</strong>
+                <span>${escapeHTML(formatDate(log.created_at))}</span>
+            </div>
+            <div class="xp-log-score">+${log.xp_delta} XP</div>
+        </div>
+    `).join('');
+
+    hint.textContent = xpLogState.expanded
+        ? `已展开 ${logs.length} 条`
+        : `最近 ${Math.min(COLLAPSED_XP_LOG_COUNT, logs.length)} / ${logs.length} 条`;
+
+    actions.hidden = logs.length <= COLLAPSED_XP_LOG_COUNT;
+    toggleBtn.textContent = xpLogState.expanded ? '收起记录' : `展开全部 ${logs.length} 条`;
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         const [level, logs] = await Promise.all([
@@ -115,37 +371,39 @@ document.addEventListener('DOMContentLoaded', async function() {
         ]);
 
         document.getElementById('levelHero').innerHTML = `
-            <div class="row align-items-end g-4">
-                <div class="col-md-4">
+            <div class="level-hero__rank">
                     <div class="level-rank">Lv${level.level}</div>
                     <div class="level-title">${escapeHTML(level.title)}</div>
+                <div class="level-meta">
+                    <span><i class="fas fa-star"></i>${level.xp} XP</span>
+                    <span><i class="fas fa-medal"></i>${level.badges.length} 枚勋章</span>
                 </div>
-                <div class="col-md-8">
+            </div>
+            <div class="level-hero__progress">
                     <div class="d-flex justify-content-between mb-2">
-                        <strong>${level.xp} XP</strong>
-                        <span>${level.next_level_xp ? `距下一级还需 ${level.xp_to_next} XP` : '已满级'}</span>
+                    <strong>${level.xp} / ${level.next_level_xp || level.xp} XP</strong>
+                    <span>${level.next_level_xp ? `距下一级还需 ${level.xp_to_next} XP` : '已满级'}</span>
                     </div>
                     <div class="level-progress"><span style="width:${level.progress_percent}%"></span></div>
-                </div>
+                <p class="text-muted mt-3 mb-0">继续记录出钓、发布高质量帖子和参与讨论可以提升等级。</p>
             </div>
         `;
 
+        document.getElementById('badgeCount').textContent = `${level.badges.length} 枚`;
         document.getElementById('badgeList').innerHTML = level.badges.length
             ? level.badges.map(badge => `<span class="badge-chip">${escapeHTML(badge.icon)} ${escapeHTML(badge.name)}</span>`).join('')
-            : '<p class="mb-0">还没有解锁勋章，先记录一次出钓吧。</p>';
+            : '<div class="level-empty level-empty--badge"><i class="fas fa-award"></i><strong>还没有解锁勋章</strong><span>完成出钓记录后会自动点亮第一枚勋章</span></div>';
 
         document.getElementById('benefitList').innerHTML = level.benefits.length
             ? level.benefits.map(item => `<span class="badge-chip"><i class="fas fa-check"></i> ${escapeHTML(item)}</span>`).join('')
-            : '<p class="mb-0">暂无权益。</p>';
+            : '<div class="level-empty">暂无权益</div>';
 
-        document.getElementById('xpLogs').innerHTML = logs.length
-            ? logs.map(log => `
-                <div class="d-flex justify-content-between border-bottom py-2">
-                    <span>${escapeHTML(formatReason(log.reason))}</span>
-                    <strong>+${log.xp_delta} XP</strong>
-                </div>
-            `).join('')
-            : '<p class="mb-0">暂无经验记录。</p>';
+        xpLogState.logs = logs;
+        renderXpLogs();
+        document.getElementById('toggleXpLogsBtn').addEventListener('click', function() {
+            xpLogState.expanded = !xpLogState.expanded;
+            renderXpLogs();
+        });
     } catch (error) {
         if (error.message.includes('登录状态已失效')) {
             redirectToLogin(error.message);

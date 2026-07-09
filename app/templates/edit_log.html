@@ -1,6 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}编辑记录 - 渔迹录{% endblock %}
+{% block title %}编辑记录 - AnglrLog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .log-photo-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+    }
+
+    .log-photo-preview__item {
+        aspect-ratio: 4 / 3;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border-soft);
+        background: var(--surface-muted);
+    }
+
+    .log-photo-preview__item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -27,8 +53,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="duration" class="form-label">作钓时长(分钟) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="duration" name="duration" min="1" required>
+                                <label for="duration" class="form-label">作钓时长(小时) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="duration" name="duration" min="0.1" max="24" step="0.1" placeholder="如：3.5" required>
                             </div>
                         </div>
                     </div>
@@ -51,6 +77,49 @@
                     <div class="mb-3">
                         <label for="quantity" class="form-label">渔获数量</label>
                         <input type="number" class="form-control" id="quantity" name="quantity" min="0" placeholder="条数">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="weight" class="form-label">总重量(kg)</label>
+                                <input type="number" class="form-control" id="weight" name="weight" min="0" step="0.01" placeholder="如：3.5">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="tide" class="form-label">潮汐/水情</label>
+                                <input type="text" class="form-control" id="tide" name="tide" placeholder="如：涨潮、退潮、轻微走水">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="rod" class="form-label">鱼竿</label>
+                                <input type="text" class="form-control" id="rod" name="rod" placeholder="如：ML 直柄">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="line_group" class="form-label">线组</label>
+                                <input type="text" class="form-control" id="line_group" name="line_group" placeholder="如：PE 0.8 + 碳线 2.0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="equipment" class="form-label">装备组合</label>
+                                <input type="text" class="form-control" id="equipment" name="equipment" placeholder="如：水滴轮 + 亮片">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="logImages" class="form-label">出钓照片</label>
+                        <input type="file" class="form-control" id="logImages" accept="image/*" capture="environment" multiple>
+                        <small class="form-text text-muted">可拍照或从手机相册选择，最多上传 3 张。重新选择照片会替换当前照片。</small>
+                        <div class="log-photo-preview" id="logPhotoPreview"></div>
                     </div>
 
                     <div class="mb-3">
@@ -76,6 +145,8 @@
 
 <script>
     const logId = window.location.pathname.split('/')[2];
+    const MAX_LOG_PHOTOS = 3;
+    let existingLogPhotoUrls = [];
 
     document.addEventListener('DOMContentLoaded', function() {
         const token = localStorage.getItem('token');
@@ -86,6 +157,7 @@
         }
 
         loadPageData();
+        document.getElementById('logImages').addEventListener('change', previewLogImages);
     });
 
     async function loadPageData() {
@@ -128,10 +200,17 @@
         const minutes = String(date.getMinutes()).padStart(2, '0');
         document.getElementById('fishing_at').value = `${year}-${month}-${day}T${hours}:${minutes}`;
 
-        document.getElementById('duration').value = log.duration;
+        document.getElementById('duration').value = minutesToHoursValue(log.duration);
         document.getElementById('species').value = log.species || '';
         document.getElementById('bait').value = log.bait || '';
         document.getElementById('quantity').value = log.quantity || '';
+        document.getElementById('weight').value = log.weight || '';
+        document.getElementById('tide').value = log.tide || '';
+        document.getElementById('equipment').value = log.equipment || '';
+        document.getElementById('rod').value = log.rod || '';
+        document.getElementById('line_group').value = log.line_group || '';
+        existingLogPhotoUrls = Array.isArray(log.photo_urls) ? log.photo_urls.filter(Boolean).slice(0, MAX_LOG_PHOTOS) : [];
+        renderLogPhotoPreview(existingLogPhotoUrls);
         document.getElementById('note').value = log.note || '';
     }
 
@@ -140,23 +219,35 @@
 
         const spotId = parseInt(document.getElementById('spot').value);
         const fishingAt = document.getElementById('fishing_at').value;
-        const duration = parseInt(document.getElementById('duration').value);
         const species = document.getElementById('species').value;
         const bait = document.getElementById('bait').value;
         const quantity = document.getElementById('quantity').value ? parseInt(document.getElementById('quantity').value) : null;
+        const weight = document.getElementById('weight').value ? parseFloat(document.getElementById('weight').value) : null;
+        const tide = document.getElementById('tide').value;
+        const equipment = document.getElementById('equipment').value;
+        const rod = document.getElementById('rod').value;
+        const lineGroup = document.getElementById('line_group').value;
         const note = document.getElementById('note').value;
 
-        const payload = {
-            spot_id: spotId,
-            fishing_at: new Date(fishingAt).toISOString(),
-            duration: duration,
-            species: species || null,
-            bait: bait || null,
-            quantity: quantity,
-            note: note || null
-        };
-
         try {
+            const duration = hoursToMinutes(document.getElementById('duration').value);
+            const photoUrls = await uploadLogImagesIfNeeded();
+            const payload = {
+                spot_id: spotId,
+                fishing_at: new Date(fishingAt).toISOString(),
+                duration: duration,
+                species: species || null,
+                bait: bait || null,
+                quantity: quantity,
+                weight: weight,
+                tide: tide || null,
+                equipment: equipment || null,
+                rod: rod || null,
+                line_group: lineGroup || null,
+                photo_urls: photoUrls.length ? photoUrls : null,
+                note: note || null
+            };
+
             await apiFetch(`/api/logs/${logId}`, {
                 method: 'PUT',
                 headers: {
@@ -176,5 +267,73 @@
             alert('更新失败：' + error.message);
         }
     });
+
+    function renderLogPhotoPreview(urls) {
+        const preview = document.getElementById('logPhotoPreview');
+        preview.innerHTML = urls.map(url => `
+            <div class="log-photo-preview__item">
+                <img src="${escapeHTML(url)}" alt="出钓照片">
+            </div>
+        `).join('');
+    }
+
+    function minutesToHoursValue(minutes) {
+        const hours = Number(minutes || 0) / 60;
+        if (!Number.isFinite(hours) || hours <= 0) return '';
+        return Number.isInteger(hours) ? String(hours) : hours.toFixed(1).replace(/\.0$/, '');
+    }
+
+    function hoursToMinutes(value) {
+        const hours = parseFloat(value);
+        if (!Number.isFinite(hours) || hours <= 0) {
+            throw new Error('请填写有效的作钓时长');
+        }
+        return Math.round(hours * 60);
+    }
+
+    function previewLogImages() {
+        const input = document.getElementById('logImages');
+        const files = Array.from(input.files || []);
+        if (files.length > MAX_LOG_PHOTOS) {
+            alert(`最多上传 ${MAX_LOG_PHOTOS} 张出钓照片`);
+            input.value = '';
+            renderLogPhotoPreview(existingLogPhotoUrls);
+            return;
+        }
+
+        const urls = files.map(file => URL.createObjectURL(file));
+        renderLogPhotoPreview(urls.length ? urls : existingLogPhotoUrls);
+    }
+
+    async function uploadLogImagesIfNeeded() {
+        const input = document.getElementById('logImages');
+        const files = Array.from(input.files || []);
+        if (!files.length) return existingLogPhotoUrls;
+        if (files.length > MAX_LOG_PHOTOS) {
+            throw new Error(`最多上传 ${MAX_LOG_PHOTOS} 张出钓照片`);
+        }
+
+        const urls = [];
+        for (const file of files) {
+            const formData = new FormData();
+            formData.append('image', file);
+            const result = await apiFetch('/api/logs/images', {
+                method: 'POST',
+                body: formData
+            });
+            urls.push(result.url);
+        }
+        return urls;
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
+    }
 </script>
 {% endblock %}

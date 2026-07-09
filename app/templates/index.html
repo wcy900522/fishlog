@@ -1,21 +1,50 @@
 {% extends "base.html" %}
 
-{% block title %}渔迹录 AnglrLog - 钓鱼人的个人数据中心{% endblock %}
+{% block title %}AnglrLog 渔迹录 - 钓鱼人的个人数据中心{% endblock %}
 
 {% block extra_css %}
 <style>
+    :root {
+        --home-ink: #0f3239;
+        --home-deep: #064955;
+        --home-teal: #0b7b8c;
+        --home-muted: #506970;
+        --home-surface: #edf6f4;
+        --home-panel: #f4faf8;
+        --home-panel-strong: #e2f0ee;
+        --home-border: rgba(10, 91, 104, 0.2);
+        --home-shadow: 0 18px 42px rgba(4, 52, 62, 0.14);
+    }
+
+    body {
+        background:
+            linear-gradient(180deg, rgba(215, 232, 230, 0.96) 0%, rgba(229, 240, 237, 0.98) 44%, rgba(238, 245, 243, 1) 100%),
+            url('/static/fishing-lake-bg.svg') center top / cover fixed no-repeat;
+    }
+
+    .navbar {
+        background: linear-gradient(90deg, rgba(7, 52, 66, 0.96), rgba(7, 88, 106, 0.94));
+        border-bottom-color: rgba(117, 215, 239, 0.22);
+        box-shadow: 0 10px 28px rgba(7, 52, 66, 0.18);
+    }
+
+    footer {
+        background:
+            linear-gradient(135deg, rgba(7, 52, 66, 0.98), rgba(7, 88, 106, 0.94));
+        border-top-color: rgba(117, 215, 239, 0.24);
+    }
+
     .home-hero {
         position: relative;
-        min-height: clamp(680px, 88vh, 960px);
+        min-height: clamp(620px, 76vh, 820px);
         display: grid;
         align-items: end;
         overflow: hidden;
         margin-bottom: 0;
         background:
-            linear-gradient(105deg, rgba(4, 19, 23, 0.95) 0%, rgba(4, 19, 23, 0.82) 42%, rgba(5, 26, 33, 0.46) 72%, rgba(5, 26, 33, 0.24) 100%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(4, 19, 23, 0.5)),
-            url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Mete_%28fiske%29_-_Ystad-2018.jpg/2200px-Mete_%28fiske%29_-_Ystad-2018.jpg') center 42%/cover;
-        box-shadow: inset 0 -140px 120px rgba(4, 19, 23, 0.52);
+            linear-gradient(105deg, rgba(5, 39, 47, 0.92) 0%, rgba(8, 70, 80, 0.82) 46%, rgba(17, 105, 111, 0.56) 100%),
+            url('/static/fishing-lake-bg.svg') center 46%/cover;
+        box-shadow: inset 0 -120px 120px rgba(5, 42, 50, 0.34);
     }
 
     .home-hero::before {
@@ -23,10 +52,8 @@
         position: absolute;
         inset: 0;
         background:
-            linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0, rgba(255, 255, 255, 0.08) 1px, transparent 1px, transparent 12.5%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0, rgba(255, 255, 255, 0.06) 1px, transparent 1px, transparent 20%);
-        background-size: 100% 100%, 100% 100%;
-        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0));
+            linear-gradient(90deg, rgba(3, 28, 34, 0.72), rgba(5, 47, 55, 0.34) 55%, rgba(5, 54, 64, 0.08)),
+            linear-gradient(180deg, rgba(8, 52, 62, 0.18), rgba(117, 215, 239, 0.06));
         pointer-events: none;
     }
 
@@ -35,7 +62,7 @@
         position: absolute;
         inset: auto 0 0;
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(217, 164, 65, 0.84), transparent);
+        background: rgba(117, 215, 239, 0.42);
     }
 
     .home-hero__inner {
@@ -43,270 +70,417 @@
         z-index: 1;
         width: min(1480px, 100%);
         margin: 0 auto;
-        padding: clamp(56px, 7vw, 110px) clamp(20px, 4vw, 64px) clamp(104px, 12vw, 164px);
+        padding: clamp(48px, 6vw, 88px) clamp(20px, 4vw, 64px) clamp(96px, 10vw, 138px);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(380px, 0.68fr);
+        gap: clamp(36px, 6vw, 92px);
+        align-items: center;
     }
 
     .home-hero__content {
-        width: min(940px, 100%);
-        color: #fff;
+        width: min(760px, 100%);
+        color: #f4fbf8;
     }
 
     .home-hero__title-lockup {
         display: grid;
-        gap: 10px;
-        margin-bottom: 24px;
-    }
-
-    .home-hero__eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 9px 14px;
-        margin-bottom: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        font-size: 0.92rem;
+        gap: 16px;
+        margin-bottom: 28px;
     }
 
     .home-hero h1 {
-        font-size: clamp(4rem, 8.8vw, 8.8rem);
-        line-height: 0.9;
-        font-weight: 800;
+        font-size: clamp(3.6rem, 7vw, 7rem);
+        line-height: 0.96;
+        font-weight: 900;
         margin: 0;
-        text-shadow: 0 10px 30px rgba(4, 19, 23, 0.24);
+        text-shadow: 0 14px 34px rgba(0, 29, 36, 0.35);
     }
 
-    .home-hero__brand-en {
+    .home-hero__brand-cn {
         display: inline-flex;
         align-items: center;
-        gap: 12px;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: clamp(1rem, 1.8vw, 1.3rem);
-        font-weight: 700;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
+        gap: 10px;
+        width: max-content;
+        color: rgba(213, 241, 235, 0.92);
+        font-size: clamp(1.28rem, 2.3vw, 2rem);
+        font-weight: 800;
     }
 
-    .home-hero__brand-en::before {
+    .home-hero__brand-cn::before {
         content: '';
-        width: 48px;
+        width: 42px;
         height: 1px;
-        background: rgba(255, 255, 255, 0.34);
+        background: rgba(243, 189, 88, 0.9);
     }
 
     .home-hero__lead {
-        max-width: 760px;
-        margin: 0 0 34px;
-        font-size: clamp(1.08rem, 1.7vw, 1.38rem);
-        line-height: 1.85;
-        color: rgba(255, 255, 255, 0.88);
+        max-width: 640px;
+        margin: 0 0 46px;
+        font-size: clamp(1.06rem, 1.5vw, 1.24rem);
+        line-height: 1.82;
+        color: rgba(229, 244, 241, 0.86);
     }
 
     .home-hero__meta {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0;
-        width: min(920px, 100%);
-        margin-bottom: 36px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        width: min(540px, 100%);
+        justify-self: end;
+        border: 1px solid rgba(178, 229, 221, 0.26);
         border-radius: 8px;
-        background: rgba(4, 19, 23, 0.3);
-        box-shadow: 0 24px 60px rgba(4, 19, 23, 0.2);
-        backdrop-filter: blur(18px);
+        background:
+            linear-gradient(180deg, rgba(235, 249, 246, 0.94), rgba(211, 232, 228, 0.88));
+        box-shadow: 0 24px 60px rgba(0, 29, 36, 0.28);
+        backdrop-filter: blur(16px) saturate(1.05);
         overflow: hidden;
     }
 
     .hero-meta {
-        min-height: 112px;
-        padding: 20px 22px;
-        border-right: 1px solid rgba(255, 255, 255, 0.12);
+        min-height: 92px;
+        padding: 18px 20px;
+        border: 1px solid rgba(10, 91, 104, 0.14);
+        border-left: 4px solid rgba(112, 204, 182, 0.78);
+        border-radius: 8px;
         background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-    }
-
-    .hero-meta:last-child {
-        border-right: 0;
+            linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(229, 241, 238, 0.5));
+        display: flex;
+        align-items: center;
     }
 
     .hero-meta span {
-        display: block;
-        margin-bottom: 10px;
-        color: rgba(217, 164, 65, 0.92);
-        font-size: 0.76rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+        display: none;
     }
 
     .hero-meta strong {
         display: block;
-        color: #fff;
-        font-size: 1rem;
+        color: var(--home-ink);
+        font-size: clamp(1rem, 1.2vw, 1.14rem);
+        line-height: 1.5;
+        writing-mode: horizontal-tb;
+        word-break: keep-all;
+        overflow-wrap: normal;
+        white-space: nowrap;
+    }
+
+    .hero-panel__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        padding: 20px 24px 0;
+    }
+
+    .hero-panel__title {
+        margin: 0;
+        color: var(--home-ink);
+        font-size: 1.18rem;
+        font-weight: 900;
+    }
+
+    .hero-panel__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: rgba(11, 123, 140, 0.1);
+        color: var(--home-teal);
+        font-size: 0.82rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .hero-weather {
+        margin: 18px 18px 0;
+        padding: 20px;
+        border: 1px solid rgba(144, 216, 216, 0.2);
+        border-radius: 8px;
+        color: #eefbf7;
+        background:
+            radial-gradient(circle at 82% 12%, rgba(241, 202, 116, 0.18), transparent 34%),
+            linear-gradient(135deg, rgba(4, 53, 62, 0.95), rgba(9, 93, 104, 0.86));
+        box-shadow: 0 18px 38px rgba(0, 29, 36, 0.2);
+    }
+
+    .hero-weather__head,
+    .hero-weather__metrics {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .hero-weather__head {
+        margin-bottom: 16px;
+    }
+
+    .hero-weather__label {
+        display: block;
+        margin-bottom: 6px;
+        color: rgba(190, 239, 229, 0.84);
+        font-size: 0.82rem;
+        font-weight: 800;
+    }
+
+    .hero-weather__status {
+        margin: 0;
+        color: rgba(238, 251, 247, 0.82);
+        font-size: 0.9rem;
         line-height: 1.6;
+    }
+
+    .hero-weather__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.14);
+        color: #f1ca74;
+        font-size: 1.35rem;
+    }
+
+    .hero-weather__metric {
+        flex: 1;
+        min-height: 70px;
+        padding: 12px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .hero-weather__metric span {
+        display: block;
+        color: rgba(225, 246, 242, 0.68);
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .hero-weather__metric strong {
+        display: block;
+        margin-top: 4px;
+        color: #ffffff;
+        font-size: 1.08rem;
+    }
+
+    .hero-panel__flow {
+        display: grid;
+        gap: 12px;
+        margin: 18px;
+    }
+
+    .hero-meta__row {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 16px;
+        align-items: center;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .hero-meta__text {
+        min-width: 0;
+        width: 100%;
+        writing-mode: horizontal-tb;
+    }
+
+    .hero-meta__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background: #d7ebe8;
+        color: var(--home-teal);
+        font-size: 1.02rem;
     }
 
     .home-hero__actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 14px;
+        gap: 18px;
+        align-items: center;
+        margin-top: 4px;
     }
 
     .home-hero__actions .btn {
-        min-width: 164px;
-        padding: 14px 22px;
+        min-width: 176px;
+        padding: 16px 24px;
     }
 
     .btn-hero-primary {
-        background: var(--brand-amber);
-        color: #13272c;
-        box-shadow: 0 18px 36px rgba(217, 164, 65, 0.2);
+        background: linear-gradient(135deg, #e4bd63, #70ccb6);
+        color: #123036;
+        box-shadow: 0 14px 30px rgba(0, 29, 36, 0.22);
+        border: 0;
     }
 
     .btn-hero-primary:hover {
-        background: #ffd16c;
-        color: #13272c;
+        background: linear-gradient(135deg, #ffe09a, #b8f1ff);
+        color: #123036;
     }
 
     .btn-hero-ghost {
-        color: #fff;
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #effbf8;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(190, 239, 229, 0.28);
+        box-shadow: 0 10px 22px rgba(0, 29, 36, 0.18);
     }
 
     .btn-hero-ghost:hover {
-        color: #fff;
-        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.18);
+        box-shadow: 0 14px 30px rgba(0, 29, 36, 0.24);
     }
 
     .home-metrics-wrap {
         position: relative;
         z-index: 2;
         max-width: 1480px;
-        margin: -78px auto 0;
+        margin: -62px auto 0;
         padding: 0 clamp(16px, 4vw, 56px);
+    }
+
+    .flow-panel {
+        border: 1px solid var(--home-border);
+        border-radius: 8px;
+        background:
+            linear-gradient(180deg, rgba(246, 251, 249, 0.98), rgba(225, 239, 236, 0.96));
+        box-shadow: var(--home-shadow);
+        overflow: hidden;
+    }
+
+    .flow-panel__header {
+        display: flex;
+        align-items: center;
+        padding: 28px 30px 22px;
+        border-bottom: 1px solid rgba(10, 91, 104, 0.14);
+    }
+
+    .flow-panel__header h2 {
+        margin: 0;
+        color: var(--home-deep);
+        font-size: clamp(1.42rem, 2vw, 2rem);
+        font-weight: 900;
+        line-height: 1.25;
     }
 
     .metric-strip {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
+        gap: 0;
         margin: 0;
     }
 
     .metric-item {
-        min-height: 176px;
-        padding: 24px;
-        border: 1px solid rgba(215, 227, 220, 0.82);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.96);
-        box-shadow: var(--shadow-strong);
+        position: relative;
+        min-height: 220px;
+        padding: 28px 28px 30px;
+        border-right: 1px solid rgba(10, 91, 104, 0.14);
+        background: rgba(255, 255, 255, 0.16);
+        overflow: hidden;
+        transition: background 0.2s ease;
+    }
+
+    .metric-item:last-child {
+        border-right: 0;
+        background: rgba(255, 255, 255, 0.16);
+    }
+
+    .metric-item:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .metric-item__head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
     }
 
     .metric-item__index {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 38px;
-        height: 38px;
-        margin-bottom: 18px;
-        border-radius: 8px;
-        background: var(--surface-soft);
-        color: var(--brand-teal);
+        width: 30px;
+        height: 30px;
+        margin: 0;
+        border-radius: 999px;
+        background: rgba(11, 123, 140, 0.1);
+        color: var(--home-teal);
         font-size: 0.84rem;
         font-weight: 800;
     }
 
-    .metric-item i {
-        color: var(--brand-amber);
-        margin-bottom: 18px;
-        font-size: 1.25rem;
+    .metric-item__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        color: var(--home-deep);
+        background: rgba(255, 255, 255, 0.5);
+        box-shadow: inset 0 0 0 1px rgba(10, 91, 104, 0.1);
     }
 
-    .metric-item strong {
-        display: block;
-        margin-bottom: 10px;
-        color: var(--brand-deep);
-        font-size: 1.14rem;
+    .metric-item__icon i {
+        font-size: 1rem;
     }
 
-    .metric-item span {
+    .metric-item h3 {
         display: block;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        line-height: 1.7;
+        margin: 0 0 14px;
+        color: var(--home-deep);
+        font-size: 1.18rem;
+        font-weight: 900;
+        line-height: 1.35;
+    }
+
+    .metric-item p {
+        display: block;
+        margin: 0;
+        color: var(--home-muted);
+        font-size: 0.94rem;
+        line-height: 1.78;
     }
 
     .home-announcement {
-        padding: clamp(26px, 4vw, 42px) clamp(16px, 4vw, 56px);
-        background: #fff;
-    }
-
-    .home-announcement__inner {
-        max-width: 1480px;
-        margin: 0 auto;
-    }
-
-    .safety-banner {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 14px;
-        padding: clamp(14px, 2vw, 18px);
-        border: 1px solid rgba(200, 90, 66, 0.24);
-        border-left: 6px solid var(--brand-coral);
-        border-radius: 8px;
-        background: #fff8ed;
-        color: var(--brand-deep);
-    }
-
-    .safety-banner i {
-        flex: 0 0 auto;
-        color: var(--brand-coral);
-        font-size: 1.35rem;
-    }
-
-    .safety-banner strong {
-        display: block;
-        margin-bottom: 2px;
-        font-size: clamp(1rem, 1.45vw, 1.16rem);
-        line-height: 1.45;
-    }
-
-    .safety-banner span {
-        display: block;
-        color: var(--text-muted);
-        line-height: 1.7;
+        position: relative;
+        z-index: 3;
+        background: linear-gradient(90deg, #efe7d5, #dcebe8);
+        border-bottom: 1px solid var(--home-border);
+        box-shadow: 0 8px 20px rgba(8, 88, 106, 0.08);
     }
 
     .compliance-ticker {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: center;
-        gap: 12px;
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid rgba(18, 108, 118, 0.18);
-        border-radius: 8px;
-        background: var(--surface-soft);
-        color: var(--brand-deep);
+        gap: 14px;
+        width: min(1480px, 100%);
+        min-height: 42px;
+        margin: 0 auto;
+        padding: 0 clamp(16px, 4vw, 56px);
+        border: 0;
+        background: transparent;
+        color: var(--home-deep);
         text-align: left;
         cursor: pointer;
     }
 
     .compliance-ticker:hover {
-        border-color: rgba(18, 108, 118, 0.34);
-        background: #f7fbf8;
+        background: rgba(255, 255, 255, 0.34);
     }
 
     .compliance-ticker__label {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
+        gap: 8px;
         white-space: nowrap;
-        color: var(--brand-teal);
-        font-size: 0.9rem;
+        color: #c62828;
+        font-size: 0.88rem;
         font-weight: 800;
     }
 
@@ -320,8 +494,8 @@
         display: inline-block;
         min-width: 100%;
         color: #40545a;
-        font-size: 0.92rem;
-        line-height: 1.5;
+        font-size: 0.88rem;
+        line-height: 1.4;
         animation: compliance-scroll 32s linear infinite;
     }
 
@@ -331,8 +505,8 @@
 
     .compliance-ticker__action {
         white-space: nowrap;
-        color: var(--brand-teal);
-        font-size: 0.86rem;
+        color: #b42a24;
+        font-size: 0.82rem;
         font-weight: 700;
     }
 
@@ -387,8 +561,8 @@
         margin: 22px 0 0;
         padding: 14px 16px;
         border-radius: 8px;
-        background: #eef5ef;
-        color: var(--brand-deep);
+        background: #e2f0ee;
+        color: var(--home-deep);
         font-weight: 700;
         line-height: 1.75;
     }
@@ -414,11 +588,11 @@
     }
 
     .home-section--light {
-        background: linear-gradient(180deg, #f8faf6, #eef5ef);
+        background: linear-gradient(180deg, #e2efed, #d7e8e5);
     }
 
     .home-section--white {
-        background: #fff;
+        background: #eef6f4;
     }
 
     .home-section__inner {
@@ -436,7 +610,7 @@
 
     .section-title {
         margin: 0;
-        color: var(--brand-deep);
+        color: var(--home-deep);
         font-size: clamp(1.55rem, 3vw, 2.45rem);
         font-weight: 800;
         display: flex;
@@ -445,12 +619,12 @@
     }
 
     .section-title i {
-        color: var(--brand-amber);
+        color: #18a9c0;
     }
 
     .section-kicker {
         margin: 0 0 8px;
-        color: var(--brand-teal);
+        color: var(--home-teal);
         font-size: 0.88rem;
         font-weight: 800;
     }
@@ -459,16 +633,27 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: flex-end;
-        gap: 12px;
+        gap: 14px;
+    }
+
+    .home-section .section-actions .btn {
+        min-height: 46px;
+        padding: 11px 18px;
+        border-radius: 8px;
+        font-size: 0.96rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .spot-card,
     .post-card {
         height: 100%;
-        border: 1px solid var(--border-soft);
+        border: 1px solid var(--home-border);
         border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 16px 40px rgba(7, 31, 36, 0.08);
+        background: var(--home-panel);
+        box-shadow: var(--home-shadow);
         overflow: hidden;
         transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
@@ -477,14 +662,14 @@
     .post-card:hover {
         transform: translateY(-3px);
         border-color: rgba(22, 115, 122, 0.28);
-        box-shadow: 0 24px 58px rgba(7, 31, 36, 0.14);
+        box-shadow: 0 20px 48px rgba(4, 52, 62, 0.18);
     }
 
     .spot-card__map {
         min-height: 186px;
         padding: 24px;
         background:
-            linear-gradient(160deg, rgba(8, 31, 37, 0.94), rgba(18, 108, 118, 0.82)),
+            linear-gradient(160deg, rgba(7, 88, 106, 0.82), rgba(14, 143, 163, 0.62)),
             url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80') center/cover;
         color: #fff;
     }
@@ -492,7 +677,7 @@
     .spot-card__topline,
     .post-card__topline {
         height: 5px;
-        background: linear-gradient(90deg, var(--brand-coral), var(--brand-amber), var(--brand-mint));
+        background: linear-gradient(90deg, #ff8b70, #f4c76f, #67d8b4, #7ddff5);
     }
 
     .spot-card__eyebrow {
@@ -537,7 +722,7 @@
         flex-wrap: wrap;
         gap: 10px;
         margin-bottom: 12px;
-        color: var(--text-muted);
+        color: var(--home-muted);
         font-size: 0.84rem;
     }
 
@@ -545,7 +730,7 @@
     .post-card__excerpt {
         min-height: 54px;
         margin: 0 0 14px;
-        color: #4c5a60;
+        color: #465d63;
         font-size: 0.92rem;
         line-height: 1.65;
     }
@@ -553,32 +738,94 @@
     .spot-card__footer,
     .post-card__footer {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
+        justify-content: center;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .spot-card__footer {
+        flex-direction: column;
     }
 
     .spot-card__owner,
     .post-card__signal {
-        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #527077;
         font-size: 0.84rem;
+        font-weight: 800;
+        padding: 7px 10px;
+        border-radius: 8px;
+        background: rgba(238, 250, 255, 0.82);
+        border: 1px solid rgba(89, 169, 188, 0.2);
+    }
+
+    .spot-card__action {
+        width: 100%;
+        min-height: 48px;
+        padding: 12px 18px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: #062b35;
+        background: linear-gradient(135deg, #8de3ca, #84ddf2);
+        border: 1px solid rgba(14, 143, 163, 0.18);
+        box-shadow: 0 10px 20px rgba(14, 143, 163, 0.16);
+        font-size: 1rem;
+        font-weight: 900;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .spot-card__action:hover {
+        color: #062b35;
+        background: linear-gradient(135deg, #a9eedc, #b8f1ff);
+        transform: translateY(-2px);
+        box-shadow: 0 14px 28px rgba(14, 143, 163, 0.22);
     }
 
     .text-link {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        color: var(--brand-teal);
+        color: var(--home-teal);
         font-weight: 700;
         text-decoration: none;
     }
 
     .text-link:hover {
-        color: var(--brand-deep);
+        color: var(--home-deep);
     }
 
     .post-card {
         cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        background:
+            linear-gradient(180deg, rgba(250, 253, 251, 0.98), rgba(237, 247, 244, 0.96));
+        border-color: rgba(7, 88, 106, 0.16);
+        box-shadow: 0 14px 32px rgba(4, 52, 62, 0.1);
+    }
+
+    .post-card:hover {
+        border-color: rgba(14, 143, 163, 0.32);
+        box-shadow: 0 18px 40px rgba(4, 52, 62, 0.16);
+    }
+
+    .post-card .post-card__topline {
+        background: linear-gradient(90deg, #0b7b8c, #57c7a6, #eab75d);
+    }
+
+    .post-card__body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 244px;
+        padding: 20px;
     }
 
     .post-card__head {
@@ -590,40 +837,85 @@
     }
 
     .post-card h3 {
-        color: var(--brand-deep);
-        min-height: 52px;
+        color: var(--home-deep);
+        min-height: 50px;
+        margin-bottom: 10px;
+        letter-spacing: 0;
     }
 
     .post-card__tag {
         display: inline-flex;
         align-items: center;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(18, 108, 118, 0.08);
-        color: var(--brand-teal);
+        padding: 6px 11px;
+        border-radius: 8px;
+        background: rgba(11, 123, 140, 0.11);
+        color: #0a6472;
+        border: 1px solid rgba(11, 123, 140, 0.14);
         font-size: 0.78rem;
         font-weight: 800;
         white-space: nowrap;
     }
 
     .post-card__comment {
-        color: var(--brand-deep);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: #527077;
         font-size: 0.84rem;
-        font-weight: 700;
+        font-weight: 800;
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.64);
+    }
+
+    .post-card__excerpt {
+        flex: 1;
+    }
+
+    .post-card__footer {
+        margin-top: 4px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(89, 169, 188, 0.18);
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .post-card__meta {
+        flex: 1;
+        margin-bottom: 0;
+        justify-content: flex-start;
+        align-items: center;
+        color: #5a737a;
+        font-size: 0.82rem;
+        line-height: 1.3;
+    }
+
+    .post-card__meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+
+    .post-card__signal {
+        flex: 0 0 auto;
+        color: #0a6472;
+        background: rgba(226, 246, 241, 0.9);
+        border-color: rgba(87, 199, 166, 0.22);
     }
 
     .empty-state {
         padding: 48px 20px;
-        border: 1px dashed var(--border-soft);
+        border: 1px dashed var(--home-border);
         border-radius: 8px;
-        background: var(--surface-soft);
-        color: var(--text-muted);
+        background: rgba(224, 239, 236, 0.92);
+        color: var(--home-muted);
         text-align: center;
     }
 
     .loading-state {
         padding: 60px 20px;
-        color: var(--text-muted);
+        color: var(--home-muted);
         text-align: center;
     }
 
@@ -632,10 +924,10 @@
         grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
         gap: 18px;
         margin-bottom: 30px;
-        border: 1px solid rgba(215, 227, 220, 0.85);
+        border: 1px solid var(--home-border);
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 18px 48px rgba(7, 31, 36, 0.08);
+        background: rgba(239, 248, 246, 0.94);
+        box-shadow: var(--home-shadow);
         overflow: hidden;
     }
 
@@ -653,12 +945,12 @@
         display: flex;
         flex-direction: column;
         gap: 16px;
-        background: linear-gradient(180deg, rgba(248, 250, 246, 0.82), #fff);
+        background: linear-gradient(180deg, rgba(224, 239, 236, 0.96), #f4faf8);
     }
 
     .nearby-status {
         margin: 0;
-        color: var(--text-muted);
+        color: var(--home-muted);
         line-height: 1.7;
     }
 
@@ -677,32 +969,32 @@
         padding: 14px;
         border: 1px solid rgba(18, 108, 118, 0.18);
         border-radius: 8px;
-        background: rgba(231, 240, 234, 0.58);
+        background: rgba(218, 235, 231, 0.82);
     }
 
     .manual-location label {
-        color: var(--brand-deep);
+        color: var(--home-deep);
         font-size: 0.82rem;
         font-weight: 700;
     }
 
     .nearby-item {
         padding: 14px;
-        border: 1px solid var(--border-soft);
+        border: 1px solid var(--home-border);
         border-radius: 8px;
-        background: #fff;
+        background: #f6fbfa;
     }
 
     .nearby-item strong {
         display: block;
         margin-bottom: 6px;
-        color: var(--brand-deep);
+        color: var(--home-deep);
     }
 
     .nearby-item span {
         display: block;
         margin-bottom: 10px;
-        color: var(--text-muted);
+        color: var(--home-muted);
         font-size: 0.86rem;
     }
 
@@ -723,8 +1015,9 @@
         border-radius: 8px;
         color: #fff;
         background:
-            linear-gradient(135deg, rgba(8, 29, 34, 0.96), rgba(12, 66, 70, 0.9)),
+            linear-gradient(135deg, rgba(5, 55, 66, 0.94), rgba(9, 105, 112, 0.82)),
             url('/static/beijing-fishing-review-bg.svg') center/cover;
+        box-shadow: 0 24px 58px rgba(4, 52, 62, 0.22);
     }
 
     .mission-band h2 {
@@ -736,7 +1029,7 @@
 
     .mission-band p {
         margin: 0;
-        color: rgba(255, 255, 255, 0.82);
+        color: rgba(250, 255, 253, 0.86);
         line-height: 1.8;
     }
 
@@ -754,9 +1047,9 @@
 
     .mission-band__stat {
         padding: 18px 20px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.24);
         border-radius: 8px;
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.14);
     }
 
     .mission-band__stat span {
@@ -778,24 +1071,34 @@
         }
 
         .home-hero__meta {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: min(860px, 100%);
+            justify-self: start;
+        }
+
+        .hero-weather {
+            grid-column: 1 / -1;
         }
 
         .hero-meta {
-            border-right: 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .hero-meta:last-child {
-            border-bottom: 0;
-        }
-
-        .home-hero__rail {
-            width: min(720px, 100%);
+            min-height: 104px;
         }
 
         .metric-strip {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .flow-panel__header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .metric-item {
+            border-top: 1px solid rgba(10, 91, 104, 0.14);
+        }
+
+        .metric-item:nth-child(2n) {
+            border-right: 0;
         }
 
         .mission-band {
@@ -812,19 +1115,27 @@
 
     @media (max-width: 576px) {
         .home-hero {
-            min-height: 640px;
+            min-height: 560px;
         }
 
         .home-hero__inner {
-            padding: 42px 20px 96px;
+            padding: 30px 20px 84px;
         }
 
         .home-hero__title-lockup {
             gap: 8px;
         }
 
-        .home-hero__brand-en::before {
-            width: 32px;
+        .home-hero h1 {
+            font-size: clamp(3.1rem, 15vw, 4.6rem);
+        }
+
+        .home-hero__brand-cn {
+            font-size: 1.25rem;
+        }
+
+        .home-hero__brand-cn::before {
+            width: 28px;
         }
 
         .home-hero__actions,
@@ -838,58 +1149,106 @@
             grid-template-columns: 1fr;
         }
 
+        .flow-panel__header {
+            padding: 24px 22px 18px;
+        }
+
+        .metric-item {
+            min-height: auto;
+            border-right: 0;
+        }
+
         .section-actions .btn,
         .home-hero__actions .btn {
             width: 100%;
+        }
+
+        .spot-card__footer {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .spot-card__owner {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .post-card__body {
+            min-height: 220px;
+        }
+
+        .post-card__footer {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .post-card__meta {
+            width: 100%;
+        }
+
+        .post-card__signal {
+            width: 100%;
+            justify-content: center;
         }
 
         .home-hero__meta {
             grid-template-columns: 1fr;
         }
 
-        .safety-banner {
-            align-items: flex-start;
+        .hero-meta strong {
+            white-space: normal;
+        }
+
+        .hero-weather__metrics {
+            flex-direction: column;
+            align-items: stretch;
         }
 
         .compliance-ticker {
-            grid-template-columns: 1fr auto;
-            gap: 8px;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 9px;
+            min-height: 40px;
+            padding: 0 14px;
         }
 
         .compliance-ticker__label {
-            grid-column: 1 / -1;
+            font-size: 0.78rem;
+        }
+
+        .compliance-ticker__action {
+            display: none;
+        }
+
+        .compliance-ticker__track {
+            font-size: 0.8rem;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="home-hero" aria-label="渔迹录 AnglrLog 首页">
+<section class="home-announcement" aria-label="安全合规公告">
+    <button class="compliance-ticker" type="button" data-bs-toggle="modal" data-bs-target="#complianceModal" aria-label="查看安全合规公告全文">
+        <span class="compliance-ticker__label">
+            <i class="fas fa-triangle-exclamation"></i> 安全合规提醒
+        </span>
+        <span class="compliance-ticker__viewport" aria-hidden="true">
+            <span class="compliance-ticker__track">
+                水边垂钓，安全为先，请勿超越安全警戒线 · 确认垂钓资格与区域 · 避开禁钓区 · 遵守禁渔期规定 · 规范钓具与钓法 · 使用环保饵料 · 管理渔获限额 · 人走场清 · 服从现场管理
+            </span>
+        </span>
+        <span class="compliance-ticker__action">查看全文</span>
+    </button>
+</section>
+
+<section class="home-hero" aria-label="AnglrLog 渔迹录 首页">
     <div class="home-hero__inner">
         <div class="home-hero__content">
-            <div class="home-hero__eyebrow">
-                <i class="fas fa-water"></i>
-                个人钓鱼数据中心
-            </div>
             <div class="home-hero__title-lockup">
-                <h1>渔迹录</h1>
-                <span class="home-hero__brand-en">AnglrLog</span>
+                <h1>AnglrLog</h1>
+                <span class="home-hero__brand-cn">渔迹录</span>
             </div>
-            <p class="home-hero__lead">把每一次出钓的钓点、天气、鱼获和复盘放进同一套记录系统里，让经验不再散落在聊天记录、相册和记忆里。</p>
-            <div class="home-hero__meta" aria-label="核心记录维度">
-                <div class="hero-meta">
-                    <span>位置资产</span>
-                    <strong>省市、水体、坐标统一归档</strong>
-                </div>
-                <div class="hero-meta">
-                    <span>条件截面</span>
-                    <strong>时间、天气、鱼种同页关联</strong>
-                </div>
-                <div class="hero-meta">
-                    <span>复盘节奏</span>
-                    <strong>记录、讨论、判断持续沉淀</strong>
-                </div>
-            </div>
+            <p class="home-hero__lead">集中记录钓点、天气、鱼获与复盘，让每次出钓都有迹可循。</p>
             <div class="home-hero__actions">
                 <a href="/spots" class="btn btn-hero-primary">
                     <i class="fas fa-map-location-dot"></i> 查看钓点
@@ -899,69 +1258,129 @@
                 </a>
             </div>
         </div>
+
+        <div class="home-hero__meta" aria-label="核心记录维度">
+            <div class="hero-panel__head">
+                <div>
+                    <h2 class="hero-panel__title">位置、天气、复盘同屏</h2>
+                </div>
+                <span class="hero-panel__badge">
+                    <i class="fas fa-satellite-dish"></i> Live
+                </span>
+            </div>
+            <div class="hero-weather" aria-label="当前位置天气">
+                <div class="hero-weather__head">
+                    <div>
+                        <span class="hero-weather__label">当前位置天气</span>
+                        <p class="hero-weather__status" id="currentWeatherStatus">允许定位后显示实时天气。</p>
+                    </div>
+                    <span class="hero-weather__icon">
+                        <i class="fas fa-cloud-sun"></i>
+                    </span>
+                </div>
+                <div class="hero-weather__metrics">
+                    <div class="hero-weather__metric">
+                        <span>气温</span>
+                        <strong id="currentWeatherTemp">--</strong>
+                    </div>
+                    <div class="hero-weather__metric">
+                        <span>风速</span>
+                        <strong id="currentWeatherWind">--</strong>
+                    </div>
+                    <div class="hero-weather__metric">
+                        <span id="currentWeatherThirdLabel">湿度</span>
+                        <strong id="currentWeatherThirdValue">--</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-panel__flow">
+                <div class="hero-meta">
+                    <div class="hero-meta__row">
+                        <span class="hero-meta__icon"><i class="fas fa-location-crosshairs"></i></span>
+                        <div class="hero-meta__text">
+                            <strong>省市、水体、坐标统一归档</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-meta">
+                    <div class="hero-meta__row">
+                        <span class="hero-meta__icon"><i class="fas fa-cloud-sun"></i></span>
+                        <div class="hero-meta__text">
+                            <strong>时间、天气、鱼种同页关联</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-meta">
+                    <div class="hero-meta__row">
+                        <span class="hero-meta__icon"><i class="fas fa-chart-line"></i></span>
+                        <div class="hero-meta__text">
+                            <strong>记录、讨论、判断持续沉淀</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
 <section class="home-metrics-wrap" aria-label="核心模块">
-    <div class="metric-strip">
-        <div class="metric-item">
-            <span class="metric-item__index">01</span>
-            <i class="fas fa-location-crosshairs"></i>
-            <strong>钓点资产</strong>
-            <span>把散落的位置、坐标和水体信息整理成能复用的点位库。</span>
+    <div class="flow-panel">
+        <div class="flow-panel__header">
+            <h2>从一次出钓，到一套可复用经验</h2>
         </div>
-        <div class="metric-item">
-            <span class="metric-item__index">02</span>
-            <i class="fas fa-cloud-sun"></i>
-            <strong>出钓条件</strong>
-            <span>天气、时间和鱼情放在同一层里看，复盘更直观。</span>
-        </div>
-        <div class="metric-item">
-            <span class="metric-item__index">03</span>
-            <i class="fas fa-clipboard-list"></i>
-            <strong>记录复盘</strong>
-            <span>保留每次策略变化和结果，不靠印象回想。</span>
-        </div>
-        <div class="metric-item">
-            <span class="metric-item__index">04</span>
-            <i class="fas fa-users"></i>
-            <strong>交流讨论</strong>
-            <span>把有价值的经验沉淀成可检索、可对照的内容。</span>
+        <div class="metric-strip">
+            <div class="metric-item">
+                <div class="metric-item__head">
+                    <span class="metric-item__index">1</span>
+                    <span class="metric-item__icon"><i class="fas fa-location-crosshairs"></i></span>
+                </div>
+                <h3>选定钓点</h3>
+                <p>看位置、水体、坐标和周边信息，先判断是否值得去。</p>
+            </div>
+            <div class="metric-item">
+                <div class="metric-item__head">
+                    <span class="metric-item__index">2</span>
+                    <span class="metric-item__icon"><i class="fas fa-cloud-sun"></i></span>
+                </div>
+                <h3>记录条件</h3>
+                <p>把时间、天气、鱼种、饵料放在同一条记录里，形成可对比样本。</p>
+            </div>
+            <div class="metric-item">
+                <div class="metric-item__head">
+                    <span class="metric-item__index">3</span>
+                    <span class="metric-item__icon"><i class="fas fa-clipboard-list"></i></span>
+                </div>
+                <h3>复盘结果</h3>
+                <p>回看鱼获、空军、天气变化和用饵策略，找到规律。</p>
+            </div>
+            <div class="metric-item">
+                <div class="metric-item__head">
+                    <span class="metric-item__index">4</span>
+                    <span class="metric-item__icon"><i class="fas fa-layer-group"></i></span>
+                </div>
+                <h3>沉淀经验</h3>
+                <p>把有效判断转成个人记录或讨论内容，下次出钓直接参考。</p>
+            </div>
         </div>
     </div>
 </section>
 
-<section class="home-announcement" aria-label="安全合规公告">
-    <div class="home-announcement__inner">
+<section class="home-section home-section--white" id="personal-dashboard" hidden>
+    <div class="home-section__inner">
         <div class="section-bar">
             <div>
-                <p class="section-kicker">站点公告</p>
                 <h2 class="section-title">
-                    <i class="fas fa-triangle-exclamation"></i>
-                    安全合规提醒
+                    <i class="fas fa-gauge-high"></i>
+                    我的出钓数据
                 </h2>
             </div>
-        </div>
-
-        <div class="safety-banner">
-            <i class="fas fa-shield-heart"></i>
-            <div>
-                <strong>水边垂钓，安全为先，请勿超越安全警戒线，快乐垂钓，安全回家。</strong>
-                <span>出钓前请确认当地管理规定、开放区域和现场安全条件。</span>
+            <div class="section-actions">
+                <a href="/profile" class="btn btn-sm btn-primary">
+                    <i class="fas fa-arrow-right"></i> 个人中心
+                </a>
             </div>
         </div>
-
-        <button class="compliance-ticker" type="button" data-bs-toggle="modal" data-bs-target="#complianceModal" aria-label="查看安全合规公告全文">
-            <span class="compliance-ticker__label">
-                <i class="fas fa-scale-balanced"></i> 合规提醒
-            </span>
-            <span class="compliance-ticker__viewport" aria-hidden="true">
-                <span class="compliance-ticker__track">
-                    确认垂钓资格与区域 · 避开禁钓区 · 遵守禁渔期规定 · 规范钓具与钓法 · 使用环保饵料 · 管理渔获限额 · 人走场清 · 安全第一 · 服从现场管理
-                </span>
-            </span>
-            <span class="compliance-ticker__action">查看全文</span>
-        </button>
+        <div class="row g-4" id="personal-dashboard-cards"></div>
     </div>
 </section>
 
@@ -1030,20 +1449,19 @@
     <div class="home-section__inner">
         <div class="section-bar">
             <div>
-                <p class="section-kicker">钓点信息</p>
                 <h2 class="section-title">
                     <i class="fas fa-location-dot"></i>
                     全国钓点
                 </h2>
             </div>
             <div class="section-actions">
-                <button class="btn btn-sm btn-outline-secondary" id="locateBtn" type="button">
+                <button class="btn btn-outline-secondary" id="locateBtn" type="button">
                     <i class="fas fa-location-crosshairs"></i> 定位
                 </button>
-                <a href="/spots" class="btn btn-sm btn-primary" id="addSpotLink" style="display: none;">
+                <a href="/spots" class="btn btn-primary" id="addSpotLink" style="display: none;">
                     <i class="fas fa-plus"></i> 新增钓点
                 </a>
-                <a href="/spots" class="btn btn-sm btn-outline-primary">
+                <a href="/spots" class="btn btn-outline-primary">
                     <i class="fas fa-arrow-right"></i> 全部钓点
                 </a>
             </div>
@@ -1103,17 +1521,16 @@
     <div class="home-section__inner">
         <div class="section-bar">
             <div>
-                <p class="section-kicker">钓友讨论</p>
                 <h2 class="section-title">
                     <i class="fas fa-comments"></i>
                     热门讨论
                 </h2>
             </div>
             <div class="section-actions">
-                <a href="/forum/create" class="btn btn-sm btn-outline-secondary">
+                <a href="/forum/create" class="btn btn-outline-secondary">
                     <i class="fas fa-pen"></i> 发帖
                 </a>
-                <a href="/forum" class="btn btn-sm btn-primary">
+                <a href="/forum" class="btn btn-primary">
                     <i class="fas fa-arrow-right"></i> 讨论区
                 </a>
             </div>
@@ -1126,36 +1543,6 @@
                         <span class="visually-hidden">加载中...</span>
                     </div>
                     <p class="mt-3 mb-0">正在加载讨论</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="home-section home-section--light">
-    <div class="home-section__inner">
-        <div class="section-bar">
-            <div>
-                <p class="section-kicker">成长体系</p>
-                <h2 class="section-title">
-                    <i class="fas fa-ranking-star"></i>
-                    钓友排行榜
-                </h2>
-            </div>
-            <div class="section-actions">
-                <a href="/level" class="btn btn-sm btn-primary">
-                    <i class="fas fa-arrow-right"></i> 我的等级
-                </a>
-            </div>
-        </div>
-
-        <div class="row g-4" id="leaderboard-list">
-            <div class="col-12">
-                <div class="loading-state">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">加载中...</span>
-                    </div>
-                    <p class="mt-3 mb-0">正在加载排行榜</p>
                 </div>
             </div>
         </div>
@@ -1200,8 +1587,14 @@
         lake: { label: '湖泊', icon: 'fa-water' },
         reservoir: { label: '水库', icon: 'fa-bridge-water' },
         pond: { label: '池塘', icon: 'fa-circle-dot' },
+        pay_pond: { label: '黑坑', icon: 'fa-fish' },
         other: { label: '其他', icon: 'fa-fish' }
     };
+
+    function getWaterTypeMeta(type) {
+        const key = String(type || '').trim().toLowerCase();
+        return waterTypes[key] || (type ? { label: String(type), icon: 'fa-water' } : waterTypes.other);
+    }
 
     let allSpots = [];
     let nearbyMap = null;
@@ -1262,6 +1655,94 @@
     function setNearbyStatus(message) {
         const status = document.getElementById('nearbyStatus');
         if (status) status.textContent = message;
+    }
+
+    function setWeatherStatus(message) {
+        const status = document.getElementById('currentWeatherStatus');
+        if (status) status.textContent = message;
+    }
+
+    function setWeatherValues(weather) {
+        const temp = document.getElementById('currentWeatherTemp');
+        const wind = document.getElementById('currentWeatherWind');
+        const thirdLabel = document.getElementById('currentWeatherThirdLabel');
+        const thirdValue = document.getElementById('currentWeatherThirdValue');
+        if (temp) temp.textContent = weather.temperature == null ? '--' : `${Math.round(Number(weather.temperature))}°C`;
+        if (wind) {
+            const windValue = weather.wind_speed;
+            const windNumber = Number(windValue);
+            wind.textContent = windValue == null
+                ? '--'
+                : Number.isFinite(windNumber)
+                    ? `${windNumber.toFixed(1)} km/h`
+                    : `${windValue}级`;
+        }
+        if (thirdLabel && thirdValue) {
+            if (weather.humidity != null) {
+                thirdLabel.textContent = '湿度';
+                thirdValue.textContent = `${Math.round(Number(weather.humidity))}%`;
+            } else if (weather.pressure != null) {
+                thirdLabel.textContent = '气压';
+                thirdValue.textContent = `${Math.round(Number(weather.pressure))} hPa`;
+            } else {
+                thirdLabel.textContent = '湿度';
+                thirdValue.textContent = '--';
+            }
+        }
+    }
+
+    async function loadWeatherForLocation(rawLocation, prefix = '当前位置') {
+        setWeatherStatus('正在获取当前位置天气...');
+        try {
+            const params = new URLSearchParams({
+                latitude: rawLocation.lat,
+                longitude: rawLocation.lng
+            });
+            const response = await fetch(`/api/weather/current?${params.toString()}`);
+            if (!response.ok) throw new Error('weather request failed');
+            const data = await response.json();
+            setWeatherValues(data);
+            const location = data.city ? `${data.city} · ` : '';
+            const weatherText = data.weather ? `${data.weather} · ` : '';
+            setWeatherStatus(`${location}${weatherText}${prefix}天气已更新。`);
+        } catch (error) {
+            setWeatherStatus('天气暂时不可用，请稍后重试。');
+        }
+    }
+
+    async function loadCurrentWeather() {
+        if (!navigator.geolocation) {
+            setWeatherStatus('当前浏览器不支持定位，暂无法显示当前位置天气。');
+            return;
+        }
+
+        if (!canPromptForLocation()) {
+            setWeatherStatus('浏览器只允许 HTTPS 或 localhost 页面请求定位。');
+            return;
+        }
+
+        const permissionState = await getLocationPermissionState();
+        if (permissionState === 'denied') {
+            setWeatherStatus('定位权限已关闭，请在地址栏站点设置中允许位置权限。');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                loadWeatherForLocation({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                });
+            },
+            function() {
+                setWeatherStatus('需要允许定位权限后才能展示当前位置天气。');
+            },
+            {
+                enableHighAccuracy: false,
+                timeout: 8000,
+                maximumAge: 600000
+            }
+        );
     }
 
     function setOpenAmapLink(lat, lng) {
@@ -1333,7 +1814,7 @@
             const name = escapeHTML(spot.name || '未命名钓点');
             const province = escapeHTML(spot.province || '');
             const city = escapeHTML(spot.city || '');
-            const waterType = waterTypes[spot.water_type] || waterTypes.other;
+            const waterType = getWaterTypeMeta(spot.water_type);
             return `
                 <article class="nearby-item">
                     <strong>${name}</strong>
@@ -1375,6 +1856,7 @@
     function applyResolvedLocation(rawLocation, mapLocation, accuracyText) {
         const map = ensureNearbyMap([mapLocation.lat, mapLocation.lng]);
         setOpenAmapLink(mapLocation.lat, mapLocation.lng);
+        loadWeatherForLocation(rawLocation);
 
         if (userLocationMarker) {
             userLocationMarker.setLatLng([mapLocation.lat, mapLocation.lng]);
@@ -1471,7 +1953,7 @@
                     const card = document.createElement('div');
                     card.className = 'col-md-6 col-lg-4';
 
-                    const waterType = waterTypes[spot.water_type] || waterTypes.other;
+                    const waterType = getWaterTypeMeta(spot.water_type);
                     const name = escapeHTML(spot.name || '未命名钓点');
                     const province = escapeHTML(spot.province || '');
                     const city = escapeHTML(spot.city || '');
@@ -1501,9 +1983,12 @@
                                 </div>
                                 <p class="spot-card__desc">${description}</p>
                                 <div class="spot-card__footer">
-                                    <span class="spot-card__owner">${spot.user_nickname ? '共享钓点' : '系统收录'}</span>
-                                    <a href="/spots/${spot.id}" class="text-link">
-                                        查看详情 <i class="fas fa-arrow-right"></i>
+                                    <span class="spot-card__owner">
+                                        <i class="fas ${spot.user_nickname ? 'fa-users' : 'fa-database'}"></i>
+                                        ${spot.user_nickname ? '共享钓点' : '系统收录'}
+                                    </span>
+                                    <a href="/spots/${spot.id}" class="spot-card__action">
+                                        进入钓点 <i class="fas fa-arrow-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -1581,37 +2066,36 @@
             });
     }
 
-    function loadLeaderboards() {
-        fetch('/api/users/leaderboards')
-            .then(response => response.json())
+    function loadPersonalDashboard() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        apiFetch('/api/dashboard/me')
             .then(data => {
-                const container = document.getElementById('leaderboard-list');
-                const boards = [
-                    ['今日活跃榜', data.today_active || [], 'XP'],
-                    ['本月经验榜', data.month_xp || [], 'XP'],
-                    ['连续记录榜', data.catch_streak || [], '天'],
-                ];
-                container.innerHTML = boards.map(([title, rows, unit]) => `
-                    <div class="col-md-4">
-                        <article class="feature-card">
-                            <h5><i class="fas fa-trophy"></i> ${escapeHTML(title)}</h5>
-                            <div class="mt-3">
-                                ${rows.length ? rows.slice(0, 5).map((row, index) => `
-                                    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                                        <span>${index + 1}. ${escapeHTML(row.nickname)}
-                                            <small class="text-muted">Lv${row.level} ${escapeHTML(row.title)}</small>
-                                        </span>
-                                        <strong>${row.score}${unit}</strong>
-                                    </div>
-                                `).join('') : '<p class="text-muted mb-0">暂无数据</p>'}
-                            </div>
-                        </article>
+                const section = document.getElementById('personal-dashboard');
+                const cards = document.getElementById('personal-dashboard-cards');
+                const commonSpecies = (data.common_species || []).slice(0, 1)[0]?.name || '暂无';
+                const latest = data.latest_log
+                    ? `${new Date(data.latest_log.fishing_at).toLocaleDateString('zh-CN')} · ${escapeHTML(data.latest_log.species || '未知鱼种')}`
+                    : '暂无记录';
+                cards.innerHTML = `
+                    <div class="col-md-3">
+                        <article class="feature-card"><h5>出钓次数</h5><p><strong>${data.trip_count}</strong> 次</p></article>
                     </div>
-                `).join('');
+                    <div class="col-md-3">
+                        <article class="feature-card feature-card--mint"><h5>累计鱼获</h5><p><strong>${data.total_quantity}</strong> 条</p></article>
+                    </div>
+                    <div class="col-md-3">
+                        <article class="feature-card feature-card--amber"><h5>常钓鱼种</h5><p><strong>${escapeHTML(commonSpecies)}</strong></p></article>
+                    </div>
+                    <div class="col-md-3">
+                        <article class="feature-card feature-card--coral"><h5>最近出钓</h5><p><strong>${latest}</strong></p></article>
+                    </div>
+                `;
+                section.hidden = false;
             })
             .catch(error => {
-                console.error('Error:', error);
-                renderError('leaderboard-list', '排行榜加载失败');
+                console.error('Dashboard load failed:', error);
             });
     }
 
@@ -1624,7 +2108,8 @@
 
         loadSpots();
         loadLatestPosts();
-        loadLeaderboards();
+        loadPersonalDashboard();
+        loadCurrentWeather();
 
         document.getElementById('locateBtn').addEventListener('click', locateUser);
         document.getElementById('relocateBtn').addEventListener('click', locateUser);

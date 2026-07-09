@@ -21,6 +21,7 @@ class BadgeService:
         BadgeRule("night_master", "夜钓高手", "🌙", "夜钓30次"),
         BadgeRule("rain_master", "雨战大师", "🌧️", "雨天出钓20次"),
         BadgeRule("big_catch_king", "爆护王", "🏆", "单次记录渔获100尾以上"),
+        BadgeRule("lure_master", "路亚高手", "🎯", "路亚记录达到100次"),
         BadgeRule("tech_author", "技术分享达人", "📖", "累计发布100篇技术分享"),
     )
 
@@ -98,8 +99,8 @@ class BadgeService:
 
     @classmethod
     async def _is_eligible(cls, session: Any, user_id: int, badge_code: str) -> bool:
-        from sqlalchemy import extract, func, select
-        from app.models import CatchLog, Post
+        from sqlalchemy import cast, extract, func, or_, select, String
+        from app.models import CatchLog, FishingSpot, Post
 
         if badge_code == "first_catch_log":
             result = await session.execute(select(func.count(CatchLog.id)).where(CatchLog.user_id == user_id))
@@ -126,7 +127,19 @@ class BadgeService:
             )
             return int(result.scalar() or 0) >= 30
         if badge_code == "rain_master":
-            return False
+            weather_text = cast(CatchLog.weather_snapshot, String)
+            result = await session.execute(
+                select(func.count(CatchLog.id)).where(
+                    CatchLog.user_id == user_id,
+                    or_(
+                        weather_text.ilike("%rain%"),
+                        weather_text.ilike("%雨%"),
+                        weather_text.ilike("%drizzle%"),
+                        weather_text.ilike("%shower%"),
+                    ),
+                )
+            )
+            return int(result.scalar() or 0) >= 20
         if badge_code == "big_catch_king":
             result = await session.execute(
                 select(func.count(CatchLog.id)).where(
@@ -135,6 +148,25 @@ class BadgeService:
                 )
             )
             return int(result.scalar() or 0) >= 1
+        if badge_code == "lure_master":
+            keyword = "%路亚%"
+            result = await session.execute(
+                select(func.count(CatchLog.id))
+                .outerjoin(FishingSpot, FishingSpot.id == CatchLog.spot_id)
+                .where(
+                    CatchLog.user_id == user_id,
+                    or_(
+                        CatchLog.bait.ilike(keyword),
+                        CatchLog.equipment.ilike(keyword),
+                        CatchLog.rod.ilike(keyword),
+                        CatchLog.line_group.ilike(keyword),
+                        CatchLog.note.ilike(keyword),
+                        FishingSpot.tags.ilike(keyword),
+                        FishingSpot.description.ilike(keyword),
+                    ),
+                )
+            )
+            return int(result.scalar() or 0) >= 100
         if badge_code == "tech_author":
             result = await session.execute(
                 select(func.count(Post.id)).where(

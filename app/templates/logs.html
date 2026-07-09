@@ -1,16 +1,98 @@
 {% extends "base.html" %}
 
-{% block title %}我的记录 - 渔迹录{% endblock %}
+{% block title %}我的记录 - AnglrLog{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media (max-width: 767.98px) {
+        .logs-page-head {
+            gap: 14px;
+        }
+
+        .logs-page-actions {
+            text-align: left !important;
+        }
+
+        .logs-page-actions .btn {
+            width: 100%;
+        }
+
+        .logs-filter-actions {
+            width: 100%;
+        }
+
+        .logs-filter-actions .btn {
+            flex: 1 1 0;
+        }
+
+        .log-card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 14px;
+            text-align: left !important;
+        }
+
+        .log-card-actions .btn {
+            width: 100%;
+        }
+
+        #logsList .card-title {
+            font-size: 1.06rem;
+            line-height: 1.45;
+        }
+
+        #logsList .weather-info small {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
+<div class="row mb-4 logs-page-head">
     <div class="col-md-8">
         <h1 class="page-title mb-0"><i class="fas fa-list"></i> 我的出钓记录</h1>
     </div>
-    <div class="col-md-4 text-end">
-        <a href="/logs/create" class="btn btn-success">
+    <div class="col-md-4 text-end logs-page-actions">
+        <a href="{{ create_url | default('/logs/create') }}" class="btn btn-success">
             <i class="fas fa-plus"></i> 新建记录
         </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label">开始日期</label>
+                <input type="date" class="form-control" id="filterDateFrom">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">结束日期</label>
+                <input type="date" class="form-control" id="filterDateTo">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">钓点</label>
+                <select class="form-select" id="filterSpot">
+                    <option value="">全部钓点</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">鱼种</label>
+                <input type="text" class="form-control" id="filterSpecies" placeholder="鲈鱼">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">饵料</label>
+                <input type="text" class="form-control" id="filterBait" placeholder="亮片">
+            </div>
+            <div class="col-md-2 d-flex gap-2 logs-filter-actions">
+                <button class="btn btn-primary flex-fill" id="applyFiltersBtn">筛选</button>
+                <button class="btn btn-outline-secondary" id="resetFiltersBtn">重置</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -34,7 +116,10 @@
             return;
         }
 
+        loadFilterSpots();
         loadLogs();
+        document.getElementById('applyFiltersBtn').addEventListener('click', loadLogs);
+        document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
     });
 
     function escapeHTML(value) {
@@ -47,15 +132,21 @@
         }[char]));
     }
 
+    function formatDurationHours(minutes) {
+        const hours = Number(minutes || 0) / 60;
+        if (!Number.isFinite(hours) || hours <= 0) return '未记录';
+        return `${Number.isInteger(hours) ? hours : hours.toFixed(1).replace(/\.0$/, '')}小时`;
+    }
+
     async function loadLogs() {
         try {
-            const logs = await apiFetch('/api/logs');
+            const logs = await apiFetch(buildLogsUrl());
             const logsList = document.getElementById('logsList');
 
             if (logs.length === 0) {
                 logsList.innerHTML = `
                     <div class="empty-state">
-                        <i class="fas fa-info-circle"></i> 您还没有任何记录，<a href="/logs/create">创建第一条记录</a>
+                        <i class="fas fa-info-circle"></i> 您还没有任何记录，<a href="{{ create_url | default('/logs/create') }}">创建第一条记录</a>
                     </div>
                 `;
                 return;
@@ -80,10 +171,24 @@
                                 </p>
                                 <p class="card-text">
                                     <small>
-                                        <i class="fas fa-hourglass-end"></i> 作钓时长: ${log.duration}分钟
+                                        <i class="fas fa-hourglass-end"></i> 作钓时长: ${formatDurationHours(log.duration)}
                                         ${log.bait ? `| <i class="fas fa-worm"></i> 饵料: ${escapeHTML(log.bait)}` : ''}
+                                        ${log.weight ? `| <i class="fas fa-weight-hanging"></i> 重量: ${escapeHTML(log.weight)} kg` : ''}
                                     </small>
                                 </p>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        ${log.tide ? `<span class="me-3"><i class="fas fa-water"></i> 潮汐: ${escapeHTML(log.tide)}</span>` : ''}
+                                        ${log.rod ? `<span class="me-3"><i class="fas fa-grip-lines"></i> 鱼竿: ${escapeHTML(log.rod)}</span>` : ''}
+                                        ${log.line_group ? `<span class="me-3"><i class="fas fa-link"></i> 线组: ${escapeHTML(log.line_group)}</span>` : ''}
+                                        ${log.equipment ? `<span class="me-3"><i class="fas fa-toolbox"></i> 装备: ${escapeHTML(log.equipment)}</span>` : ''}
+                                    </small>
+                                </p>
+                                ${Array.isArray(log.photo_urls) && log.photo_urls.length ? `
+                                    <div class="d-flex gap-2 flex-wrap mb-2">
+                                        ${log.photo_urls.slice(0, 4).map(url => `<img src="${escapeHTML(url)}" alt="渔获照片" class="rounded" style="width: 76px; height: 56px; object-fit: cover;">`).join('')}
+                                    </div>
+                                ` : ''}
                                 ${log.note ? `<p class="card-text"><small>${escapeHTML(log.note)}</small></p>` : ''}
                                 <div class="weather-info mt-2">
                                     <small class="text-muted">
@@ -93,7 +198,7 @@
                                     </small>
                                 </div>
                             </div>
-                            <div class="col-md-4 text-end">
+                            <div class="col-md-4 text-end log-card-actions">
                                 <button class="btn btn-sm btn-primary" onclick="editLog(${log.id})">
                                     <i class="fas fa-edit"></i> 编辑
                                 </button>
@@ -115,13 +220,55 @@
         }
     }
 
+    function buildLogsUrl() {
+        const params = new URLSearchParams();
+        const dateFrom = document.getElementById('filterDateFrom').value;
+        const dateTo = document.getElementById('filterDateTo').value;
+        const spotId = document.getElementById('filterSpot').value;
+        const species = document.getElementById('filterSpecies').value.trim();
+        const bait = document.getElementById('filterBait').value.trim();
+
+        if (dateFrom) params.set('date_from', `${dateFrom}T00:00:00`);
+        if (dateTo) params.set('date_to', `${dateTo}T23:59:59`);
+        if (spotId) params.set('spot_id', spotId);
+        if (species) params.set('species', species);
+        if (bait) params.set('bait', bait);
+
+        const query = params.toString();
+        return `{{ api_url | default('/api/logs') }}${query ? `?${query}` : ''}`;
+    }
+
+    async function loadFilterSpots() {
+        try {
+            const spots = await apiFetch('/api/spots');
+            const select = document.getElementById('filterSpot');
+            spots.forEach(spot => {
+                const option = document.createElement('option');
+                option.value = spot.id;
+                option.textContent = `${spot.name} (${spot.city || '未知'})`;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading filter spots:', error);
+        }
+    }
+
+    function resetFilters() {
+        document.getElementById('filterDateFrom').value = '';
+        document.getElementById('filterDateTo').value = '';
+        document.getElementById('filterSpot').value = '';
+        document.getElementById('filterSpecies').value = '';
+        document.getElementById('filterBait').value = '';
+        loadLogs();
+    }
+
     async function deleteLog(logId) {
         if (!confirm('确认删除此记录？')) {
             return;
         }
 
         try {
-            await apiFetch(`/api/logs/${logId}`, {
+            await apiFetch(`{{ api_url | default('/api/logs') }}/${logId}`, {
                 method: 'DELETE'
             });
 
@@ -138,7 +285,7 @@
     }
 
     function editLog(logId) {
-        window.location.href = `/logs/${logId}/edit`;
+        window.location.href = `{{ edit_base_url | default('/logs') }}/${logId}/edit`;
     }
 </script>
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}用户管理 - 渔迹录{% endblock %}
+{% block title %}用户管理 - AnglrLog{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -14,8 +14,8 @@
     .admin-summary__item {
         padding: 20px;
         border: 1px solid var(--border-soft);
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.92);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.94);
         box-shadow: var(--shadow-soft);
     }
 
@@ -69,7 +69,7 @@
     }
 
     .status-pill--admin {
-        background: rgba(217, 164, 65, 0.16);
+        background: rgba(234, 183, 93, 0.18);
         color: #9a6b12;
     }
 
@@ -152,7 +152,24 @@
 {% block extra_js %}
 <script>
 let currentUser = null;
-const SUPER_ADMIN_PHONE = '18610137321';
+const SUPER_ADMIN_PHONES = ['18610137321'];
+const ROOT_ADMIN_NICKNAMES = ['Demo', 'Demo用户'];
+const DAILY_SUPER_ADMIN_NICKNAMES = ['wang_77'];
+const SUPER_ADMIN_NICKNAMES = ROOT_ADMIN_NICKNAMES.concat(DAILY_SUPER_ADMIN_NICKNAMES);
+
+function isRootAdminUser(user) {
+    return Boolean(user && (
+        SUPER_ADMIN_PHONES.includes(user.phone)
+        || ROOT_ADMIN_NICKNAMES.includes(user.nickname)
+    ));
+}
+
+function isSuperAdminUser(user) {
+    return Boolean(user && (
+        isRootAdminUser(user)
+        || SUPER_ADMIN_NICKNAMES.includes(user.nickname)
+    ));
+}
 
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -217,14 +234,17 @@ function renderUsers(users) {
     const tbody = document.getElementById('usersTable');
     tbody.innerHTML = users.map(user => {
         const isSelf = currentUser && currentUser.id === user.id;
-        const isSuperAdmin = user.phone === SUPER_ADMIN_PHONE;
-        const currentUserIsSuperAdmin = currentUser && currentUser.phone === SUPER_ADMIN_PHONE;
-        const protectedFromCurrentAdmin = isSuperAdmin && !isSelf;
+        const isRootAdmin = isRootAdminUser(user);
+        const isSuperAdmin = isSuperAdminUser(user);
+        const currentUserIsRootAdmin = isRootAdminUser(currentUser);
+        const currentUserIsSuperAdmin = isSuperAdminUser(currentUser);
+        const protectedFromCurrentAdmin = (isRootAdmin && !currentUserIsRootAdmin) || (isSuperAdmin && !isSelf && !currentUserIsRootAdmin);
         const canManageAdminRole = currentUserIsSuperAdmin && !isSelf;
         const canOperate = !protectedFromCurrentAdmin;
         const identity = user.phone || user.wechat_openid || '未绑定手机号';
         const statuses = [
-            isSuperAdmin ? '<span class="status-pill status-pill--admin"><i class="fas fa-crown"></i> 超级管理员</span>' : '',
+            isRootAdmin ? '<span class="status-pill status-pill--admin"><i class="fas fa-crown"></i> 最大管理账号</span>' : '',
+            isSuperAdmin && !isRootAdmin ? '<span class="status-pill status-pill--admin"><i class="fas fa-crown"></i> 超级管理员</span>' : '',
             user.is_admin ? '<span class="status-pill status-pill--admin"><i class="fas fa-user-shield"></i> 管理员</span>' : '',
             user.is_disabled ? '<span class="status-pill status-pill--danger"><i class="fas fa-ban"></i> 已禁用</span>' : '<span class="status-pill"><i class="fas fa-circle-check"></i> 正常</span>',
             user.can_post ? '<span class="status-pill"><i class="fas fa-comment"></i> 可发言</span>' : '<span class="status-pill status-pill--danger"><i class="fas fa-comment-slash"></i> 已禁言</span>'

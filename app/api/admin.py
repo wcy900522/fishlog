@@ -3,7 +3,14 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_db
-from app.core.deps import is_super_admin_user, require_admin_user
+from app.core.deps import (
+    ROOT_ADMIN_NICKNAMES,
+    ROOT_ADMIN_PHONES,
+    can_view_root_admin_user,
+    is_root_admin_user,
+    is_super_admin_user,
+    require_admin_user,
+)
 from app.core.security import SecurityService
 from app.models import CatchLog, Comment, CommentLike, FishingSpot, Post, PostLike, User, UserBadge, XPLog
 from app.schemas import (
@@ -17,13 +24,21 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
 def _assert_can_manage_target(admin: User, target: User) -> None:
-    if is_super_admin_user(target) and target.id != admin.id:
+    if is_root_admin_user(target) and not is_root_admin_user(admin):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="最大管理账号不允许被其他管理员管理")
+    if is_super_admin_user(target) and target.id != admin.id and not is_root_admin_user(admin):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="超级管理员账号不允许被其他管理员管理")
 
 
 def _assert_super_admin(admin: User) -> None:
     if not is_super_admin_user(admin):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="只有超级管理员可以授权或取消管理员权限")
+
+
+def _visible_user_condition(admin: User):
+    if can_view_root_admin_user(admin):
+        return None
+    return ~((User.phone.in_(ROOT_ADMIN_PHONES)) | (User.nickname.in_(ROOT_ADMIN_NICKNAMES)))
 
 
 def _user_response(row) -> AdminUserResponse:
@@ -84,8 +99,9 @@ async def list_users(
         .subquery()
     )
 
-    total_result = await session.execute(select(func.count(User.id)))
-    result = await session.execute(
+    visible_condition = _visible_user_condition(admin)
+    total_query = select(func.count(User.id))
+    users_query = (
         select(
             User,
             func.coalesce(post_counts.c.post_count, 0),
@@ -99,6 +115,12 @@ async def list_users(
         .outerjoin(log_counts, log_counts.c.user_id == User.id)
         .order_by(User.created_at.desc(), User.id.desc())
     )
+    if visible_condition is not None:
+        total_query = total_query.where(visible_condition)
+        users_query = users_query.where(visible_condition)
+
+    total_result = await session.execute(total_query)
+    result = await session.execute(users_query)
 
     return AdminUserListResponse(
         total=total_result.scalar_one(),

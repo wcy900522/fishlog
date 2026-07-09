@@ -1,16 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}讨论专区 - 渔迹录{% endblock %}
+{% block title %}讨论专区 - AnglrLog{% endblock %}
 
 {% block extra_css %}
 <style>
     .post-card {
         cursor: pointer;
-        transition: all 0.3s;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
     .post-card:hover {
         transform: translateY(-2px);
+        box-shadow: var(--shadow-strong);
+        border-color: rgba(14, 143, 163, 0.28);
     }
 
     .post-title {
@@ -26,11 +28,11 @@
 
     .post-meta {
         font-size: 0.9rem;
-        color: #999;
+        color: var(--text-muted);
     }
 
     .post-content-preview {
-        color: #555;
+        color: var(--text-dark);
         margin: 10px 0;
         line-height: 1.6;
     }
@@ -51,7 +53,7 @@
     }
 
     .tag-filter .btn {
-        border-radius: 20px;
+        border-radius: 8px;
         padding: 6px 16px;
     }
 
@@ -59,8 +61,8 @@
         display: inline-flex;
         align-items: center;
         padding: 3px 10px;
-        border-radius: 14px;
-        background: #e8f4f8;
+        border-radius: 999px;
+        background: var(--surface-soft);
         color: var(--primary-blue);
         font-size: 0.82rem;
         font-weight: 600;
@@ -73,11 +75,64 @@
         gap: 5px;
         padding: 2px 8px;
         border-radius: 999px;
-        background: rgba(13, 164, 166, 0.12);
+        background: rgba(14, 143, 163, 0.12);
         color: var(--brand-teal);
         font-size: 0.78rem;
         font-weight: 700;
         margin-left: 8px;
+    }
+
+    @media (max-width: 576px) {
+        .tag-filter {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 8px;
+            margin-left: -12px;
+            margin-right: -12px;
+            padding: 0 12px 12px;
+            scroll-snap-type: x proximity;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tag-filter .btn {
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+            padding: 7px 13px;
+            white-space: nowrap;
+        }
+
+        .search-box {
+            margin-bottom: 18px;
+        }
+
+        .search-box .input-group {
+            display: grid;
+            gap: 8px;
+        }
+
+        .search-box .input-group > * {
+            width: 100%;
+            border-radius: 8px !important;
+        }
+
+        #createPostBtn {
+            width: 100%;
+        }
+
+        .post-card .card-body {
+            padding: 16px;
+        }
+
+        .post-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            line-height: 1.5;
+        }
+
+        .level-chip {
+            margin-left: 0;
+        }
     }
 </style>
 {% endblock %}
@@ -101,6 +156,7 @@
     <button type="button" class="btn btn-outline-primary" data-tag="技术分享" onclick="selectTag('技术分享')">技术分享</button>
     <button type="button" class="btn btn-outline-primary" data-tag="装备评测" onclick="selectTag('装备评测')">装备评测</button>
     <button type="button" class="btn btn-outline-primary" data-tag="钓点攻略" onclick="selectTag('钓点攻略')">钓点攻略</button>
+    <button type="button" class="btn btn-outline-primary" data-tag="秀出鱼获" onclick="selectTag('秀出鱼获')">秀出鱼获</button>
 </div>
 
 <div class="search-box">
@@ -186,10 +242,16 @@
                                 <i class="fas fa-user"></i> ${escapeHTML(post.user_nickname || '未知用户')}
                                 <span class="level-chip">Lv${post.user_level || 1} ${escapeHTML(post.user_title || '初学钓手')}</span>
                                 <i class="fas fa-clock ms-3"></i> ${formatDate(post.created_at)}
+                                <i class="fas fa-eye ms-3"></i> ${post.view_count || 0}
                                 <i class="fas fa-comments ms-3"></i> ${post.comment_count} 条评论
                                 <i class="fas fa-heart ms-3"></i> ${post.like_count || 0}
                                 ${post.is_featured ? '<i class="fas fa-star ms-3 text-warning"></i> 精华' : ''}
                             </p>
+                            ${Array.isArray(post.image_urls) && post.image_urls.length ? `
+                                <div class="d-flex gap-2 flex-wrap my-2">
+                                    ${post.image_urls.slice(0, 3).map(url => `<img src="${escapeHTML(url)}" alt="帖子图片" class="rounded" style="width: 96px; height: 68px; object-fit: cover;">`).join('')}
+                                </div>
+                            ` : ''}
                             <p class="post-content-preview">${escapeHTML(truncateContent(post.content))}</p>
                         </div>
                     </div>

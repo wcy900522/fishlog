@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}个人中心 - AnglrLog{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-hero {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 22px;
+        align-items: center;
+        padding: 30px;
+        border-radius: 8px;
+        background:
+            linear-gradient(135deg, rgba(7, 88, 106, 0.96), rgba(14, 143, 163, 0.88)),
+            url('/static/fishing-lake-bg.svg') center 52%/cover;
+        color: #fff;
+        box-shadow: var(--shadow-strong);
+        margin-bottom: 28px;
+    }
+
+    .profile-avatar {
+        width: 86px;
+        height: 86px;
+        border-radius: 50%;
+        display: inline-grid;
+        place-items: center;
+        background: linear-gradient(135deg, #f1c96d, #8de3ca);
+        color: var(--brand-ink);
+        font-size: 2.2rem;
+        font-weight: 900;
+        box-shadow: 0 12px 26px rgba(7, 52, 66, 0.18);
+        overflow: hidden;
+        border: 3px solid rgba(255, 255, 255, 0.72);
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .profile-avatar-wrap {
+        display: grid;
+        gap: 10px;
+        justify-items: center;
+    }
+
+    .avatar-upload-btn {
+        border: 1px solid rgba(255, 255, 255, 0.46);
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .avatar-upload-btn:hover {
+        background: rgba(255, 255, 255, 0.24);
+        color: #fff;
+    }
+
+    .avatar-upload-status {
+        min-height: 18px;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 0.78rem;
+        text-align: center;
+    }
+
+    .profile-name-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .profile-name-row h2 {
+        margin: 0;
+    }
+
+    .nickname-edit-btn {
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 0.82rem;
+        font-weight: 800;
+    }
+
+    .nickname-edit-btn:hover {
+        background: rgba(255, 255, 255, 0.24);
+        color: #fff;
+    }
+
+    .nickname-edit-panel {
+        display: none;
+        grid-template-columns: minmax(180px, 280px) auto auto;
+        gap: 8px;
+        align-items: center;
+        margin: 10px 0;
+    }
+
+    .nickname-edit-panel.is-open {
+        display: grid;
+    }
+
+    .nickname-edit-status {
+        min-height: 20px;
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 0.84rem;
+    }
+
+    .dashboard-card {
+        height: 100%;
+        padding: 24px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid var(--border-soft);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .dashboard-card strong {
+        display: block;
+        font-size: 2rem;
+        color: var(--brand-deep);
+    }
+
+    .mini-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .mini-list div {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-soft);
+        padding-bottom: 8px;
+    }
+
+    @media (max-width: 767.98px) {
+        .profile-hero {
+            grid-template-columns: 1fr;
+            justify-items: center;
+            text-align: center;
+            padding: 22px 16px;
+            gap: 16px;
+        }
+
+        .profile-avatar {
+            width: 78px;
+            height: 78px;
+            font-size: 2rem;
+        }
+
+        .dashboard-card {
+            padding: 18px;
+        }
+
+        .dashboard-card strong {
+            font-size: 1.55rem;
+        }
+
+        .mini-list div {
+            gap: 10px;
+            align-items: center;
+        }
+
+        .profile-name-row {
+            justify-content: center;
+        }
+
+        .nickname-edit-panel {
+            grid-template-columns: 1fr;
+            width: min(100%, 320px);
+            margin-left: auto;
+            margin-right: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="page-title"><i class="fas fa-user-circle"></i> 个人中心</h1>
+    <p class="page-subtitle">查看你的出钓数据、经验等级和常用作钓模式。</p>
+</div>
+
+<section class="profile-hero" id="profileHero">
+    <div class="profile-avatar-wrap">
+        <div class="profile-avatar">F</div>
+    </div>
+    <div>
+        <p class="mb-1">加载中...</p>
+    </div>
+</section>
+
+<div class="row g-4 mb-4" id="dashboardCards"></div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="dashboard-card">
+            <h5><i class="fas fa-location-dot"></i> 常用钓点</h5>
+            <div class="mini-list mt-3" id="commonSpots"></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="dashboard-card">
+            <h5><i class="fas fa-fish"></i> 常用鱼种</h5>
+            <div class="mini-list mt-3" id="commonSpecies"></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="dashboard-card">
+            <h5><i class="fas fa-worm"></i> 常用饵料</h5>
+            <div class="mini-list mt-3" id="commonBaits"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+function renderList(id, rows, emptyText) {
+    document.getElementById(id).innerHTML = rows.length
+        ? rows.map(row => `<div><span>${escapeHTML(row.name)}</span><strong>${row.count}</strong></div>`).join('')
+        : `<p class="text-muted mb-0">${escapeHTML(emptyText)}</p>`;
+}
+
+function renderAvatar(user) {
+    const initial = escapeHTML((user.nickname || 'F').slice(0, 1).toUpperCase());
+    if (user.avatar) {
+        return `<div class="profile-avatar"><img src="${escapeHTML(user.avatar)}" alt="${escapeHTML(user.nickname || '用户头像')}"></div>`;
+    }
+    return `<div class="profile-avatar">${initial}</div>`;
+}
+
+function renderProfileHero(me, level) {
+    document.getElementById('profileHero').innerHTML = `
+        <div class="profile-avatar-wrap">
+            ${renderAvatar(me)}
+            <button class="avatar-upload-btn" type="button" id="avatarUploadBtn">
+                <i class="fas fa-camera"></i> 更换头像
+            </button>
+            <input type="file" id="avatarInput" accept="image/*" hidden>
+            <div class="avatar-upload-status" id="avatarUploadStatus"></div>
+        </div>
+        <div>
+            <div class="profile-name-row">
+                <h2>${escapeHTML(me.nickname)}</h2>
+                <button class="nickname-edit-btn" type="button" id="nicknameEditBtn">
+                    <i class="fas fa-pen"></i> 修改昵称
+                </button>
+            </div>
+            <div class="nickname-edit-panel" id="nicknameEditPanel">
+                <input class="form-control form-control-sm" id="nicknameInput" maxlength="50" value="${escapeHTML(me.nickname)}">
+                <button class="btn btn-sm btn-light" type="button" id="nicknameSaveBtn">保存</button>
+                <button class="btn btn-sm btn-outline-light" type="button" id="nicknameCancelBtn">取消</button>
+            </div>
+            <div class="nickname-edit-status" id="nicknameEditStatus"></div>
+            <p class="mb-2">Lv${level.level} ${escapeHTML(level.title)} · ${level.xp} XP</p>
+            <a class="btn btn-sm btn-primary" href="/level"><i class="fas fa-ranking-star"></i> 查看等级详情</a>
+        </div>
+    `;
+    bindAvatarUpload(me, level);
+    bindNicknameEdit(me, level);
+}
+
+function bindAvatarUpload(me, level) {
+    const input = document.getElementById('avatarInput');
+    const button = document.getElementById('avatarUploadBtn');
+    const status = document.getElementById('avatarUploadStatus');
+    button.addEventListener('click', () => input.click());
+    input.addEventListener('change', async function() {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        if (file.size > 3 * 1024 * 1024) {
+            status.textContent = '头像不能超过 3MB';
+            input.value = '';
+            return;
+        }
+        status.textContent = '正在上传...';
+        button.disabled = true;
+        try {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            const updatedUser = await apiFetch('/api/users/me/avatar', {
+                method: 'POST',
+                body: formData
+            });
+            renderProfileHero(updatedUser, level);
+        } catch (error) {
+            if (error.message.includes('登录状态已失效')) {
+                redirectToLogin(error.message);
+                return;
+            }
+            status.textContent = '上传失败：' + error.message;
+            button.disabled = false;
+        } finally {
+            input.value = '';
+        }
+    });
+}
+
+function bindNicknameEdit(me, level) {
+    const editButton = document.getElementById('nicknameEditBtn');
+    const panel = document.getElementById('nicknameEditPanel');
+    const input = document.getElementById('nicknameInput');
+    const saveButton = document.getElementById('nicknameSaveBtn');
+    const cancelButton = document.getElementById('nicknameCancelBtn');
+    const status = document.getElementById('nicknameEditStatus');
+
+    editButton.addEventListener('click', () => {
+        panel.classList.add('is-open');
+        input.focus();
+        input.select();
+    });
+
+    cancelButton.addEventListener('click', () => {
+        input.value = me.nickname || '';
+        status.textContent = '';
+        panel.classList.remove('is-open');
+    });
+
+    saveButton.addEventListener('click', async () => {
+        const nickname = input.value.trim();
+        if (!nickname) {
+            status.textContent = '昵称不能为空';
+            return;
+        }
+
+        saveButton.disabled = true;
+        status.textContent = '正在保存...';
+        try {
+            const updatedUser = await apiFetch('/api/users/me', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nickname })
+            });
+            renderProfileHero(updatedUser, level);
+        } catch (error) {
+            if (error.message.includes('登录状态已失效')) {
+                redirectToLogin(error.message);
+                return;
+            }
+            status.textContent = '保存失败：' + error.message;
+            saveButton.disabled = false;
+        }
+    });
+
+    input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') saveButton.click();
+        if (event.key === 'Escape') cancelButton.click();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const [me, dashboard, level] = await Promise.all([
+            apiFetch('/api/auth/me'),
+            apiFetch('/api/dashboard/me'),
+            apiFetch('/api/users/me/level')
+        ]);
+
+        renderProfileHero(me, level);
+
+        const latest = dashboard.latest_log;
+        document.getElementById('dashboardCards').innerHTML = `
+            <div class="col-md-4">
+                <div class="dashboard-card"><span>我的出钓次数</span><strong>${dashboard.trip_count}</strong></div>
+            </div>
+            <div class="col-md-4">
+                <div class="dashboard-card"><span>累计鱼获数量</span><strong>${dashboard.total_quantity}</strong></div>
+            </div>
+            <div class="col-md-4">
+                <div class="dashboard-card">
+                    <span>最近一次出钓</span>
+                    <strong style="font-size:1.1rem;">${latest ? new Date(latest.fishing_at).toLocaleDateString('zh-CN') : '暂无记录'}</strong>
+                    ${latest ? `<small>${escapeHTML(latest.species || '未知鱼种')} · ${latest.quantity || 0} 条</small>` : ''}
+                </div>
+            </div>
+        `;
+
+        renderList('commonSpots', dashboard.common_spots || [], '暂无钓点数据');
+        renderList('commonSpecies', dashboard.common_species || [], '暂无鱼种数据');
+        renderList('commonBaits', dashboard.common_baits || [], '暂无饵料数据');
+    } catch (error) {
+        if (error.message.includes('登录状态已失效')) {
+            redirectToLogin(error.message);
+            return;
+        }
+        document.getElementById('profileHero').innerHTML = `<p class="mb-0">加载失败：${escapeHTML(error.message)}</p>`;
+    }
+});
+</script>
+{% endblock %}

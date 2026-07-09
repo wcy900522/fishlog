@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     OPEN_METEO_API_URL: str = "https://api.open-meteo.com/v1"
+    AMAP_WEB_SERVICE_KEY: Optional[str] = os.getenv("AMAP_WEB_SERVICE_KEY")
     WECHAT_APP_ID: Optional[str] = os.getenv("WECHAT_APP_ID")
     WECHAT_APP_SECRET: Optional[str] = os.getenv("WECHAT_APP_SECRET")
     WECHAT_REDIRECT_URI: Optional[str] = os.getenv("WECHAT_REDIRECT_URI")

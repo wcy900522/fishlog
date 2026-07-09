@@ -51,7 +51,11 @@ class FishingSpot(Base):
     city = Column(VARCHAR(50), nullable=True)
     latitude = Column(DECIMAL(10, 6), nullable=False)
     longitude = Column(DECIMAL(10, 6), nullable=False)
-    water_type = Column(VARCHAR(20), nullable=True)  # sea, river, lake, reservoir
+    water_type = Column(VARCHAR(20), nullable=True)  # sea, river, lake, reservoir, pond, pay_pond
+    target_species = Column(VARCHAR(255), nullable=True)
+    best_season = Column(VARCHAR(100), nullable=True)
+    image_url = Column(VARCHAR(255), nullable=True)
+    tags = Column(VARCHAR(255), nullable=True)
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -69,6 +73,12 @@ class CatchLog(Base):
     bait = Column(VARCHAR(100), nullable=True)
     species = Column(VARCHAR(100), nullable=True)
     quantity = Column(Integer, nullable=True)
+    weight = Column(DECIMAL(8, 2), nullable=True)
+    tide = Column(VARCHAR(100), nullable=True)
+    equipment = Column(VARCHAR(255), nullable=True)
+    rod = Column(VARCHAR(100), nullable=True)
+    line_group = Column(VARCHAR(100), nullable=True)
+    photo_urls = Column(JSON, nullable=True)
     note = Column(Text, nullable=True)
     temperature = Column(DECIMAL(5, 2), nullable=True)
     pressure = Column(DECIMAL(6, 2), nullable=True)
@@ -79,6 +89,12 @@ class CatchLog(Base):
     user = relationship("User", back_populates="catch_logs")
     spot = relationship("FishingSpot", back_populates="catch_logs")
 
+    @property
+    def image_count(self) -> int:
+        if isinstance(self.photo_urls, list):
+            return len([url for url in self.photo_urls if url])
+        return 0
+
 class Post(Base):
     __tablename__ = "posts"
 
@@ -87,6 +103,8 @@ class Post(Base):
     title = Column(VARCHAR(255), nullable=False)
     tag = Column(VARCHAR(20), nullable=False, default="野钓")
     content = Column(Text, nullable=False)
+    image_urls = Column(JSON, nullable=True)
+    view_count = Column(Integer, default=0, nullable=False)
     is_featured = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -154,6 +172,49 @@ class UserBadge(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     badge_code = Column(VARCHAR(50), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user = relationship("User")
+
+
+class FishSpecies(Base):
+    __tablename__ = "fish_species"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(VARCHAR(80), nullable=False, unique=True)
+    category = Column(VARCHAR(50), nullable=True)
+    image_url = Column(VARCHAR(255), nullable=True)
+    description = Column(Text, nullable=True)
+    common_methods = Column(Text, nullable=True)
+    common_baits = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Bait(Base):
+    __tablename__ = "baits"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(VARCHAR(100), nullable=False)
+    bait_type = Column(VARCHAR(50), nullable=False)
+    brand = Column(VARCHAR(100), nullable=True)
+    target_species = Column(Text, nullable=True)
+    water_type = Column(VARCHAR(50), nullable=True)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Equipment(Base):
+    __tablename__ = "equipment"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(VARCHAR(100), nullable=False)
+    equipment_type = Column(VARCHAR(50), nullable=False)
+    brand = Column(VARCHAR(100), nullable=True)
+    model = Column(VARCHAR(100), nullable=True)
+    parameters = Column(Text, nullable=True)
+    purchased_at = Column(DateTime, nullable=True)
+    note = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User")

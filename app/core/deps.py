@@ -8,7 +8,11 @@ from app.core.security import SecurityService
 from app.models import User
 from app.repositories import UserRepository
 
-SUPER_ADMIN_PHONE = "18610137321"
+ROOT_ADMIN_PHONES = {"18610137321"}
+ROOT_ADMIN_NICKNAMES = {"Demo", "Demo用户"}
+DAILY_SUPER_ADMIN_NICKNAMES = {"wang_77"}
+SUPER_ADMIN_PHONES = ROOT_ADMIN_PHONES
+SUPER_ADMIN_NICKNAMES = ROOT_ADMIN_NICKNAMES | DAILY_SUPER_ADMIN_NICKNAMES
 
 
 async def get_current_user(
@@ -52,8 +56,23 @@ def is_admin_user(user: User) -> bool:
     return bool(getattr(user, "is_admin", False))
 
 
+def is_root_admin_user(user: User) -> bool:
+    return (
+        getattr(user, "phone", None) in ROOT_ADMIN_PHONES
+        or getattr(user, "nickname", None) in ROOT_ADMIN_NICKNAMES
+    )
+
+
+def can_view_root_admin_user(user: User | None) -> bool:
+    return getattr(user, "nickname", None) in DAILY_SUPER_ADMIN_NICKNAMES
+
+
 def is_super_admin_user(user: User) -> bool:
-    return getattr(user, "phone", None) == SUPER_ADMIN_PHONE
+    return (
+        is_root_admin_user(user)
+        or getattr(user, "phone", None) in SUPER_ADMIN_PHONES
+        or getattr(user, "nickname", None) in SUPER_ADMIN_NICKNAMES
+    )
 
 
 def can_manage_user_content(user: User, owner_id: int | None) -> bool:

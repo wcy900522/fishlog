@@ -1,63 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}关于 渔迹录 - 2026 钓鱼数据中枢{% endblock %}
+{% block title %}关于 AnglrLog - 钓鱼数据中枢{% endblock %}
 
 {% block extra_css %}
 <style>
     .about-page {
         max-width: 1480px;
-        margin: clamp(32px, 5vw, 64px) auto 0;
-        padding: 0 clamp(16px, 3vw, 28px);
-        position: relative;
-    }
-
-    .about-page::before,
-    .about-page::after {
-        content: "";
-        position: absolute;
-        pointer-events: none;
-        z-index: -1;
-        border-radius: 999px;
-        filter: blur(2px);
-    }
-
-    .about-page::before {
-        width: 280px;
-        height: 280px;
-        left: -90px;
-        top: 260px;
-        background: radial-gradient(circle, rgba(103, 232, 249, 0.28), transparent 68%);
-        animation: aboutFloat 9s ease-in-out infinite alternate;
-    }
-
-    .about-page::after {
-        width: 360px;
-        height: 360px;
-        right: -120px;
-        bottom: 180px;
-        background: radial-gradient(circle, rgba(56, 240, 160, 0.22), transparent 66%);
-        animation: aboutFloat 12s ease-in-out infinite alternate-reverse;
-    }
-
-    @keyframes aboutFloat {
-        from { transform: translate3d(0, 0, 0) scale(1); }
-        to { transform: translate3d(36px, -44px, 0) scale(1.1); }
+        margin: clamp(24px, 4vw, 48px) auto 0;
+        padding: 0 clamp(16px, 4vw, 56px);
     }
 
     .about-hero {
-        min-height: clamp(520px, 68vh, 760px);
+        min-height: clamp(420px, 56vh, 620px);
         display: grid;
-        grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
-        gap: clamp(36px, 6vw, 86px);
+        grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+        gap: clamp(28px, 5vw, 72px);
         align-items: center;
-        padding: clamp(42px, 7vw, 86px);
-        border: 1px solid rgba(103, 232, 249, 0.26);
-        border-radius: 38px;
+        padding: clamp(34px, 6vw, 76px);
+        border: 1px solid rgba(117, 215, 239, 0.24);
+        border-radius: 8px;
         color: #fff;
         overflow: hidden;
         position: relative;
         background:
-            linear-gradient(115deg, rgba(6, 17, 22, 0.96), rgba(9, 36, 43, 0.84) 54%, rgba(13, 164, 166, 0.58)),
+            linear-gradient(105deg, rgba(7, 52, 66, 0.88) 0%, rgba(7, 88, 106, 0.72) 48%, rgba(14, 143, 163, 0.42) 100%),
             url('/static/beijing-fishing-review-bg.svg') center/cover;
         box-shadow: var(--shadow-strong);
     }
@@ -66,23 +32,13 @@
         content: "";
         position: absolute;
         inset: 0;
-        opacity: 0.24;
+        opacity: 0.18;
         background-image:
-            linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.13) 1px, transparent 1px);
-        background-size: 58px 58px;
-        mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.85), transparent);
-    }
-
-    .about-hero::after {
-        content: "";
-        position: absolute;
-        width: 520px;
-        height: 520px;
-        right: -130px;
-        top: -120px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(103, 232, 249, 0.24), transparent 62%);
+            linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+        background-size: 56px 56px;
+        pointer-events: none;
+        mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.82), transparent 78%);
     }
 
     .about-hero__content,
@@ -94,223 +50,201 @@
     .about-kicker {
         display: inline-flex;
         align-items: center;
-        gap: 10px;
-        padding: 9px 14px;
-        border: 1px solid rgba(103, 232, 249, 0.38);
+        gap: 9px;
+        padding: 8px 12px;
+        border: 1px solid rgba(117, 215, 239, 0.34);
         border-radius: 999px;
-        color: rgba(239, 254, 250, 0.92);
+        color: rgba(239, 254, 250, 0.9);
         background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(16px);
-        font-size: 0.92rem;
+        font-size: 0.82rem;
         font-weight: 800;
-        letter-spacing: 0.08em;
     }
 
     .about-hero h1 {
-        margin: 24px 0 18px;
-        font-size: clamp(3.2rem, 8vw, 7.6rem);
-        line-height: 0.92;
-        font-weight: 950;
-        letter-spacing: -0.08em;
+        max-width: 760px;
+        margin: 22px 0 16px;
+        font-size: clamp(2.2rem, 4.6vw, 4.2rem);
+        line-height: 1.02;
+        font-weight: 900;
+        letter-spacing: 0;
     }
 
     .about-hero h1 span {
         display: block;
-        color: transparent;
-        -webkit-text-stroke: 1px rgba(239, 254, 250, 0.58);
-        text-shadow: none;
+        margin-top: 4px;
+        color: rgba(239, 254, 250, 0.66);
+        font-size: clamp(1.2rem, 2.6vw, 2rem);
+        font-weight: 800;
     }
 
     .about-hero__lead {
         max-width: 720px;
         margin: 0;
-        color: rgba(239, 254, 250, 0.8);
-        font-size: clamp(1.05rem, 1.7vw, 1.36rem);
-        line-height: 1.85;
+        color: rgba(239, 254, 250, 0.82);
+        font-size: clamp(1rem, 1.35vw, 1.18rem);
+        line-height: 1.82;
     }
 
     .about-hero__actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 14px;
-        margin-top: 34px;
+        gap: 12px;
+        margin-top: 28px;
     }
 
     .about-console {
-        padding: 28px;
-        border: 1px solid rgba(103, 232, 249, 0.24);
-        border-radius: 30px;
-        background: rgba(6, 17, 22, 0.54);
-        backdrop-filter: blur(22px) saturate(1.2);
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), var(--glow-aqua);
+        padding: 18px;
+        border: 1px solid rgba(117, 215, 239, 0.22);
+        border-radius: 8px;
+        background: rgba(7, 88, 106, 0.48);
+        backdrop-filter: blur(12px) saturate(1.08);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
     }
 
     .about-console__map {
-        min-height: 260px;
-        border-radius: 24px;
+        min-height: 220px;
+        border-radius: 8px;
         position: relative;
         overflow: hidden;
         background:
-            radial-gradient(circle at 30% 38%, rgba(103, 232, 249, 0.32), transparent 18%),
-            radial-gradient(circle at 68% 62%, rgba(56, 240, 160, 0.24), transparent 18%),
-            linear-gradient(135deg, rgba(9, 36, 43, 0.98), rgba(13, 164, 166, 0.46));
+            linear-gradient(135deg, rgba(7, 88, 106, 0.88), rgba(14, 143, 163, 0.62)),
+            repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 34px);
     }
 
     .about-console__map::before {
         content: "";
         position: absolute;
-        inset: 24px;
-        border: 1px dashed rgba(239, 254, 250, 0.28);
-        border-radius: 22px;
-    }
-
-    .about-console__map::after {
-        content: "";
-        position: absolute;
-        width: 130px;
-        height: 130px;
-        left: 50%;
-        top: 50%;
-        border-radius: 50%;
-        border: 1px solid rgba(103, 232, 249, 0.45);
-        transform: translate(-50%, -50%);
-        animation: scanPulse 2.8s ease-out infinite;
-    }
-
-    @keyframes scanPulse {
-        from { opacity: 0.8; transform: translate(-50%, -50%) scale(0.42); }
-        to { opacity: 0; transform: translate(-50%, -50%) scale(1.9); }
+        inset: 18px;
+        border: 1px dashed rgba(239, 254, 250, 0.26);
+        border-radius: 8px;
     }
 
     .map-pin {
         position: absolute;
         display: grid;
         place-items: center;
-        width: 42px;
-        height: 42px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
-        color: #061116;
-        background: linear-gradient(135deg, var(--brand-electric), var(--brand-mint));
-        box-shadow: 0 0 28px rgba(103, 232, 249, 0.42);
+        color: var(--brand-ink);
+        background: linear-gradient(135deg, var(--brand-electric), var(--brand-amber));
+        box-shadow: 0 10px 22px rgba(7, 52, 66, 0.16);
     }
 
-    .map-pin:nth-child(1) { left: 24%; top: 32%; }
-    .map-pin:nth-child(2) { right: 22%; top: 46%; animation-delay: 0.4s; }
-    .map-pin:nth-child(3) { left: 52%; bottom: 18%; animation-delay: 0.8s; }
+    .map-pin:nth-child(1) { left: 22%; top: 32%; }
+    .map-pin:nth-child(2) { right: 22%; top: 45%; }
+    .map-pin:nth-child(3) { left: 52%; bottom: 18%; }
 
     .about-console__rows {
         display: grid;
-        gap: 12px;
-        margin-top: 18px;
+        gap: 10px;
+        margin-top: 14px;
     }
 
     .about-console__row {
         display: flex;
         justify-content: space-between;
         gap: 16px;
-        padding: 14px 16px;
-        border-radius: 18px;
-        color: rgba(239, 254, 250, 0.84);
+        padding: 12px 14px;
+        border-radius: 8px;
+        color: rgba(239, 254, 250, 0.78);
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.09);
+        font-size: 0.9rem;
     }
 
     .about-console__row strong {
         color: #fff;
+        white-space: nowrap;
     }
 
     .about-section {
-        margin-top: clamp(56px, 8vw, 104px);
+        margin-top: clamp(42px, 7vw, 82px);
     }
 
     .about-section__head {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: clamp(18px, 4vw, 56px);
         align-items: end;
-        gap: 28px;
-        margin-bottom: 28px;
+        margin-bottom: 22px;
     }
 
     .about-section__head h2 {
         margin: 0;
         color: var(--brand-deep);
-        font-size: clamp(2rem, 4vw, 4.2rem);
-        line-height: 1;
-        font-weight: 950;
-        letter-spacing: -0.06em;
+        font-size: clamp(1.55rem, 2.55vw, 2.45rem);
+        line-height: 1.15;
+        font-weight: 900;
+        letter-spacing: 0;
     }
 
     .about-section__head p {
-        max-width: 520px;
         margin: 0;
         color: var(--text-muted);
-        line-height: 1.8;
+        line-height: 1.78;
     }
 
-    .about-metrics {
+    .about-metrics,
+    .about-flow {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 16px;
+        gap: 14px;
     }
 
     .about-metric,
     .about-feature,
     .about-flow__item {
         border: 1px solid var(--border-soft);
-        background: rgba(255, 255, 255, 0.78);
-        backdrop-filter: blur(20px) saturate(1.12);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px) saturate(1.04);
         box-shadow: var(--shadow-soft);
     }
 
     .about-metric {
-        min-height: 180px;
-        padding: 24px;
-        border-radius: 28px;
-        position: relative;
-        overflow: hidden;
+        min-height: 164px;
+        padding: 20px;
+        border-top: 4px solid var(--brand-electric);
     }
 
-    .about-metric::after {
-        content: "";
-        position: absolute;
-        width: 120px;
-        height: 120px;
-        right: -36px;
-        top: -36px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(103, 232, 249, 0.22), transparent 68%);
+    .about-metric:nth-child(2) {
+        border-top-color: var(--brand-mint);
+    }
+
+    .about-metric:nth-child(3) {
+        border-top-color: var(--brand-amber);
+    }
+
+    .about-metric:nth-child(4) {
+        border-top-color: var(--brand-coral);
     }
 
     .about-metric span {
         color: var(--text-muted);
-        font-size: 0.9rem;
+        font-size: 0.84rem;
+        font-weight: 700;
     }
 
     .about-metric strong {
         display: block;
-        margin-top: 10px;
+        margin-top: 8px;
         color: var(--brand-deep);
-        font-size: 2.4rem;
-        line-height: 1;
-        font-weight: 950;
-        letter-spacing: -0.06em;
+        font-size: clamp(1.28rem, 1.8vw, 1.6rem);
+        line-height: 1.2;
+        font-weight: 900;
     }
 
     .about-metric p {
-        margin: 18px 0 0;
+        margin: 14px 0 0;
         color: var(--text-muted);
         line-height: 1.7;
-    }
-
-    .about-flow {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 18px;
+        font-size: 0.94rem;
     }
 
     .about-flow__item {
-        padding: 26px;
-        border-radius: 28px;
+        min-height: 190px;
+        padding: 22px;
         position: relative;
         overflow: hidden;
     }
@@ -318,11 +252,11 @@
     .about-flow__item::before {
         content: attr(data-step);
         position: absolute;
-        right: 18px;
+        right: 16px;
         top: 12px;
-        color: rgba(13, 164, 166, 0.12);
-        font-size: 4.8rem;
-        font-weight: 950;
+        color: rgba(14, 143, 163, 0.12);
+        font-size: 3rem;
+        font-weight: 900;
         line-height: 1;
     }
 
@@ -330,41 +264,43 @@
     .about-feature i {
         display: inline-grid;
         place-items: center;
-        width: 54px;
-        height: 54px;
-        border-radius: 18px;
-        color: #061116;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        color: var(--brand-ink);
         background: linear-gradient(135deg, var(--brand-electric), var(--brand-mint));
-        box-shadow: var(--glow-aqua);
-        margin-bottom: 20px;
+        box-shadow: 0 10px 22px rgba(14, 143, 163, 0.16);
+        margin-bottom: 16px;
     }
 
     .about-flow__item h3,
     .about-feature h3 {
+        margin: 0 0 8px;
         color: var(--brand-deep);
-        font-weight: 900;
-        font-size: 1.18rem;
+        font-weight: 850;
+        font-size: 1.08rem;
+        line-height: 1.35;
     }
 
     .about-flow__item p,
     .about-feature p {
         margin: 0;
         color: var(--text-muted);
-        line-height: 1.75;
+        line-height: 1.72;
+        font-size: 0.94rem;
     }
 
     .about-features {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 20px;
+        gap: 16px;
     }
 
     .about-feature {
         display: grid;
         grid-template-columns: auto 1fr;
-        gap: 20px;
-        padding: 28px;
-        border-radius: 30px;
+        gap: 16px;
+        padding: 22px;
     }
 
     .about-feature i {
@@ -373,56 +309,63 @@
 
     .about-vision {
         display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 32px;
+        grid-template-columns: 1fr minmax(180px, 280px);
+        gap: 28px;
         align-items: center;
-        padding: clamp(34px, 6vw, 72px);
-        border-radius: 36px;
+        padding: clamp(28px, 5vw, 56px);
+        border-radius: 8px;
         color: #fff;
         overflow: hidden;
         position: relative;
         background:
-            radial-gradient(circle at 18% 18%, rgba(103, 232, 249, 0.28), transparent 34%),
-            linear-gradient(135deg, rgba(6, 17, 22, 0.96), rgba(9, 36, 43, 0.92));
+            linear-gradient(135deg, rgba(7, 88, 106, 0.92), rgba(14, 143, 163, 0.74)),
+            url('/static/fishing-lake-bg.svg') center/cover;
         box-shadow: var(--shadow-strong);
     }
 
     .about-vision h2 {
-        margin: 0 0 16px;
-        font-size: clamp(2.4rem, 5vw, 5.2rem);
-        font-weight: 950;
-        letter-spacing: -0.08em;
+        margin: 0 0 14px;
+        font-size: clamp(1.6rem, 2.7vw, 2.6rem);
+        font-weight: 900;
+        line-height: 1.16;
+        letter-spacing: 0;
     }
 
     .about-vision p {
-        max-width: 760px;
+        max-width: 780px;
         margin: 0;
         color: rgba(239, 254, 250, 0.78);
-        font-size: 1.08rem;
-        line-height: 1.85;
+        font-size: 1rem;
+        line-height: 1.82;
     }
 
-    .vision-orb {
+    .vision-mark {
         display: grid;
-        place-items: center;
-        width: clamp(150px, 20vw, 240px);
-        height: clamp(150px, 20vw, 240px);
-        border-radius: 50%;
-        border: 1px solid rgba(103, 232, 249, 0.34);
-        background:
-            radial-gradient(circle, rgba(103, 232, 249, 0.22), transparent 62%);
-        box-shadow: var(--glow-aqua);
+        gap: 10px;
+        padding: 18px;
+        border: 1px solid rgba(117, 215, 239, 0.28);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
     }
 
-    .vision-orb i {
-        color: var(--brand-electric);
-        font-size: clamp(3rem, 6vw, 6rem);
-        filter: drop-shadow(0 0 22px rgba(103, 232, 249, 0.58));
+    .vision-mark span {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        color: rgba(239, 254, 250, 0.72);
+        font-size: 0.82rem;
+    }
+
+    .vision-mark strong {
+        color: #fff;
+        font-size: 1.24rem;
+        line-height: 1.2;
     }
 
     @media (max-width: 1100px) {
         .about-hero,
-        .about-vision {
+        .about-vision,
+        .about-section__head {
             grid-template-columns: 1fr;
         }
 
@@ -433,17 +376,30 @@
     }
 
     @media (max-width: 720px) {
+        .about-page {
+            margin-top: 16px;
+            padding: 0 14px;
+        }
+
         .about-hero {
-            padding: 34px 22px;
-            border-radius: 26px;
+            padding: 28px 18px;
         }
 
-        .about-section__head {
-            display: block;
+        .about-hero__actions .btn {
+            width: 100%;
         }
 
-        .about-section__head p {
-            margin-top: 14px;
+        .about-console {
+            padding: 12px;
+        }
+
+        .about-console__row {
+            display: grid;
+            gap: 4px;
+        }
+
+        .about-console__row strong {
+            white-space: normal;
         }
 
         .about-metrics,
@@ -461,18 +417,18 @@
 
 {% block content %}
 <div class="about-page bleed">
-    <section class="about-hero" aria-label="渔迹录产品介绍">
+    <section class="about-hero" aria-label="AnglrLog 产品介绍">
         <div class="about-hero__content">
             <div class="about-kicker">
-                <i class="fas fa-satellite-dish"></i>
-                2026 FISHING DATA OS
+                <i class="fas fa-database"></i>
+                FISHING DATA CENTER
             </div>
             <h1>
-                渔迹录
-                <span>AnglrLog</span>
+                AnglrLog
+                <span>渔迹录</span>
             </h1>
             <p class="about-hero__lead">
-                面向年轻钓鱼人的新一代出钓数据中枢。把钓点、天气、水情、鱼获、策略和讨论沉淀成可复盘、可搜索、可判断的个人作钓资产。
+                面向钓鱼人的出钓数据中枢。把钓点、天气、水情、鱼获、策略和讨论沉淀成可复盘、可搜索、可判断的个人作钓资产。
             </p>
             <div class="about-hero__actions">
                 <a href="/spots" class="btn btn-primary">
@@ -501,7 +457,7 @@
                 </div>
                 <div class="about-console__row">
                     <span>复盘输出</span>
-                    <strong>策略 / 鱼种 / 命中窗口</strong>
+                    <strong>策略 / 鱼种 / 窗口</strong>
                 </div>
             </div>
         </aside>
@@ -510,7 +466,6 @@
     <section class="about-section">
         <div class="about-section__head">
             <h2>不靠玄学，靠数据。</h2>
-            <p>传统记录只留下“今天钓到了什么”。渔迹录更关注为什么钓到、什么时候更容易钓到、下一次应该怎么选择。</p>
         </div>
         <div class="about-metrics">
             <article class="about-metric">
@@ -539,7 +494,6 @@
     <section class="about-section">
         <div class="about-section__head">
             <h2>一次出钓，四层沉淀。</h2>
-            <p>从出门前选点，到回家后复盘，每一步都对应一个明确的数据层。</p>
         </div>
         <div class="about-flow">
             <article class="about-flow__item" data-step="01">
@@ -568,7 +522,6 @@
     <section class="about-section">
         <div class="about-section__head">
             <h2>为真实钓鱼场景设计。</h2>
-            <p>不是把表单搬到网页上，而是围绕钓鱼人的行动路径做成一套年轻、直接、可长期使用的工具。</p>
         </div>
         <div class="about-features">
             <article class="about-feature">
@@ -604,13 +557,16 @@
 
     <section class="about-section about-vision">
         <div>
-            <h2>让每一次抛竿，都成为下一次判断的燃料。</h2>
+            <h2>让每一次抛竿，都成为下一次判断的依据。</h2>
             <p>
-                渔迹录的目标不是替你决定怎么钓，而是帮你积累足够清晰的个人样本：什么时候开口、什么天气稳定、哪个点位更值得去、哪套装备更有效。经验可以主观，记录必须可靠。
+                渔迹录不替你决定怎么钓，只帮你沉淀可靠样本：开口时间、稳定天气、值得复去的点位和更有效的装备。
             </p>
         </div>
-        <div class="vision-orb" aria-hidden="true">
-            <i class="fas fa-fish"></i>
+        <div class="vision-mark" aria-hidden="true">
+            <span>DATA <strong>01</strong></span>
+            <span>SPOTS <strong>02</strong></span>
+            <span>LOGS <strong>03</strong></span>
+            <span>REVIEW <strong>04</strong></span>
         </div>
     </section>
 </div>

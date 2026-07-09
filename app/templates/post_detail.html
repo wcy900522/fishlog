@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}帖子详情 - 渔迹录{% endblock %}
+{% block title %}帖子详情 - AnglrLog{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -110,6 +110,54 @@
         font-weight: 700;
         margin-left: 8px;
     }
+
+    @media (max-width: 576px) {
+        .post-header {
+            padding: 18px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+        }
+
+        .post-title {
+            font-size: 1.45rem;
+            line-height: 1.35;
+        }
+
+        .post-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            line-height: 1.5;
+        }
+
+        .post-content {
+            font-size: 1rem;
+            line-height: 1.75;
+            margin: 20px 0;
+        }
+
+        .post-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .post-actions .btn {
+            margin-right: 0;
+            width: 100%;
+        }
+
+        .new-comment-form,
+        .comment {
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .comment-delete-btn {
+            width: 100%;
+            margin-right: 0;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -167,6 +215,7 @@
                         <i class="fas fa-user"></i> ${escapeHTML(post.user_nickname || '未知用户')}
                         <span class="level-chip">Lv${post.user_level || 1} ${escapeHTML(post.user_title || '初学钓手')}</span>
                         <i class="fas fa-clock ms-3"></i> ${formatDate(post.created_at)}
+                        <i class="fas fa-eye ms-3"></i> ${post.view_count || 0}
                         <button class="btn btn-sm btn-outline-primary ms-3" onclick="likePost(event)">
                             <i class="fas fa-heart"></i> ${post.like_count || 0}
                         </button>
@@ -198,6 +247,18 @@
                 </div>
 
                 <div class="post-content">${escapeHTML(post.content)}</div>
+
+                ${Array.isArray(post.image_urls) && post.image_urls.length ? `
+                    <div class="row g-3 mb-4">
+                        ${post.image_urls.map(url => `
+                            <div class="col-md-4">
+                                <a href="${escapeHTML(url)}" target="_blank" rel="noopener">
+                                    <img src="${escapeHTML(url)}" alt="帖子图片" class="w-100 rounded shadow-sm" style="height: 220px; object-fit: cover;">
+                                </a>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
 
                 <div class="comments-section">
                     <h3><i class="fas fa-comments"></i> 评论 (${post.comments.length})</h3>
@@ -445,14 +506,26 @@
         if (title === null) return;
         const content = prompt('修改帖子内容', currentPost.content);
         if (content === null) return;
-        const tag = prompt('修改帖子标签（海钓、路亚、台钓、飞钓、黑坑、野钓）', currentPost.tag || '野钓');
+        const tag = prompt('修改帖子标签（海钓、路亚、台钓、飞钓、黑坑、野钓、技术分享、装备评测、钓点攻略、秀出鱼获）', currentPost.tag || '野钓');
         if (tag === null) return;
+        const imageUrls = prompt('修改图片地址（一行一个 URL）', Array.isArray(currentPost.image_urls) ? currentPost.image_urls.join('\n') : '');
+        if (imageUrls === null) return;
 
         updatePost({
             title: title.trim(),
             content: content.trim(),
-            tag: tag.trim()
+            tag: tag.trim(),
+            image_urls: parseImageUrls(imageUrls, tag.trim())
         });
+    }
+
+    function parseImageUrls(value, tag = '') {
+        const limit = tag === '秀出鱼获' ? 3 : 5;
+        return value
+            .split(/\n+/)
+            .map(item => item.trim())
+            .filter(Boolean)
+            .slice(0, limit);
     }
 
     async function updatePost(postData) {

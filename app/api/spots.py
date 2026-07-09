@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import inspect as sa_inspect, select
 from sqlalchemy.orm import selectinload
 from typing import List
+from pathlib import Path
+from uuid import uuid4
 from app.core.config import get_db
-from app.core.deps import can_manage_user_content, get_current_user, is_admin_user
+from app.core.deps import can_manage_user_content, get_current_user, is_admin_user, is_root_admin_user
 from app.schemas import FishingSpotResponse, FishingSpotCreate
 from app.repositories import FishingSpotRepository
 from app.services import WeatherService
@@ -12,6 +14,16 @@ from app.models import CatchLog, FishingSpot
 
 router = APIRouter(prefix="/api/spots", tags=["spots"])
 PUBLISHER_DISPLAY_NAME = "管理员发布"
+ALLOWED_SPOT_IMAGE_TYPES = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
+MAX_SPOT_IMAGE_SIZE = 5 * 1024 * 1024
+
+
+def public_user_nickname(user) -> str:
+    if not user:
+        return PUBLISHER_DISPLAY_NAME
+    if is_root_admin_user(user):
+        return PUBLISHER_DISPLAY_NAME
+    return user.nickname
 
 
 def build_spot_response(spot: FishingSpot) -> dict:
@@ -28,18 +40,40 @@ def build_spot_response(spot: FishingSpot) -> dict:
         "latitude": float(spot.latitude),
         "longitude": float(spot.longitude),
         "water_type": spot.water_type,
+        "target_species": spot.target_species,
+        "best_season": spot.best_season,
+        "image_url": spot.image_url,
+        "tags": spot.tags,
         "description": spot.description,
         "created_at": spot.created_at,
-        "user_nickname": user.nickname if user else PUBLISHER_DISPLAY_NAME,
+        "user_nickname": public_user_nickname(user),
     }
 
 @router.get("", response_model=List[FishingSpotResponse])
-async def get_all_spots(session: AsyncSession = Depends(get_db)):
-    result = await session.execute(
+async def get_all_spots(
+    keyword: str | None = None,
+    water_type: str | None = None,
+    tag: str | None = None,
+    session: AsyncSession = Depends(get_db),
+):
+    query = (
         select(FishingSpot)
         .options(selectinload(FishingSpot.user))
-        .order_by(FishingSpot.created_at.desc())
+        .order_by(FishingSpot.created_at.desc(), FishingSpot.id.desc())
     )
+    if keyword:
+        like = f"%{keyword}%"
+        query = query.where(
+            (FishingSpot.name.ilike(like))
+            | (FishingSpot.city.ilike(like))
+            | (FishingSpot.target_species.ilike(like))
+            | (FishingSpot.description.ilike(like))
+        )
+    if water_type:
+        query = query.where(FishingSpot.water_type == water_type)
+    if tag:
+        query = query.where(FishingSpot.tags.ilike(f"%{tag}%"))
+    result = await session.execute(query)
     spots = result.scalars().all()
 
     return [build_spot_response(spot) for spot in spots]
@@ -77,6 +111,34 @@ async def create_spot(spot_data: FishingSpotCreate, user = Depends(get_current_u
     spot = await FishingSpotRepository.create_spot(session, user.id, spot_data)
     spot.user = user
     return build_spot_response(spot)
+
+
+@router.post("/image")
+async def upload_spot_image(
+    image: UploadFile = File(...),
+    user = Depends(get_current_user),
+):
+    suffix = ALLOWED_SPOT_IMAGE_TYPES.get(image.content_type or "")
+    if not suffix:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPG, PNG, and WebP images are supported",
+        )
+
+    content = await image.read()
+    if len(content) > MAX_SPOT_IMAGE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Image must be 5MB or smaller",
+        )
+
+    upload_dir = Path(__file__).resolve().parents[1] / "static" / "uploads" / "spots"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"{user.id}_{uuid4().hex}{suffix}"
+    file_path = upload_dir / filename
+    file_path.write_bytes(content)
+
+    return {"url": f"/static/uploads/spots/{filename}"}
 
 @router.put("/{spot_id}", response_model=FishingSpotResponse)
 async def update_spot(spot_id: int, spot_data: FishingSpotCreate, user = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
@@ -138,13 +200,19 @@ async def get_spot_logs(spot_id: int, session: AsyncSession = Depends(get_db)):
         log_dict = {
             "id": log.id,
             "user_id": log.user_id,
-            "user_nickname": log.user.nickname if log.user else "未知用户",
+            "user_nickname": public_user_nickname(log.user) if log.user else "未知用户",
             "spot_id": log.spot_id,
             "fishing_at": log.fishing_at.isoformat() if log.fishing_at else None,
             "duration": log.duration,
             "bait": log.bait,
             "species": log.species,
             "quantity": log.quantity,
+            "weight": float(log.weight) if log.weight is not None else None,
+            "tide": log.tide,
+            "equipment": log.equipment,
+            "rod": log.rod,
+            "line_group": log.line_group,
+            "photo_urls": log.photo_urls,
             "note": log.note,
             "temperature": float(log.temperature) if log.temperature else None,
             "pressure": float(log.pressure) if log.pressure else None,

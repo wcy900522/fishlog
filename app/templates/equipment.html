@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}装备库 - AnglrLog{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="page-title"><i class="fas fa-toolbox"></i> 我的装备</h1>
+    <p class="page-subtitle">记录鱼竿、鱼轮、鱼线和路亚饵，建立自己的装备档案。</p>
+</div>
+
+<div class="shell-card p-4 mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label">搜索装备</label>
+            <input class="form-control" id="keywordFilter" placeholder="名称、品牌、型号关键词">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">类型</label>
+            <select class="form-select" id="typeFilter">
+                <option value="">全部类型</option>
+                <option>鱼竿</option><option>鱼轮</option><option>鱼线</option><option>鱼钩</option><option>路亚饵</option><option>其他</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button class="btn btn-primary flex-fill" onclick="loadEquipment()">筛选</button>
+            <button class="btn btn-outline-secondary" onclick="resetFilters()">重置</button>
+        </div>
+    </div>
+</div>
+
+<div class="shell-card p-4 mb-4">
+    <h5 class="mb-3" id="formTitle">新增装备</h5>
+    <div class="row g-3">
+        <div class="col-md-3"><input class="form-control" id="name" placeholder="名称"></div>
+        <div class="col-md-3">
+            <select class="form-select" id="equipmentType">
+                <option>鱼竿</option><option>鱼轮</option><option>鱼线</option><option>鱼钩</option><option>路亚饵</option><option>其他</option>
+            </select>
+        </div>
+        <div class="col-md-3"><input class="form-control" id="brand" placeholder="品牌"></div>
+        <div class="col-md-3"><input class="form-control" id="model" placeholder="型号"></div>
+        <div class="col-md-4"><input class="form-control" id="purchasedAt" type="date" placeholder="购买时间"></div>
+        <div class="col-md-4"><input class="form-control" id="parameters" placeholder="参数"></div>
+        <div class="col-md-4"><input class="form-control" id="note" placeholder="备注"></div>
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" onclick="saveEquipment()" id="saveBtn">保存</button>
+            <button class="btn btn-outline-secondary" onclick="resetForm()" type="button">取消编辑</button>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4" id="equipmentList"></div>
+
+<script>
+let editingEquipmentId = null;
+
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+
+async function loadEquipment() {
+    const params = new URLSearchParams();
+    const keyword = document.getElementById('keywordFilter').value.trim();
+    const equipmentType = document.getElementById('typeFilter').value;
+    if (keyword) params.set('keyword', keyword);
+    if (equipmentType) params.set('equipment_type', equipmentType);
+    const rows = await apiFetch(`/api/equipment${params.toString() ? `?${params}` : ''}`);
+    document.getElementById('equipmentList').innerHTML = rows.length ? rows.map(item => `
+        <div class="col-md-6 col-lg-4">
+            <article class="feature-card">
+                <h5>${escapeHTML(item.name)}</h5>
+                <p><strong>${escapeHTML(item.equipment_type)}</strong>${item.brand ? ` · ${escapeHTML(item.brand)}` : ''}</p>
+                ${item.model ? `<p><i class="fas fa-barcode"></i> ${escapeHTML(item.model)}</p>` : ''}
+                ${item.purchased_at ? `<p><i class="fas fa-calendar"></i> ${new Date(item.purchased_at).toLocaleDateString('zh-CN')}</p>` : ''}
+                ${item.parameters ? `<p><i class="fas fa-sliders"></i> ${escapeHTML(item.parameters)}</p>` : ''}
+                ${item.note ? `<p>${escapeHTML(item.note)}</p>` : ''}
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-sm btn-primary" onclick="editEquipment(${item.id})"><i class="fas fa-edit"></i> 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteEquipment(${item.id})"><i class="fas fa-trash"></i> 删除</button>
+                </div>
+            </article>
+        </div>
+    `).join('') : '<div class="empty-state">暂无装备数据</div>';
+}
+
+async function saveEquipment() {
+    const payload = {
+        name: document.getElementById('name').value.trim(),
+        equipment_type: document.getElementById('equipmentType').value,
+        brand: document.getElementById('brand').value.trim() || null,
+        model: document.getElementById('model').value.trim() || null,
+        purchased_at: document.getElementById('purchasedAt').value ? `${document.getElementById('purchasedAt').value}T00:00:00` : null,
+        parameters: document.getElementById('parameters').value.trim() || null,
+        note: document.getElementById('note').value.trim() || null
+    };
+    const url = editingEquipmentId ? `/api/equipment/${editingEquipmentId}` : '/api/equipment';
+    await apiFetch(url, {
+        method: editingEquipmentId ? 'PUT' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    resetForm();
+    await loadEquipment();
+}
+
+async function editEquipment(id) {
+    const item = await apiFetch(`/api/equipment/${id}`);
+    if (!item) {
+        alert('装备不存在或已被删除');
+        await loadEquipment();
+        return;
+    }
+    editingEquipmentId = item.id;
+    document.getElementById('formTitle').textContent = '编辑装备';
+    document.getElementById('saveBtn').textContent = '保存修改';
+    document.getElementById('name').value = item.name || '';
+    document.getElementById('equipmentType').value = item.equipment_type || '鱼竿';
+    document.getElementById('brand').value = item.brand || '';
+    document.getElementById('model').value = item.model || '';
+    document.getElementById('purchasedAt').value = item.purchased_at ? item.purchased_at.slice(0, 10) : '';
+    document.getElementById('parameters').value = item.parameters || '';
+    document.getElementById('note').value = item.note || '';
+    document.getElementById('formTitle').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+async function deleteEquipment(id) {
+    if (!confirm('确定删除这件装备吗？')) return;
+    await apiFetch(`/api/equipment/${id}`, {method: 'DELETE'});
+    await loadEquipment();
+}
+
+function resetForm() {
+    editingEquipmentId = null;
+    document.getElementById('formTitle').textContent = '新增装备';
+    document.getElementById('saveBtn').textContent = '保存';
+    document.querySelectorAll('#name, #brand, #model, #purchasedAt, #parameters, #note').forEach(el => el.value = '');
+    document.getElementById('equipmentType').value = '鱼竿';
+}
+
+function resetFilters() {
+    document.getElementById('keywordFilter').value = '';
+    document.getElementById('typeFilter').value = '';
+    loadEquipment();
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    if (!localStorage.getItem('token')) {
+        redirectToLogin('请先登录');
+        return;
+    }
+    await loadEquipment();
+});
+</script>
+{% endblock %}
