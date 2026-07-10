@@ -9,42 +9,60 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+    <script>
+        /* 深色模式：首帧同步应用，避免闪烁（在 body 渲染前执行）*/
+        (function () {
+            try {
+                var saved = localStorage.getItem('anglr-theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (saved === 'dark' || (!saved && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <style>
         :root {
-            --brand-ink: #073642;
-            --brand-deep: #07586a;
-            --brand-teal: #0e8fa3;
-            --brand-mint: #57c7a6;
-            --brand-amber: #eab75d;
-            --brand-coral: #e96f5b;
-            --brand-electric: #75d7ef;
-            --sky-wash: #e4f8ff;
-            --sky-soft: #f1fbff;
-            --surface: #ffffff;
-            --surface-soft: #eefaff;
-            --surface-tint: #dff6ff;
-            --surface-warm: #fff8e8;
-            --glass-strong: rgba(255, 255, 255, 0.92);
-            --glass-dark: rgba(6, 72, 88, 0.9);
-            --border-soft: rgba(89, 169, 188, 0.24);
-            --border-strong: rgba(7, 88, 106, 0.18);
-            --text-dark: #14343d;
-            --text-muted: #5d737a;
+            /* 主色系：深森林绿 #0A3C35 + 湖水青 #4ECDC4 + 暖米白 */
+            --brand-ink: #072A25;        /* 最深森林 */
+            --brand-deep: #0A3C35;       /* 主色 · 深森林绿 */
+            --brand-teal: #1F9E8D;       /* 功能强调（文字/图标，保证可读对比）*/
+            --brand-mint: #4ECDC4;       /* 湖水青 · 高光 / 渐变 */
+            --brand-amber: #E0A458;      /* 暖沙点缀 */
+            --brand-coral: #E0796B;
+            --brand-electric: #6FE0D2;   /* 亮青 */
+            --sky-wash: #E8F3EF;
+            --sky-soft: #F2F7F2;
+            --surface: #FCFAF4;          /* 卡面 · 暖米白 */
+            --surface-soft: #F1EEE4;
+            --surface-tint: #E7F1EC;
+            --surface-warm: #FBF4E6;
+            --glass-strong: rgba(252, 250, 244, 0.92);
+            --glass-dark: rgba(10, 60, 53, 0.9);
+            --border-soft: rgba(10, 60, 53, 0.14);
+            --border-strong: rgba(10, 60, 53, 0.2);
+            --text-dark: #14231F;
+            --text-muted: #5B6B63;
             --primary-blue: var(--brand-teal);
             --secondary-blue: var(--brand-deep);
-            --shadow-soft: 0 6px 24px rgba(8, 88, 106, 0.09);
-            --shadow-strong: 0 14px 44px rgba(8, 88, 106, 0.16);
-            --shadow-lift: 0 18px 40px rgba(8, 88, 106, 0.18);
-            --focus-ring: 0 0 0 0.25rem rgba(14, 143, 163, 0.2);
+            --shadow-soft: 0 6px 24px rgba(10, 60, 53, 0.09);
+            --shadow-strong: 0 14px 44px rgba(10, 60, 53, 0.16);
+            --shadow-lift: 0 18px 40px rgba(10, 60, 53, 0.18);
+            --focus-ring: 0 0 0 0.25rem rgba(78, 205, 196, 0.28);
             /* RGB 分量：供 rgba() 动态透明度使用 */
-            --brand-teal-rgb: 14, 143, 163;
-            --brand-deep-rgb: 7, 88, 106;
-            --brand-mint-rgb: 87, 199, 166;
-            --brand-amber-rgb: 234, 183, 93;
-            --brand-coral-rgb: 233, 111, 91;
+            --brand-teal-rgb: 31, 158, 141;
+            --brand-deep-rgb: 10, 60, 53;
+            --brand-mint-rgb: 78, 205, 196;
+            --brand-amber-rgb: 224, 164, 88;
+            --brand-coral-rgb: 224, 121, 107;
             /* 补齐历史遗漏的 surface token */
-            --surface-muted: #e8f3f5;
+            --surface-muted: #E8F0EA;
+            /* 页面画布（供 body 背景引用，深浅模式统一入口）*/
+            --page-bg-top: rgba(246, 243, 236, 0.94);
+            --page-bg-mid: rgba(248, 245, 238, 0.97);
+            --page-bg-bottom: rgba(250, 248, 242, 1);
+            --grid-line: rgba(10, 60, 53, 0.08);
             /* 全局圆角标度 */
             --radius: 14px;
             --radius-lg: 18px;
@@ -57,6 +75,40 @@
             --progress-start: var(--brand-teal);
             --progress-mid: var(--brand-mint);
             --progress-end: var(--brand-amber);
+            color-scheme: light;
+        }
+
+        /* ============ 深色模式：翻转 surface / text 语义 token ============
+           说明：nav / footer / card-header 的品牌绿渐变多为硬编码字面量，
+           深色下天然协调，无需改动；此处只翻转“表面 + 文字”角色的 token。 */
+        html.dark {
+            --brand-ink: #EDF2EE;        /* 文字角色 → 近白 */
+            --brand-deep: #A9E9DF;       /* 标题文字 → 浅湖青（在深底可读）*/
+            --brand-teal: #4ECDC4;       /* 强调 → 亮湖水青 */
+            --brand-mint: #4ECDC4;
+            --brand-electric: #6FE0D2;
+            --sky-wash: #12201C;
+            --sky-soft: #0F1C18;
+            --surface: #12201C;          /* 卡面 → 深森林 */
+            --surface-soft: #16261F;
+            --surface-tint: #17322B;
+            --surface-warm: #1E2A22;
+            --surface-muted: #16261F;
+            --glass-strong: rgba(18, 32, 28, 0.86);
+            --glass-dark: rgba(6, 18, 15, 0.9);
+            --border-soft: rgba(78, 205, 196, 0.16);
+            --border-strong: rgba(78, 205, 196, 0.24);
+            --text-dark: #EDF2EE;
+            --text-muted: #8FA69C;
+            --shadow-soft: 0 6px 24px rgba(0, 0, 0, 0.4);
+            --shadow-strong: 0 14px 44px rgba(0, 0, 0, 0.5);
+            --shadow-lift: 0 18px 40px rgba(0, 0, 0, 0.52);
+            --page-bg-top: rgba(11, 21, 18, 0.96);
+            --page-bg-mid: rgba(12, 22, 19, 0.98);
+            --page-bg-bottom: #0B1512;
+            --grid-line: rgba(78, 205, 196, 0.08);
+            --text-amber-dark: #E0C089;
+            color-scheme: dark;
         }
 
         * {
@@ -68,7 +120,7 @@
         body {
             font-family: 'Noto Sans SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
             background:
-                linear-gradient(180deg, rgba(228, 248, 255, 0.96) 0%, rgba(241, 251, 255, 0.98) 42%, rgba(250, 254, 255, 1) 100%),
+                linear-gradient(180deg, var(--page-bg-top) 0%, var(--page-bg-mid) 42%, var(--page-bg-bottom) 100%),
                 url('/static/fishing-lake-bg.svg') center top / cover fixed no-repeat;
             color: var(--text-dark);
             min-height: 100vh;
@@ -77,6 +129,15 @@
             position: relative;
             isolation: isolate;
             overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        html.dark body {
+            /* 深色下弱化湖面底图，让森林绿画布主导 */
+            background:
+                linear-gradient(180deg, var(--page-bg-top) 0%, var(--page-bg-mid) 42%, var(--page-bg-bottom) 100%),
+                radial-gradient(1200px 600px at 78% -8%, rgba(78, 205, 196, 0.1), transparent 60%),
+                var(--page-bg-bottom);
         }
 
         body::before,
@@ -91,8 +152,8 @@
             inset: 0;
             opacity: 0.16;
             background-image:
-                linear-gradient(90deg, rgba(7, 88, 106, 0.08) 1px, transparent 1px),
-                linear-gradient(180deg, rgba(7, 88, 106, 0.06) 1px, transparent 1px);
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(180deg, var(--grid-line) 1px, transparent 1px);
             background-size: 84px 84px;
             mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent 72%);
         }
@@ -901,10 +962,180 @@
             border-color: rgba(200, 90, 66, 0.28);
             background: rgba(255, 248, 245, 0.8);
         }
+
+        /* ================= 视觉升级：字体 / 动画 / 交互 ================= */
+
+        /* 展示字体：中文用 Noto Sans SC，拉丁标题回落到 Fraunces 衬线 */
+        .font-display {
+            font-family: 'Fraunces', 'Noto Sans SC', 'Microsoft YaHei', serif;
+            letter-spacing: 0.01em;
+        }
+
+        /* ——— 关键帧：仅 transform / opacity，GPU 安全 ——— */
+        @keyframes anglr-ripple {
+            0% { transform: translate(-50%, -50%) scale(0.55); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
+        }
+        @keyframes anglr-breathe {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.09); opacity: 1; }
+        }
+        @keyframes anglr-mesh {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            50% { transform: translate3d(4%, -3%, 0) scale(1.12); }
+            100% { transform: translate3d(0, 0, 0) scale(1); }
+        }
+        @keyframes anglr-float-up {
+            0% { transform: translateY(0) rotate(0); opacity: 0; }
+            12% { opacity: 0.5; }
+            100% { transform: translateY(-130px) rotate(45deg); opacity: 0; }
+        }
+        @keyframes anglr-pulse-dot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(var(--brand-mint-rgb), 0.5); }
+            50% { box-shadow: 0 0 0 12px rgba(var(--brand-mint-rgb), 0); }
+        }
+        @keyframes anglr-fade-in {
+            from { opacity: 0; transform: translateY(26px); filter: blur(6px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        /* ——— 滚动渐显（配合 IntersectionObserver）——— */
+        .reveal {
+            opacity: 0;
+            transform: translateY(26px);
+            filter: blur(6px);
+            transition: opacity 0.7s cubic-bezier(0.32, 0.72, 0, 1),
+                        transform 0.7s cubic-bezier(0.32, 0.72, 0, 1),
+                        filter 0.7s cubic-bezier(0.32, 0.72, 0, 1);
+            will-change: opacity, transform;
+        }
+        .reveal.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+        }
+
+        /* ——— 湖光动态渐变色斑 ——— */
+        .anglr-mesh {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .anglr-mesh__blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.4;
+            animation: anglr-mesh 22s ease-in-out infinite;
+        }
+        .anglr-mesh__blob--teal {
+            top: -18%; left: -12%;
+            width: 60vh; height: 60vh;
+            background: radial-gradient(circle, var(--brand-mint), transparent 60%);
+        }
+        .anglr-mesh__blob--deep {
+            bottom: -22%; right: -14%;
+            width: 72vh; height: 72vh;
+            background: radial-gradient(circle, var(--brand-deep), transparent 62%);
+            opacity: 0.3;
+            animation-duration: 28s;
+            animation-direction: reverse;
+        }
+
+        /* ——— 自然粒子（≤4，低调）——— */
+        .anglr-particles {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .anglr-particles span {
+            position: absolute;
+            bottom: 0;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(var(--brand-mint-rgb), 0.28);
+            animation: anglr-float-up linear infinite;
+        }
+        .anglr-particles span:nth-child(1) { left: 18%; animation-duration: 13s; animation-delay: 0s; }
+        .anglr-particles span:nth-child(2) { left: 42%; animation-duration: 15s; animation-delay: 2.6s; }
+        .anglr-particles span:nth-child(3) { left: 66%; animation-duration: 17s; animation-delay: 5.2s; }
+        .anglr-particles span:nth-child(4) { left: 84%; animation-duration: 19s; animation-delay: 7.8s; }
+
+        /* ——— 水波纹（同心圆呼吸扩散）——— */
+        .anglr-ripple {
+            position: absolute;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .anglr-ripple span {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: 1px solid rgba(var(--brand-mint-rgb), 0.42);
+            animation: anglr-ripple 8s ease-out infinite;
+        }
+        .anglr-ripple span:nth-child(2) { animation-delay: 2.6s; }
+        .anglr-ripple span:nth-child(3) { animation-delay: 5.2s; }
+
+        /* ——— 呼吸图标 / 脉冲点 工具类 ——— */
+        .anglr-breathe { animation: anglr-breathe 3.6s ease-in-out infinite; }
+        .anglr-pulse-dot { animation: anglr-pulse-dot 2.4s infinite; }
+
+        /* ——— 深色模式浮动切换按钮 ——— */
+        .theme-toggle {
+            position: fixed;
+            right: clamp(16px, 3vw, 30px);
+            bottom: clamp(16px, 3vw, 30px);
+            z-index: 1060;
+            width: 52px;
+            height: 52px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-pill);
+            background: var(--glass-strong);
+            backdrop-filter: blur(14px) saturate(1.1);
+            color: var(--brand-deep);
+            font-size: 1.16rem;
+            box-shadow: var(--shadow-strong);
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.3s ease, color 0.3s ease;
+        }
+        .theme-toggle:hover {
+            transform: translateY(-3px) scale(1.04);
+            color: var(--brand-teal);
+            box-shadow: var(--shadow-lift);
+        }
+        .theme-toggle:active { transform: scale(0.94); }
+        .theme-toggle .fa-sun { display: none; }
+        html.dark .theme-toggle .fa-sun { display: inline-block; }
+        html.dark .theme-toggle .fa-moon { display: none; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
+            .anglr-mesh__blob,
+            .anglr-particles span,
+            .anglr-ripple span,
+            .anglr-breathe,
+            .anglr-pulse-dot { animation: none !important; }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <button type="button" class="theme-toggle" id="themeToggle" aria-label="切换深色模式" title="切换深色 / 浅色模式">
+        <i class="fas fa-moon"></i>
+        <i class="fas fa-sun"></i>
+    </button>
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
@@ -980,6 +1211,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.10/htmx.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script>
+        // ——— 深色模式切换（首帧已在 <head> 预应用，此处仅处理点击）———
+        (function () {
+            const toggle = document.getElementById('themeToggle');
+            if (!toggle) return;
+            toggle.addEventListener('click', function () {
+                const isDark = document.documentElement.classList.toggle('dark');
+                try { localStorage.setItem('anglr-theme', isDark ? 'dark' : 'light'); } catch (e) {}
+            });
+        })();
+
+        // ——— 全局滚动渐显：给任意 .reveal 元素加 is-visible ———
+        window.AnglrReveal = function (root) {
+            const scope = root || document;
+            const targets = scope.querySelectorAll('.reveal:not(.is-visible)');
+            if (!targets.length) return;
+            if (!('IntersectionObserver' in window)) {
+                targets.forEach(el => el.classList.add('is-visible'));
+                return;
+            }
+            const io = new IntersectionObserver(function (entries, obs) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -80px 0px' });
+            targets.forEach(el => io.observe(el));
+        };
+        document.addEventListener('DOMContentLoaded', function () { window.AnglrReveal(); });
+
         document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('token');
             const authNav = document.getElementById('authNav');

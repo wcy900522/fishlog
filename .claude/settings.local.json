@@ -55,7 +55,10 @@
       "Skill(run)",
       "Bash(netstat -tlnp)",
       "Bash(python -m json.tool)",
-      "Bash(pkill -f \"uvicorn app.main:app\")"
+      "Bash(pkill -f \"uvicorn app.main:app\")",
+      "Read(//tmp/**)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
