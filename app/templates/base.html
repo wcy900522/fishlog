@@ -1177,6 +1177,24 @@
         }
         html.dark .form-control::placeholder { color: var(--text-muted); }
 
+        /* ================= 浅色模式文字对比度强化 =================
+           Bootstrap 默认的 label / placeholder 在暖米白背景上对比不足，
+           统一加深为主题深绿/深灰以保证可读性。 */
+        .form-label {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+        .form-control::placeholder,
+        .form-select::placeholder {
+            color: var(--text-muted);
+            opacity: 0.8;
+        }
+        /* 在浅色卡面（shell-card / card-body）内的表单，label 用深森林绿增强对比 */
+        .shell-card .form-label,
+        .card-body .form-label {
+            color: var(--brand-deep);
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .reveal { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
             .anglr-mesh__blob,
