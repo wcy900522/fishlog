@@ -1099,6 +1099,54 @@
             font-size: 0.8rem;
         }
     }
+
+    /* ============ 移动端专项优化（≤768px）============ */
+    @media (max-width: 768px) {
+        /* 装饰性动画在小屏弱化：降低视觉密度 + 减轻 GPU 负担 */
+        .anglr-mesh__blob { opacity: 0.22; filter: blur(40px); }
+        .anglr-particles { display: none; }              /* 粒子在窄屏收益低、易显杂乱 */
+        .home-section__ripple { display: none; }          /* 右上水纹在窄屏易溢出 */
+
+        /* Hero 底图更聚焦，减少小屏空旷感 */
+        .home-hero {
+            min-height: auto;
+            background-position: center 40%;
+        }
+        .home-hero__inner {
+            padding: clamp(28px, 8vw, 44px) 18px clamp(40px, 9vw, 60px);
+            gap: 26px;
+        }
+        .home-hero__lead {
+            margin-bottom: 30px;
+            font-size: 1.02rem;
+            line-height: 1.75;
+        }
+
+        /* 天气卡内边距收紧，避免小屏占屏过高 */
+        .hero-weather { margin: 14px 14px 0; padding: 16px; }
+        .hero-panel__flow { margin: 14px; gap: 10px; }
+        .hero-panel__head { padding: 16px 18px 0; }
+
+        /* 区块纵向间距压缩，滚动更紧凑 */
+        .home-section { padding: clamp(34px, 8vw, 52px) 16px; }
+        .section-bar { margin-bottom: 22px; gap: 14px; }
+
+        /* 卡片网格间距在窄屏收敛 */
+        .home-section .row.g-4 { --bs-gutter-y: 14px; }
+
+        /* 任务栏栅格在窄屏堆叠时保证可点区域 */
+        .spot-card__action,
+        .spot-card__owner { min-height: 46px; }
+    }
+
+    /* 触摸设备：禁用 hover 抬升，避免点触后卡片"卡"在悬浮态 */
+    @media (hover: none) {
+        .spot-card:hover,
+        .post-card:hover,
+        .feature-card:hover {
+            transform: none;
+        }
+    }
 </style>
 {% endblock %}
 

@@ -594,6 +594,36 @@
             .shell-card .d-flex.gap-2 .btn {
                 flex: 1 1 0;
             }
+
+            /* ——— 全站移动端增强 ——— */
+            /* 认证卡（登录/注册）在窄屏铺满，减少边距浪费 */
+            .auth-wrap { min-height: auto; padding: 8px 0 24px; }
+            .auth-card { max-width: 100%; }
+            .auth-card__head { padding: 30px 20px; }
+            .auth-card__head i { font-size: 2.8rem; }
+            .auth-card__body { padding: 24px 20px; }
+
+            /* 表单内成对按钮（取消/提交）纵向堆叠更好按 */
+            .d-flex.justify-content-between > .btn,
+            .d-flex.justify-content-end > .btn { min-height: 44px; }
+
+            /* Leaflet 地图容器在窄屏降低高度，避免占满整屏 */
+            .map-container,
+            .nearby-map { min-height: 260px !important; height: 260px !important; }
+
+            /* 页脚在窄屏收紧并留出 iOS 底部安全区 */
+            footer {
+                padding: 30px 18px calc(30px + env(safe-area-inset-bottom, 0px));
+                font-size: 0.92rem;
+            }
+
+            /* 徽章/芯片在窄屏可换行，避免撑破容器 */
+            .chip { padding: 7px 10px; font-size: 0.82rem; }
+
+            /* 长坐标/链接等强制换行，杜绝横向滚动 */
+            .card-body,
+            .shell-card,
+            .data-card { overflow-wrap: anywhere; }
         }
 
         @media (hover: none) {
