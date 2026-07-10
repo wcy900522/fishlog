@@ -14,7 +14,7 @@
         color: var(--brand-deep);
     }
 
-    textarea {
+    .post-content-input {
         resize: vertical;
         min-height: 300px;
     }
@@ -29,7 +29,7 @@
     .post-image-preview__item {
         aspect-ratio: 1;
         border: 1px solid var(--border-soft);
-        border-radius: 8px;
+        border-radius: var(--radius);
         overflow: hidden;
         background: var(--surface-soft);
     }
@@ -61,12 +61,12 @@
         <div class="card">
             <div class="card-body">
                 <div class="form-group">
-                    <label for="title">帖子标题</label>
+                    <label for="title" class="form-label">帖子标题</label>
                     <input type="text" class="form-control" id="title" placeholder="请输入帖子标题" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="tag">话题标签</label>
+                    <label for="tag" class="form-label">话题标签</label>
                     <select class="form-select" id="tag" required>
                         <option value="海钓">海钓</option>
                         <option value="路亚">路亚</option>
@@ -82,12 +82,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="content">内容</label>
-                    <textarea class="form-control" id="content" placeholder="请输入帖子内容" required></textarea>
+                    <label for="content" class="form-label">内容</label>
+                    <textarea class="form-control post-content-input" id="content" placeholder="请输入帖子内容" required></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="postImages">帖子照片</label>
+                    <label for="postImages" class="form-label">帖子照片</label>
                     <input type="file" class="form-control" id="postImages" accept="image/*" capture="environment" multiple>
                     <small class="form-text text-muted" id="postImageLimitText">可拍照或从手机相册选择，最多上传 5 张</small>
                     <div class="post-image-preview" id="postImagePreview"></div>

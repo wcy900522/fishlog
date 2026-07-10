@@ -12,6 +12,7 @@
         </div>
 
         <div class="auth-card__body">
+                <div id="formAlert" class="alert alert-danger d-none" role="alert"></div>
                 <form id="loginForm">
                     <div class="mb-4">
                         <label for="phone" class="form-label">
@@ -79,8 +80,19 @@
         });
     });
 
+    function showFormAlert(message) {
+        const box = document.getElementById('formAlert');
+        box.innerHTML = `<i class="fas fa-circle-exclamation"></i> ${message}`;
+        box.classList.remove('d-none');
+    }
+
+    function clearFormAlert() {
+        document.getElementById('formAlert').classList.add('d-none');
+    }
+
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
+        clearFormAlert();
 
         const phone = document.getElementById('phone').value;
         const password = document.getElementById('password').value;
@@ -105,11 +117,11 @@
                 window.location.replace('/');
             } else {
                 const message = await parseApiError(response);
-                alert('❌ ' + (message === 'Invalid credentials' ? '手机号或密码错误' : message));
+                showFormAlert(message === 'Invalid credentials' ? '手机号或密码错误' : message);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('❌ 登录失败，请重试');
+            showFormAlert('登录失败，请重试');
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalText;

@@ -7,7 +7,7 @@
     .post-header {
         background: linear-gradient(135deg, var(--surface), var(--surface-tint));
         padding: 30px;
-        border-radius: 18px;
+        border-radius: var(--radius-lg);
         margin-bottom: 30px;
         border-left: 4px solid var(--brand-teal);
     }
@@ -28,7 +28,7 @@
         display: inline-flex;
         align-items: center;
         padding: 4px 12px;
-        border-radius: 14px;
+        border-radius: var(--radius-lg);
         background: var(--surface-tint);
         color: var(--brand-teal);
         font-size: 0.9rem;
@@ -54,7 +54,7 @@
     .comment {
         background: var(--surface-soft);
         padding: 20px;
-        border-radius: 10px;
+        border-radius: var(--radius);
         margin-bottom: 15px;
         border-left: 3px solid var(--brand-mint);
     }
@@ -86,7 +86,7 @@
     .new-comment-form {
         background: var(--surface-soft);
         padding: 20px;
-        border-radius: 10px;
+        border-radius: var(--radius);
         margin-bottom: 30px;
     }
 
@@ -104,8 +104,8 @@
         gap: 5px;
         padding: 2px 8px;
         border-radius: 999px;
-        background: rgba(13, 164, 166, 0.12);
-        color: var(--brand-teal);
+        background: rgba(var(--brand-teal-rgb), 0.12);
+        color: var(--brand-deep);
         font-size: 0.78rem;
         font-weight: 700;
         margin-left: 8px;
@@ -114,7 +114,7 @@
     @media (max-width: 576px) {
         .post-header {
             padding: 18px;
-            border-radius: 8px;
+            border-radius: var(--radius);
             margin-bottom: 18px;
         }
 
@@ -150,7 +150,7 @@
         .new-comment-form,
         .comment {
             padding: 16px;
-            border-radius: 8px;
+            border-radius: var(--radius);
         }
 
         .comment-delete-btn {
@@ -219,7 +219,7 @@
                         <button class="btn btn-sm btn-outline-primary ms-3" onclick="likePost(event)">
                             <i class="fas fa-heart"></i> ${post.like_count || 0}
                         </button>
-                        ${post.is_featured ? '<span class="badge bg-warning text-dark ms-2"><i class="fas fa-star"></i> 精华</span>' : ''}
+                        ${post.is_featured ? '<span class="badge badge-amber ms-2"><i class="fas fa-star"></i> 精华</span>' : ''}
             `;
 
             const token = localStorage.getItem('token');
@@ -301,7 +301,7 @@
                                 <span class="level-chip">Lv${comment.user_level || 1} ${escapeHTML(comment.user_title || '初学钓手')}</span>
                             </div>
                             <div class="comment-meta">${formatDate(comment.created_at)}</div>
-                            <div class="comment-content">${escapeHTML(comment.content)}</div>
+                            <div class="comment-content" id="comment-content-${comment.id}">${escapeHTML(comment.content)}</div>
                             <button class="btn btn-sm btn-outline-primary comment-delete-btn" onclick="likeComment(event, ${comment.id})">
                                 <i class="fas fa-heart"></i> ${comment.like_count || 0}
                             </button>
@@ -446,14 +446,30 @@
         }
     }
 
-    async function editComment(commentId) {
+    function editComment(commentId) {
         const comment = currentPost?.comments?.find(item => item.id === commentId);
         if (!comment) return;
 
-        const content = prompt('修改评论内容', comment.content);
-        if (content === null) return;
+        const contentEl = document.getElementById(`comment-content-${commentId}`);
+        if (!contentEl) return;
 
-        const trimmedContent = content.trim();
+        contentEl.innerHTML = `
+            <textarea class="form-control mb-2" id="editCommentInput-${commentId}" rows="3">${escapeHTML(comment.content)}</textarea>
+            <button class="btn btn-sm btn-primary" onclick="saveCommentEdit(${commentId})">
+                <i class="fas fa-check"></i> 保存
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="loadPost()">
+                <i class="fas fa-times"></i> 取消
+            </button>
+        `;
+        document.getElementById(`editCommentInput-${commentId}`).focus();
+    }
+
+    async function saveCommentEdit(commentId) {
+        const input = document.getElementById(`editCommentInput-${commentId}`);
+        if (!input) return;
+
+        const trimmedContent = input.value.trim();
         if (!trimmedContent) {
             alert('评论内容不能为空');
             return;
@@ -499,17 +515,53 @@
         }
     }
 
+    const POST_TAGS = ['海钓', '路亚', '台钓', '飞钓', '黑坑', '野钓', '技术分享', '装备评测', '钓点攻略', '秀出鱼获'];
+
     function editPost() {
         if (!currentPost) return;
 
-        const title = prompt('修改帖子标题', currentPost.title);
-        if (title === null) return;
-        const content = prompt('修改帖子内容', currentPost.content);
-        if (content === null) return;
-        const tag = prompt('修改帖子标签（海钓、路亚、台钓、飞钓、黑坑、野钓、技术分享、装备评测、钓点攻略、秀出鱼获）', currentPost.tag || '野钓');
-        if (tag === null) return;
-        const imageUrls = prompt('修改图片地址（一行一个 URL）', Array.isArray(currentPost.image_urls) ? currentPost.image_urls.join('\n') : '');
-        if (imageUrls === null) return;
+        const currentTag = currentPost.tag || '野钓';
+        const imageUrlsText = Array.isArray(currentPost.image_urls) ? currentPost.image_urls.join('\n') : '';
+        const tagOptions = POST_TAGS.map(tag =>
+            `<option value="${escapeHTML(tag)}"${tag === currentTag ? ' selected' : ''}>${escapeHTML(tag)}</option>`
+        ).join('');
+
+        document.getElementById('postContent').innerHTML = `
+            <div class="post-header">
+                <h2 class="post-title">编辑帖子</h2>
+                <div class="mb-3">
+                    <label for="editPostTitle" class="form-label">标题</label>
+                    <input type="text" class="form-control" id="editPostTitle" value="${escapeHTML(currentPost.title)}">
+                </div>
+                <div class="mb-3">
+                    <label for="editPostTag" class="form-label">标签</label>
+                    <select class="form-select" id="editPostTag">${tagOptions}</select>
+                </div>
+                <div class="mb-3">
+                    <label for="editPostContent" class="form-label">内容</label>
+                    <textarea class="form-control" id="editPostContent" rows="8">${escapeHTML(currentPost.content)}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="editPostImages" class="form-label">图片地址（一行一个 URL）</label>
+                    <textarea class="form-control" id="editPostImages" rows="3">${escapeHTML(imageUrlsText)}</textarea>
+                </div>
+                <div class="post-actions">
+                    <button class="btn btn-primary" onclick="savePostEdit()">
+                        <i class="fas fa-check"></i> 保存
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="loadPost()">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function savePostEdit() {
+        const title = document.getElementById('editPostTitle').value;
+        const content = document.getElementById('editPostContent').value;
+        const tag = document.getElementById('editPostTag').value;
+        const imageUrls = document.getElementById('editPostImages').value;
 
         updatePost({
             title: title.trim(),

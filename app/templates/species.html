@@ -71,8 +71,8 @@ async function loadSpecies() {
     const rows = await apiFetch(`/api/species${params.toString() ? `?${params}` : ''}`);
     document.getElementById('speciesList').innerHTML = rows.length ? rows.map(item => `
         <div class="col-md-6 col-lg-4">
-            <article class="feature-card">
-                ${item.image_url ? `<img src="${escapeHTML(item.image_url)}" alt="${escapeHTML(item.name)}" class="w-100 rounded mb-3" style="height: 180px; object-fit: cover;">` : ''}
+            <article class="data-card p-4 h-100">
+                ${item.image_url ? `<img src="${escapeHTML(item.image_url)}" alt="${escapeHTML(item.name)}鱼种图片" class="media-thumb mb-3">` : ''}
                 <h5>${escapeHTML(item.name)}</h5>
                 <p class="mb-2"><strong>${escapeHTML(item.category || '未分类')}</strong></p>
                 <p>${escapeHTML(item.description || '暂无介绍')}</p>
@@ -86,7 +86,7 @@ async function loadSpecies() {
                 ` : ''}
             </article>
         </div>
-    `).join('') : '<div class="empty-state">暂无鱼种数据</div>';
+    `).join('') : '<div class="col-12"><div class="empty-state">暂无鱼种数据</div></div>';
 }
 
 async function editSpeciesById(id) {

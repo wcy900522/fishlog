@@ -10,9 +10,9 @@
         gap: 22px;
         align-items: center;
         padding: 30px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background:
-            linear-gradient(135deg, rgba(7, 88, 106, 0.96), rgba(14, 143, 163, 0.88)),
+            linear-gradient(135deg, rgba(var(--brand-deep-rgb), 0.96), rgba(var(--brand-teal-rgb), 0.88)),
             url('/static/fishing-lake-bg.svg') center 52%/cover;
         color: #fff;
         box-shadow: var(--shadow-strong);
@@ -25,7 +25,7 @@
         border-radius: 50%;
         display: inline-grid;
         place-items: center;
-        background: linear-gradient(135deg, #f1c96d, #8de3ca);
+        background: linear-gradient(135deg, var(--brand-amber), var(--brand-mint));
         color: var(--brand-ink);
         font-size: 2.2rem;
         font-weight: 900;
@@ -51,7 +51,7 @@
         border: 1px solid rgba(255, 255, 255, 0.46);
         background: rgba(255, 255, 255, 0.16);
         color: #fff;
-        border-radius: 8px;
+        border-radius: var(--radius);
         padding: 6px 10px;
         font-size: 0.82rem;
         font-weight: 700;
@@ -60,6 +60,11 @@
     .avatar-upload-btn:hover {
         background: rgba(255, 255, 255, 0.24);
         color: #fff;
+    }
+
+    .avatar-upload-btn:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, 0.9);
+        outline-offset: 2px;
     }
 
     .avatar-upload-status {
@@ -85,7 +90,7 @@
         border: 1px solid rgba(255, 255, 255, 0.42);
         background: rgba(255, 255, 255, 0.14);
         color: #fff;
-        border-radius: 8px;
+        border-radius: var(--radius);
         padding: 6px 10px;
         font-size: 0.82rem;
         font-weight: 800;
@@ -94,6 +99,11 @@
     .nickname-edit-btn:hover {
         background: rgba(255, 255, 255, 0.24);
         color: #fff;
+    }
+
+    .nickname-edit-btn:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, 0.9);
+        outline-offset: 2px;
     }
 
     .nickname-edit-panel {
@@ -117,7 +127,7 @@
     .dashboard-card {
         height: 100%;
         padding: 24px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.94);
         border: 1px solid var(--border-soft);
         box-shadow: var(--shadow-soft);
@@ -127,6 +137,10 @@
         display: block;
         font-size: 2rem;
         color: var(--brand-deep);
+    }
+
+    .dashboard-card strong.dashboard-card__date {
+        font-size: 1.1rem;
     }
 
     .mini-list {
@@ -388,7 +402,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             <div class="col-md-4">
                 <div class="dashboard-card">
                     <span>最近一次出钓</span>
-                    <strong style="font-size:1.1rem;">${latest ? new Date(latest.fishing_at).toLocaleDateString('zh-CN') : '暂无记录'}</strong>
+                    <strong class="dashboard-card__date">${latest ? new Date(latest.fishing_at).toLocaleDateString('zh-CN') : '暂无记录'}</strong>
                     ${latest ? `<small>${escapeHTML(latest.species || '未知鱼种')} · ${latest.quantity || 0} 条</small>` : ''}
                 </div>
             </div>

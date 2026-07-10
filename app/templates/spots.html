@@ -60,21 +60,28 @@
         gap: 8px;
     }
 
+    /* 复用全局 .chip token；仅保留本页字重差异 */
     .target-species-chip {
-        border: 1px solid rgba(14, 143, 163, 0.24);
-        border-radius: 8px;
+        border: 1px solid rgba(var(--brand-teal-rgb), 0.24);
+        border-radius: var(--radius-pill);
         background: #fff;
         color: var(--brand-deep);
         padding: 6px 11px;
         font-size: 0.88rem;
         font-weight: 800;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .target-species-chip:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
     }
 
     .target-species-chip.active {
         color: #062b35;
         background: linear-gradient(135deg, #84ddf2, #8de3ca);
-        border-color: rgba(14, 143, 163, 0.34);
-        box-shadow: 0 8px 18px rgba(14, 143, 163, 0.14);
+        border-color: rgba(var(--brand-teal-rgb), 0.34);
+        box-shadow: 0 8px 18px rgba(var(--brand-teal-rgb), 0.14);
     }
 
     .spot-page-actions {
@@ -1215,7 +1222,7 @@ function renderSpotCards(spots) {
                         ` : ''}
                         ${spot.tags ? `
                             <p class="mb-2">
-                                ${spot.tags.split(',').map(tag => `<span class="badge bg-info-subtle text-info-emphasis me-1">${escapeHTML(tag.trim())}</span>`).join('')}
+                                ${spot.tags.split(',').map(tag => `<span class="badge badge-info me-1">${escapeHTML(tag.trim())}</span>`).join('')}
                             </p>
                         ` : ''}
                         ${spot.user_nickname ? `
@@ -1226,7 +1233,7 @@ function renderSpotCards(spots) {
                         ` : ''}
                         <p class="mb-2">
                             <strong><i class="fas fa-globe"></i> 坐标：</strong>
-                            ${spot.latitude}, ${spot.longitude}
+                            ${Number(spot.latitude).toFixed(5)}, ${Number(spot.longitude).toFixed(5)}
                         </p>
                         ${spot.description ? `
                             <p class="mb-2">
@@ -1238,7 +1245,7 @@ function renderSpotCards(spots) {
                             <i class="fas fa-clock"></i> ${new Date(spot.created_at).toLocaleDateString('zh-CN')}
                         </small>
                     </div>
-                    <div class="card-footer bg-light spot-card-actions">
+                    <div class="card-footer spot-card-actions">
                         <a class="btn btn-sm btn-success btn-record" href="/logs/create?spot_id=${spot.id}">
                             <i class="fas fa-pen"></i> 新增出钓记录
                         </a>

@@ -67,7 +67,7 @@ async function loadEquipment() {
     const rows = await apiFetch(`/api/equipment${params.toString() ? `?${params}` : ''}`);
     document.getElementById('equipmentList').innerHTML = rows.length ? rows.map(item => `
         <div class="col-md-6 col-lg-4">
-            <article class="feature-card">
+            <article class="data-card p-4 h-100">
                 <h5>${escapeHTML(item.name)}</h5>
                 <p><strong>${escapeHTML(item.equipment_type)}</strong>${item.brand ? ` · ${escapeHTML(item.brand)}` : ''}</p>
                 ${item.model ? `<p><i class="fas fa-barcode"></i> ${escapeHTML(item.model)}</p>` : ''}
@@ -80,7 +80,7 @@ async function loadEquipment() {
                 </div>
             </article>
         </div>
-    `).join('') : '<div class="empty-state">暂无装备数据</div>';
+    `).join('') : '<div class="col-12"><div class="empty-state">暂无装备数据</div></div>';
 }
 
 async function saveEquipment() {

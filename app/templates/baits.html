@@ -76,7 +76,7 @@ async function loadBaits() {
     const rows = await apiFetch(`/api/baits${params.toString() ? `?${params}` : ''}`);
     document.getElementById('baitList').innerHTML = rows.length ? rows.map(item => `
         <div class="col-md-6 col-lg-4">
-            <article class="feature-card">
+            <article class="data-card p-4 h-100">
                 <h5>${escapeHTML(item.name)}</h5>
                 <p><strong>${escapeHTML(item.bait_type)}</strong>${item.brand ? ` · ${escapeHTML(item.brand)}` : ''}</p>
                 ${item.target_species ? `<p><i class="fas fa-fish"></i> ${escapeHTML(item.target_species)}</p>` : ''}
@@ -90,7 +90,7 @@ async function loadBaits() {
                 ` : ''}
             </article>
         </div>
-    `).join('') : '<div class="empty-state">暂无饵料数据</div>';
+    `).join('') : '<div class="col-12"><div class="empty-state">暂无饵料数据</div></div>';
 }
 
 async function saveBait() {

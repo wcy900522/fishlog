@@ -2,6 +2,117 @@
 
 {% block title %}钓点详情 - AnglrLog{% endblock %}
 
+{% block extra_css %}
+<style>
+    .map-container {
+        height: 400px;
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .detail-sidebar {
+        position: sticky;
+        top: 100px;
+    }
+
+    /* 天气数据磁贴 */
+    .weather-metric {
+        text-align: center;
+    }
+
+    .weather-metric__icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .weather-metric__icon--temp { color: var(--brand-coral); }
+    .weather-metric__icon--wind { color: var(--brand-teal); }
+    .weather-metric__icon--pressure { color: var(--brand-mint); }
+
+    .weather-metric__label {
+        color: var(--text-muted);
+    }
+
+    .weather-metric__value {
+        font-weight: 700;
+        color: var(--brand-deep);
+    }
+
+    /* 社区记录卡片 */
+    .community-log {
+        padding-left: 15px;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-left: 4px solid var(--brand-teal);
+        border-bottom: 1px solid var(--border-soft);
+    }
+
+    .community-log__head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .community-log__author {
+        margin: 0;
+        color: var(--brand-deep);
+        font-weight: 600;
+    }
+
+    .community-log__date {
+        color: var(--text-muted);
+    }
+
+    .community-log__body {
+        padding: 12px;
+        margin-bottom: 10px;
+        background: var(--surface-soft);
+        border-radius: var(--radius);
+    }
+
+    .community-log__row {
+        margin: 8px 0;
+        color: var(--text-dark);
+    }
+
+    .community-log__key {
+        color: var(--brand-teal);
+    }
+
+    .community-log__env {
+        display: flex;
+        gap: 15px;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    /* 侧栏统计 */
+    .spot-stats {
+        text-align: center;
+    }
+
+    .spot-stats__number {
+        color: var(--brand-teal);
+        font-weight: 700;
+    }
+
+    .spot-stats__row {
+        margin: 5px 0;
+        color: var(--text-dark);
+    }
+
+    .panel-spinner {
+        color: var(--brand-teal);
+    }
+
+    .panel-loading {
+        padding: 30px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-12">
@@ -22,7 +133,7 @@
                 <div id="map" class="map-container mb-3"></div>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <p><strong><i class="fas fa-province-alt"></i> 省份：</strong> <span id="spot-province"></span></p>
+                        <p><strong><i class="fas fa-map-location-dot"></i> 省份：</strong> <span id="spot-province"></span></p>
                         <p><strong><i class="fas fa-city"></i> 城市：</strong> <span id="spot-city"></span></p>
                         <p><strong><i class="fas fa-water"></i> 水体：</strong> <span id="spot-water-type"></span></p>
                     </div>
@@ -43,8 +154,8 @@
                 <h5 class="mb-0"><i class="fas fa-cloud"></i> 实时天气数据</h5>
             </div>
             <div class="card-body" id="weather-info">
-                <div class="text-center" style="padding: 30px;">
-                    <div class="spinner-border" role="status" style="color: var(--brand-teal);">
+                <div class="panel-loading">
+                    <div class="spinner-border panel-spinner" role="status">
                         <span class="visually-hidden">加载中...</span>
                     </div>
                 </div>
@@ -57,8 +168,8 @@
                 <h5 class="mb-0"><i class="fas fa-book"></i> 钓友记录（<span id="log-count">加载中</span>条）</h5>
             </div>
             <div class="card-body" id="community-logs">
-                <div class="text-center" style="padding: 30px;">
-                    <div class="spinner-border" role="status" style="color: var(--brand-teal);">
+                <div class="panel-loading">
+                    <div class="spinner-border panel-spinner" role="status">
                         <span class="visually-hidden">加载中...</span>
                     </div>
                 </div>
@@ -68,7 +179,7 @@
 
     <!-- 侧边栏 -->
     <div class="col-md-4">
-        <div class="card" style="position: sticky; top: 100px;">
+        <div class="card detail-sidebar">
             <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-star"></i> 快速操作</h5>
             </div>
@@ -82,7 +193,7 @@
                     点击上方按钮记录您在此处的出钓结果，与其他钓友分享！
                 </div>
                 <hr>
-                <div id="spot-stats" style="text-align: center;">
+                <div id="spot-stats" class="spot-stats">
                     <p class="text-muted">统计数据加载中...</p>
                 </div>
             </div>
@@ -140,8 +251,8 @@
                     'pay_pond': '黑坑',
                     'other': '其他'
                 }[String(spot.water_type || '').toLowerCase()] || spot.water_type || '未知';
-                document.getElementById('spot-lat').textContent = spot.latitude;
-                document.getElementById('spot-lng').textContent = spot.longitude;
+                document.getElementById('spot-lat').textContent = Number(spot.latitude).toFixed(5);
+                document.getElementById('spot-lng').textContent = Number(spot.longitude).toFixed(5);
                 document.getElementById('spot-description').textContent = spot.description || '暂无介绍';
 
                 // 初始化国内地图底图。钓点坐标通常来自用户在国内地图中复制，按原坐标展示。
@@ -149,16 +260,7 @@
                     center: [spot.latitude, spot.longitude],
                     zoom: 13
                 });
-                L.marker([spot.latitude, spot.longitude], {
-                    icon: L.icon({
-                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 41],
-                        popupAnchor: [1, -34],
-                        shadowSize: [41, 41]
-                    })
-                }).addTo(map).bindPopup(`
+                L.marker([spot.latitude, spot.longitude]).addTo(map).bindPopup(`
                     <b>${spot.name}</b><br>
                     <a href="${AnglrMap.amapMarkerUrl(spot.latitude, spot.longitude, spot.name)}" target="_blank" rel="noopener">在高德地图中打开</a>
                 `);
@@ -175,26 +277,26 @@
                 const weatherInfo = document.getElementById('weather-info');
                 weatherInfo.innerHTML = `
                     <div class="row text-center">
-                        <div class="col-md-4">
-                            <div style="font-size: 2.5rem; color: var(--brand-coral); margin-bottom: 10px;">
+                        <div class="col-md-4 weather-metric">
+                            <div class="weather-metric__icon weather-metric__icon--temp">
                                 <i class="fas fa-thermometer-half"></i>
                             </div>
-                            <p style="color: var(--text-muted);">温度</p>
-                            <h4 class="fw-bold" style="color: var(--brand-deep);">${weather.temperature || '?'}°C</h4>
+                            <p class="weather-metric__label">温度</p>
+                            <h4 class="weather-metric__value">${weather.temperature || '?'}°C</h4>
                         </div>
-                        <div class="col-md-4">
-                            <div style="font-size: 2.5rem; color: var(--brand-teal); margin-bottom: 10px;">
+                        <div class="col-md-4 weather-metric">
+                            <div class="weather-metric__icon weather-metric__icon--wind">
                                 <i class="fas fa-wind"></i>
                             </div>
-                            <p style="color: var(--text-muted);">风速</p>
-                            <h4 class="fw-bold" style="color: var(--brand-deep);">${weather.wind_speed || '?'} m/s</h4>
+                            <p class="weather-metric__label">风速</p>
+                            <h4 class="weather-metric__value">${weather.wind_speed || '?'} m/s</h4>
                         </div>
-                        <div class="col-md-4">
-                            <div style="font-size: 2.5rem; color: var(--brand-mint); margin-bottom: 10px;">
+                        <div class="col-md-4 weather-metric">
+                            <div class="weather-metric__icon weather-metric__icon--pressure">
                                 <i class="fas fa-gauge"></i>
                             </div>
-                            <p style="color: var(--text-muted);">气压</p>
-                            <h4 class="fw-bold" style="color: var(--brand-deep);">${weather.pressure || '?'} hPa</h4>
+                            <p class="weather-metric__label">气压</p>
+                            <h4 class="weather-metric__value">${weather.pressure || '?'} hPa</h4>
                         </div>
                     </div>
                 `;
@@ -212,8 +314,8 @@
 
                 if (logs.length === 0) {
                     communityLogs.innerHTML = `
-                        <div class="text-center" style="padding: 40px; color: var(--text-muted);">
-                            <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                        <div class="empty-state">
+                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                             暂无记录，您可以成为第一个分享者！
                         </div>
                     `;
@@ -221,31 +323,31 @@
                 }
 
                 communityLogs.innerHTML = logs.map(log => `
-                    <div style="border-left: 4px solid var(--brand-teal); padding-left: 15px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-soft);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h6 style="margin: 0; color: var(--brand-deep); font-weight: 600;">
+                    <div class="community-log">
+                        <div class="community-log__head">
+                            <h6 class="community-log__author">
                                 <i class="fas fa-user-circle"></i> ${escapeHTML(log.user_nickname || '未知用户')}
                             </h6>
-                            <small style="color: var(--text-muted);">
+                            <small class="community-log__date">
                                 <i class="fas fa-calendar"></i> ${new Date(log.fishing_at).toLocaleDateString('zh-CN')}
                             </small>
                         </div>
 
-                        <div style="background: var(--surface-soft); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
-                            <p style="margin: 8px 0; color: var(--text-dark);">
-                                <strong style="color: var(--brand-teal);">鱼种：</strong>${escapeHTML(log.species || '未记录')}
-                                <span class="badge badge-success" style="margin-left: 10px;">${log.quantity || 0}条</span>
+                        <div class="community-log__body">
+                            <p class="community-log__row">
+                                <strong class="community-log__key">鱼种：</strong>${escapeHTML(log.species || '未记录')}
+                                <span class="badge badge-success ms-2">${log.quantity || 0}条</span>
                             </p>
-                            <p style="margin: 8px 0; color: var(--text-dark);">
-                                <strong style="color: var(--brand-teal);">饵料：</strong>${escapeHTML(log.bait || '未记录')}
+                            <p class="community-log__row">
+                                <strong class="community-log__key">饵料：</strong>${escapeHTML(log.bait || '未记录')}
                             </p>
-                            <p style="margin: 8px 0; color: var(--text-dark);">
-                                <strong style="color: var(--brand-teal);">时长：</strong>${formatDurationHours(log.duration)}
+                            <p class="community-log__row">
+                                <strong class="community-log__key">时长：</strong>${formatDurationHours(log.duration)}
                             </p>
-                            ${log.note ? `<p style="margin: 8px 0; color: var(--text-muted);"><strong>备注：</strong>${escapeHTML(log.note)}</p>` : ''}
+                            ${log.note ? `<p class="community-log__row" style="color: var(--text-muted);"><strong>备注：</strong>${escapeHTML(log.note)}</p>` : ''}
                         </div>
 
-                        <div style="display: flex; gap: 15px; font-size: 0.9rem; color: var(--text-muted);">
+                        <div class="community-log__env">
                             <span><i class="fas fa-thermometer-half"></i> ${log.temperature || '?'}°C</span>
                             <span><i class="fas fa-wind"></i> ${log.wind_speed || '?'} m/s</span>
                             <span><i class="fas fa-gauge"></i> ${log.pressure || '?'} hPa</span>
@@ -277,16 +379,16 @@
                     .slice(0, 3);
 
                 let statsHtml = `
-                    <div style="text-align: center;">
-                        <h4 style="color: var(--brand-teal); font-weight: bold;">${totalFish}</h4>
-                        <p style="color: var(--text-muted);">总渔获数</p>
+                    <div>
+                        <h4 class="spot-stats__number">${totalFish}</h4>
+                        <p class="text-muted">总渔获数</p>
                     </div>
                     <hr>
                     ${topSpecies.length > 0 ? `
-                        <p style="color: var(--text-muted); font-weight: 600; margin-bottom: 10px;">热门鱼种：</p>
+                        <p class="text-muted fw-semibold mb-2">热门鱼种：</p>
                         ${topSpecies.map(([species, count]) => `
-                            <p style="margin: 5px 0; color: var(--text-dark);">
-                                <i class="fas fa-fish"></i> ${species}: <strong>${count}</strong>条
+                            <p class="spot-stats__row">
+                                <i class="fas fa-fish"></i> ${escapeHTML(species)}: <strong>${count}</strong>条
                             </p>
                         `).join('')}
                     ` : ''}
@@ -309,12 +411,4 @@
         window.location.href = `/logs/create?spot_id=${spotId}`;
     }
 </script>
-
-<style>
-    .map-container {
-        height: 400px;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-</style>
 {% endblock %}

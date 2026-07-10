@@ -14,7 +14,7 @@
     .admin-summary__item {
         padding: 20px;
         border: 1px solid var(--border-soft);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.94);
         box-shadow: var(--shadow-soft);
     }
@@ -64,13 +64,13 @@
     }
 
     .status-pill--danger {
-        background: rgba(200, 90, 66, 0.12);
+        background: rgba(var(--brand-coral-rgb), 0.12);
         color: var(--brand-coral);
     }
 
     .status-pill--admin {
-        background: rgba(234, 183, 93, 0.18);
-        color: #9a6b12;
+        background: rgba(var(--brand-amber-rgb), 0.18);
+        color: var(--text-amber-dark);
     }
 
     @media (max-width: 992px) {
@@ -144,6 +144,29 @@
                     <tbody id="usersTable"></tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel"><i class="fas fa-key"></i> 重置密码</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <form id="resetPasswordForm">
+                <div class="modal-body">
+                    <label for="resetPasswordInput" class="form-label">新密码</label>
+                    <input type="password" class="form-control" id="resetPasswordInput" autocomplete="new-password" placeholder="至少8位，必须同时包含字母和数字" required>
+                    <div class="form-text">至少8位，必须同时包含字母和数字。</div>
+                    <div class="text-danger small mt-2" id="resetPasswordError" hidden></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">确认重置</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -256,7 +279,7 @@ function renderUsers(users) {
                 <td>
                     <strong>${escapeHTML(user.nickname)}</strong>
                     ${isSelf ? '<span class="badge badge-primary ms-1">当前账号</span>' : ''}
-                    ${protectedFromCurrentAdmin ? '<span class="badge badge-success ms-1">受保护</span>' : ''}
+                    ${protectedFromCurrentAdmin ? '<span class="badge badge-info ms-1">受保护</span>' : ''}
                     <div class="text-muted small">${escapeHTML(identity)}</div>
                 </td>
                 <td>${statuses}</td>
@@ -303,19 +326,32 @@ async function toggleUser(userId, field, value) {
 }
 
 async function resetPassword(userId) {
-    const password = prompt('请输入新密码（至少8位，必须同时包含字母和数字）：');
-    if (!password) return;
+    const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    const form = document.getElementById('resetPasswordForm');
+    const input = document.getElementById('resetPasswordInput');
+    const error = document.getElementById('resetPasswordError');
 
-    try {
-        await apiFetch(`/api/admin/users/${userId}/reset-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
-        });
-        alert('密码已重置');
-    } catch (error) {
-        alert(`重置失败：${error.message}`);
-    }
+    input.value = '';
+    error.hidden = true;
+    modal.show();
+
+    form.onsubmit = async function(e) {
+        e.preventDefault();
+        const password = input.value;
+
+        try {
+            await apiFetch(`/api/admin/users/${userId}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            modal.hide();
+            alert('密码已重置');
+        } catch (err) {
+            error.textContent = `重置失败：${err.message}`;
+            error.hidden = false;
+        }
+    };
 }
 
 async function deleteUser(userId, nickname) {

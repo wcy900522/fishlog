@@ -7,10 +7,16 @@
     .leaderboard-card {
         height: 100%;
         border: 1px solid var(--border-soft);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: var(--glass-strong);
         box-shadow: var(--shadow-soft);
         overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .leaderboard-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-strong);
     }
 
     .leaderboard-card__head {
@@ -66,24 +72,24 @@
         justify-content: center;
         width: 34px;
         height: 34px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: var(--surface-soft);
         color: var(--brand-teal);
         font-weight: 900;
     }
 
     .leaderboard-row:nth-child(1) .leaderboard-rank {
-        background: #f7d774;
+        background: var(--medal-gold);
         color: #4a3709;
     }
 
     .leaderboard-row:nth-child(2) .leaderboard-rank {
-        background: #dce5ea;
+        background: var(--medal-silver);
         color: #33444b;
     }
 
     .leaderboard-row:nth-child(3) .leaderboard-rank {
-        background: #efc39b;
+        background: var(--medal-bronze);
         color: #523019;
     }
 
@@ -118,7 +124,7 @@
         justify-content: center;
         margin: 16px;
         border: 1px dashed rgba(89, 169, 188, 0.28);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(248, 252, 253, 0.72);
         color: var(--text-muted);
         font-size: 0.94rem;
@@ -181,7 +187,7 @@
                     <div class="leaderboard-card__head">
                         <div class="leaderboard-card__title">
                             <h2>${title}</h2>
-                            <span class="badge bg-info-subtle text-info-emphasis">${scoreLabel}</span>
+                            <span class="badge badge-info">${scoreLabel}</span>
                         </div>
                         <p class="leaderboard-card__rule">${escapeHTML(rule)}</p>
                     </div>

@@ -18,12 +18,12 @@
         align-items: center;
         padding: clamp(34px, 6vw, 76px);
         border: 1px solid rgba(117, 215, 239, 0.24);
-        border-radius: 8px;
+        border-radius: var(--radius);
         color: #fff;
         overflow: hidden;
         position: relative;
         background:
-            linear-gradient(105deg, rgba(7, 52, 66, 0.88) 0%, rgba(7, 88, 106, 0.72) 48%, rgba(14, 143, 163, 0.42) 100%),
+            linear-gradient(105deg, rgba(7, 52, 66, 0.88) 0%, rgba(var(--brand-deep-rgb), 0.72) 48%, rgba(var(--brand-teal-rgb), 0.42) 100%),
             url('/static/beijing-fishing-review-bg.svg') center/cover;
         box-shadow: var(--shadow-strong);
     }
@@ -72,7 +72,7 @@
     .about-hero h1 span {
         display: block;
         margin-top: 4px;
-        color: rgba(239, 254, 250, 0.66);
+        color: rgba(239, 254, 250, 0.9);
         font-size: clamp(1.2rem, 2.6vw, 2rem);
         font-weight: 800;
     }
@@ -80,7 +80,7 @@
     .about-hero__lead {
         max-width: 720px;
         margin: 0;
-        color: rgba(239, 254, 250, 0.82);
+        color: rgba(239, 254, 250, 0.92);
         font-size: clamp(1rem, 1.35vw, 1.18rem);
         line-height: 1.82;
     }
@@ -95,19 +95,19 @@
     .about-console {
         padding: 18px;
         border: 1px solid rgba(117, 215, 239, 0.22);
-        border-radius: 8px;
-        background: rgba(7, 88, 106, 0.48);
+        border-radius: var(--radius);
+        background: rgba(var(--brand-deep-rgb), 0.48);
         backdrop-filter: blur(12px) saturate(1.08);
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
     }
 
     .about-console__map {
         min-height: 220px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         position: relative;
         overflow: hidden;
         background:
-            linear-gradient(135deg, rgba(7, 88, 106, 0.88), rgba(14, 143, 163, 0.62)),
+            linear-gradient(135deg, rgba(var(--brand-deep-rgb), 0.88), rgba(var(--brand-teal-rgb), 0.62)),
             repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 34px);
     }
 
@@ -116,7 +116,7 @@
         position: absolute;
         inset: 18px;
         border: 1px dashed rgba(239, 254, 250, 0.26);
-        border-radius: 8px;
+        border-radius: var(--radius);
     }
 
     .map-pin {
@@ -146,8 +146,8 @@
         justify-content: space-between;
         gap: 16px;
         padding: 12px 14px;
-        border-radius: 8px;
-        color: rgba(239, 254, 250, 0.78);
+        border-radius: var(--radius);
+        color: rgba(239, 254, 250, 0.92);
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.09);
         font-size: 0.9rem;
@@ -196,7 +196,7 @@
     .about-feature,
     .about-flow__item {
         border: 1px solid var(--border-soft);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.92);
         backdrop-filter: blur(10px) saturate(1.04);
         box-shadow: var(--shadow-soft);
@@ -254,7 +254,7 @@
         position: absolute;
         right: 16px;
         top: 12px;
-        color: rgba(14, 143, 163, 0.12);
+        color: rgba(var(--brand-teal-rgb), 0.12);
         font-size: 3rem;
         font-weight: 900;
         line-height: 1;
@@ -266,10 +266,10 @@
         place-items: center;
         width: 44px;
         height: 44px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         color: var(--brand-ink);
         background: linear-gradient(135deg, var(--brand-electric), var(--brand-mint));
-        box-shadow: 0 10px 22px rgba(14, 143, 163, 0.16);
+        box-shadow: 0 10px 22px rgba(var(--brand-teal-rgb), 0.16);
         margin-bottom: 16px;
     }
 
@@ -313,12 +313,12 @@
         gap: 28px;
         align-items: center;
         padding: clamp(28px, 5vw, 56px);
-        border-radius: 8px;
+        border-radius: var(--radius);
         color: #fff;
         overflow: hidden;
         position: relative;
         background:
-            linear-gradient(135deg, rgba(7, 88, 106, 0.92), rgba(14, 143, 163, 0.74)),
+            linear-gradient(135deg, rgba(var(--brand-deep-rgb), 0.92), rgba(var(--brand-teal-rgb), 0.74)),
             url('/static/fishing-lake-bg.svg') center/cover;
         box-shadow: var(--shadow-strong);
     }
@@ -334,7 +334,7 @@
     .about-vision p {
         max-width: 780px;
         margin: 0;
-        color: rgba(239, 254, 250, 0.78);
+        color: rgba(239, 254, 250, 0.92);
         font-size: 1rem;
         line-height: 1.82;
     }
@@ -344,7 +344,7 @@
         gap: 10px;
         padding: 18px;
         border: 1px solid rgba(117, 215, 239, 0.28);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.08);
     }
 
@@ -352,7 +352,7 @@
         display: flex;
         justify-content: space-between;
         gap: 14px;
-        color: rgba(239, 254, 250, 0.72);
+        color: rgba(239, 254, 250, 0.92);
         font-size: 0.82rem;
     }
 
@@ -362,7 +362,7 @@
         line-height: 1.2;
     }
 
-    @media (max-width: 1100px) {
+    @media (max-width: 992px) {
         .about-hero,
         .about-vision,
         .about-section__head {
@@ -375,7 +375,7 @@
         }
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 768px) {
         .about-page {
             margin-top: 16px;
             padding: 0 14px;
@@ -441,7 +441,7 @@
         </div>
 
         <aside class="about-console" aria-label="钓鱼数据控制台示意">
-            <div class="about-console__map">
+            <div class="about-console__map" aria-hidden="true">
                 <span class="map-pin"><i class="fas fa-location-dot"></i></span>
                 <span class="map-pin"><i class="fas fa-fish"></i></span>
                 <span class="map-pin"><i class="fas fa-water"></i></span>

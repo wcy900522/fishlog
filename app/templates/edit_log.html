@@ -13,7 +13,7 @@
 
     .log-photo-preview__item {
         aspect-ratio: 4 / 3;
-        border-radius: 8px;
+        border-radius: var(--radius);
         overflow: hidden;
         border: 1px solid var(--border-soft);
         background: var(--surface-muted);
@@ -24,6 +24,53 @@
         height: 100%;
         object-fit: cover;
         display: block;
+    }
+
+    /* 鱼种快选芯片（与 create_log 保持一致） */
+    .species-picker {
+        display: grid;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .species-picker__group {
+        display: grid;
+        gap: 8px;
+    }
+
+    .species-picker__label {
+        color: var(--text-muted);
+        font-size: 0.84rem;
+        font-weight: 800;
+    }
+
+    .species-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .species-chip {
+        border: 1px solid rgba(var(--brand-teal-rgb), 0.24);
+        border-radius: var(--radius-pill);
+        background: #fff;
+        color: var(--brand-deep);
+        padding: 6px 11px;
+        font-size: 0.88rem;
+        font-weight: 800;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .species-chip:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+    }
+
+    .species-chip.active {
+        color: #062b35;
+        background: linear-gradient(135deg, #84ddf2, #8de3ca);
+        border-color: rgba(var(--brand-teal-rgb), 0.34);
+        box-shadow: 0 8px 18px rgba(var(--brand-teal-rgb), 0.14);
     }
 </style>
 {% endblock %}
@@ -64,6 +111,16 @@
                             <div class="mb-3">
                                 <label for="species" class="form-label">鱼种</label>
                                 <input type="text" class="form-control" id="species" name="species" placeholder="如：鲤鱼、草鱼">
+                                <div class="species-picker" id="speciesPicker">
+                                    <div class="species-picker__group">
+                                        <span class="species-picker__label">常见台钓鱼种</span>
+                                        <div class="species-chip-row" id="floatSpeciesChips"></div>
+                                    </div>
+                                    <div class="species-picker__group">
+                                        <span class="species-picker__label">常见路亚鱼种</span>
+                                        <div class="species-chip-row" id="lureSpeciesChips"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -148,6 +205,10 @@
     const MAX_LOG_PHOTOS = 3;
     let existingLogPhotoUrls = [];
 
+    const COMMON_FLOAT_SPECIES = ['鲫鱼', '鲤鱼', '草鱼', '青鱼', '鳊鱼', '鲢鳙', '翘嘴', '罗非'];
+    const COMMON_LURE_SPECIES = ['鲈鱼', '黑鱼', '鳜鱼', '翘嘴', '马口', '军鱼', '鲶鱼', '海鲈'];
+    let selectedSpecies = new Set();
+
     document.addEventListener('DOMContentLoaded', function() {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -156,9 +217,55 @@
             return;
         }
 
+        renderSpeciesChips();
+        document.getElementById('species').addEventListener('input', syncSpeciesFromInput);
         loadPageData();
         document.getElementById('logImages').addEventListener('change', previewLogImages);
     });
+
+    function renderSpeciesChips() {
+        renderSpeciesChipGroup('floatSpeciesChips', COMMON_FLOAT_SPECIES);
+        renderSpeciesChipGroup('lureSpeciesChips', COMMON_LURE_SPECIES);
+    }
+
+    function renderSpeciesChipGroup(containerId, speciesList) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = speciesList.map(species => `
+            <button type="button" class="species-chip" data-species="${escapeHTML(species)}">${escapeHTML(species)}</button>
+        `).join('');
+        container.querySelectorAll('.species-chip').forEach(button => {
+            button.addEventListener('click', () => toggleSpecies(button.dataset.species));
+        });
+    }
+
+    function toggleSpecies(species) {
+        if (selectedSpecies.has(species)) {
+            selectedSpecies.delete(species);
+        } else {
+            selectedSpecies.add(species);
+        }
+        updateSpeciesInput();
+        updateSpeciesChipState();
+    }
+
+    function updateSpeciesInput() {
+        document.getElementById('species').value = Array.from(selectedSpecies).join('、');
+    }
+
+    function syncSpeciesFromInput() {
+        const values = document.getElementById('species').value
+            .split(/[、,，\s]+/)
+            .map(value => value.trim())
+            .filter(Boolean);
+        selectedSpecies = new Set(values);
+        updateSpeciesChipState();
+    }
+
+    function updateSpeciesChipState() {
+        document.querySelectorAll('.species-chip').forEach(button => {
+            button.classList.toggle('active', selectedSpecies.has(button.dataset.species));
+        });
+    }
 
     async function loadPageData() {
         try {
@@ -202,6 +309,7 @@
 
         document.getElementById('duration').value = minutesToHoursValue(log.duration);
         document.getElementById('species').value = log.species || '';
+        syncSpeciesFromInput();
         document.getElementById('bait').value = log.bait || '';
         document.getElementById('quantity').value = log.quantity || '';
         document.getElementById('weight').value = log.weight || '';

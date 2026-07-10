@@ -12,6 +12,7 @@
         </div>
 
         <div class="auth-card__body">
+                <div id="formAlert" class="alert d-none" role="alert"></div>
                 <form id="registerForm">
                     <div class="mb-3">
                         <label for="nickname" class="form-label">
@@ -37,6 +38,7 @@
                             <i class="fas fa-check-circle"></i> 确认密码
                         </label>
                         <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="确认密码" required>
+                        <small id="confirmHint" class="form-text d-block mt-2"></small>
                     </div>
                     <button type="submit" class="btn btn-success w-100">
                         <i class="fas fa-user-plus"></i> 注册账户
@@ -102,8 +104,49 @@
         return '注册失败，请重试';
     }
 
+    function showFormAlert(message, type = 'danger') {
+        const box = document.getElementById('formAlert');
+        const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+        box.className = `alert alert-${type}`;
+        box.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+    }
+
+    function clearFormAlert() {
+        const box = document.getElementById('formAlert');
+        box.className = 'alert d-none';
+    }
+
+    // 实时确认两次密码是否一致
+    const confirmInput = document.getElementById('confirmPassword');
+    const passwordInput = document.getElementById('password');
+    const confirmHint = document.getElementById('confirmHint');
+
+    function updateConfirmHint() {
+        const confirm = confirmInput.value;
+        if (!confirm) {
+            confirmHint.textContent = '';
+            confirmInput.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+        if (confirm === passwordInput.value) {
+            confirmHint.textContent = '两次密码一致';
+            confirmHint.className = 'form-text d-block mt-2 text-success';
+            confirmInput.classList.add('is-valid');
+            confirmInput.classList.remove('is-invalid');
+        } else {
+            confirmHint.textContent = '两次密码不一致';
+            confirmHint.className = 'form-text d-block mt-2 text-danger';
+            confirmInput.classList.add('is-invalid');
+            confirmInput.classList.remove('is-valid');
+        }
+    }
+
+    confirmInput.addEventListener('input', updateConfirmHint);
+    passwordInput.addEventListener('input', updateConfirmHint);
+
     document.getElementById('registerForm').addEventListener('submit', async function(e) {
         e.preventDefault();
+        clearFormAlert();
 
         const nickname = document.getElementById('nickname').value;
         const phone = document.getElementById('phone').value;
@@ -111,13 +154,13 @@
         const confirmPassword = document.getElementById('confirmPassword').value;
 
         if (password !== confirmPassword) {
-            alert('❌ 两次输入的密码不一致');
+            showFormAlert('两次输入的密码不一致');
             return;
         }
 
         const passwordError = getPasswordComplexityError(password);
         if (passwordError) {
-            alert(`❌ ${passwordError}`);
+            showFormAlert(passwordError);
             return;
         }
 
@@ -137,16 +180,17 @@
             });
 
             if (response.ok) {
-                alert('✅ 注册成功！请登录');
-                window.location.href = '/login';
+                showFormAlert('注册成功！正在跳转到登录…', 'success');
+                setTimeout(() => { window.location.href = '/login'; }, 900);
             } else {
                 const payload = await response.json().catch(() => null);
-                alert(`❌ ${formatRegisterError(payload)}`);
+                showFormAlert(formatRegisterError(payload));
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('❌ 注册失败，请重试');
-        } finally {
+            showFormAlert('注册失败，请重试');
             btn.disabled = false;
             btn.innerHTML = originalText;
         }
