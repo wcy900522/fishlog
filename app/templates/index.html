@@ -127,7 +127,7 @@
         width: min(540px, 100%);
         justify-self: end;
         border: 1px solid rgba(178, 229, 221, 0.26);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background:
             linear-gradient(180deg, rgba(235, 249, 246, 0.94), rgba(211, 232, 228, 0.88));
         box-shadow: 0 24px 60px rgba(0, 29, 36, 0.28);
@@ -140,7 +140,7 @@
         padding: 18px 20px;
         border: 1px solid rgba(10, 91, 104, 0.14);
         border-left: 4px solid rgba(112, 204, 182, 0.78);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(229, 241, 238, 0.5));
         display: flex;
@@ -182,7 +182,7 @@
         align-items: center;
         gap: 7px;
         padding: 8px 10px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(11, 123, 140, 0.1);
         color: var(--home-teal);
         font-size: 0.82rem;
@@ -194,7 +194,7 @@
         margin: 18px 18px 0;
         padding: 20px;
         border: 1px solid rgba(144, 216, 216, 0.2);
-        border-radius: 8px;
+        border-radius: var(--radius);
         color: #eefbf7;
         background:
             radial-gradient(circle at 82% 12%, rgba(241, 202, 116, 0.18), transparent 34%),
@@ -235,7 +235,7 @@
         justify-content: center;
         width: 48px;
         height: 48px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.14);
         color: #f1ca74;
         font-size: 1.35rem;
@@ -245,7 +245,7 @@
         flex: 1;
         min-height: 70px;
         padding: 12px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.1);
     }
 
@@ -290,7 +290,7 @@
         justify-content: center;
         width: 44px;
         height: 44px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: #d7ebe8;
         color: var(--home-teal);
         font-size: 1.02rem;
@@ -344,7 +344,7 @@
 
     .flow-panel {
         border: 1px solid var(--home-border);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background:
             linear-gradient(180deg, rgba(246, 251, 249, 0.98), rgba(225, 239, 236, 0.96));
         box-shadow: var(--home-shadow);
@@ -419,7 +419,7 @@
         justify-content: center;
         width: 38px;
         height: 38px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         color: var(--home-deep);
         background: rgba(255, 255, 255, 0.5);
         box-shadow: inset 0 0 0 1px rgba(10, 91, 104, 0.1);
@@ -512,7 +512,7 @@
 
     .compliance-modal .modal-content {
         border: 0;
-        border-radius: 8px;
+        border-radius: var(--radius);
         overflow: hidden;
     }
 
@@ -560,7 +560,7 @@
     .compliance-modal__note {
         margin: 22px 0 0;
         padding: 14px 16px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: #e2f0ee;
         color: var(--home-deep);
         font-weight: 700;
@@ -639,7 +639,7 @@
     .home-section .section-actions .btn {
         min-height: 46px;
         padding: 11px 18px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         font-size: 0.96rem;
         font-weight: 800;
         display: inline-flex;
@@ -651,7 +651,7 @@
     .post-card {
         height: 100%;
         border: 1px solid var(--home-border);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: var(--home-panel);
         box-shadow: var(--home-shadow);
         overflow: hidden;
@@ -756,7 +756,7 @@
         font-size: 0.84rem;
         font-weight: 800;
         padding: 7px 10px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(238, 250, 255, 0.82);
         border: 1px solid rgba(89, 169, 188, 0.2);
     }
@@ -765,7 +765,7 @@
         width: 100%;
         min-height: 48px;
         padding: 12px 18px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -847,7 +847,7 @@
         display: inline-flex;
         align-items: center;
         padding: 6px 11px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(11, 123, 140, 0.11);
         color: #0a6472;
         border: 1px solid rgba(11, 123, 140, 0.14);
@@ -864,7 +864,7 @@
         font-size: 0.84rem;
         font-weight: 800;
         padding: 6px 8px;
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.64);
     }
 
@@ -907,7 +907,7 @@
     .empty-state {
         padding: 48px 20px;
         border: 1px dashed var(--home-border);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(224, 239, 236, 0.92);
         color: var(--home-muted);
         text-align: center;
@@ -925,7 +925,7 @@
         gap: 18px;
         margin-bottom: 30px;
         border: 1px solid var(--home-border);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(239, 248, 246, 0.94);
         box-shadow: var(--home-shadow);
         overflow: hidden;
@@ -968,7 +968,7 @@
     .manual-location {
         padding: 14px;
         border: 1px solid rgba(18, 108, 118, 0.18);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(218, 235, 231, 0.82);
     }
 
@@ -981,7 +981,7 @@
     .nearby-item {
         padding: 14px;
         border: 1px solid var(--home-border);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: #f6fbfa;
     }
 
@@ -1012,7 +1012,7 @@
         gap: clamp(28px, 6vw, 80px);
         align-items: center;
         padding: clamp(42px, 7vw, 78px) clamp(24px, 6vw, 72px);
-        border-radius: 8px;
+        border-radius: var(--radius);
         color: #fff;
         background:
             linear-gradient(135deg, rgba(5, 55, 66, 0.94), rgba(9, 105, 112, 0.82)),
@@ -1048,7 +1048,7 @@
     .mission-band__stat {
         padding: 18px 20px;
         border: 1px solid rgba(255, 255, 255, 0.24);
-        border-radius: 8px;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.14);
     }
 
