@@ -5,33 +5,55 @@
 {% block extra_css %}
 <style>
     :root {
-        --home-ink: #0f3239;
-        --home-deep: #064955;
-        --home-teal: #0b7b8c;
-        --home-muted: #506970;
-        --home-surface: #edf6f4;
-        --home-panel: #f4faf8;
-        --home-panel-strong: #e2f0ee;
-        --home-border: rgba(10, 91, 104, 0.2);
-        --home-shadow: 0 18px 42px rgba(4, 52, 62, 0.14);
+        /* 主页语义色 → 统一映射到 base.html 的品牌 token，随深浅模式联动 */
+        --home-ink: var(--text-dark);
+        --home-deep: var(--brand-deep);
+        --home-teal: var(--brand-teal);
+        --home-muted: var(--text-muted);
+        --home-surface: var(--surface-soft);
+        --home-panel: var(--surface);
+        --home-panel-strong: var(--surface-tint);
+        --home-border: var(--border-soft);
+        --home-shadow: var(--shadow-strong);
     }
 
-    body {
-        background:
-            linear-gradient(180deg, rgba(215, 232, 230, 0.96) 0%, rgba(229, 240, 237, 0.98) 44%, rgba(238, 245, 243, 1) 100%),
-            url('/static/fishing-lake-bg.svg') center top / cover fixed no-repeat;
-    }
+    /* body / navbar / footer 背景交由 base.html 的 token 驱动（含深色模式），
+       此处不再硬编码浅色渐变。 */
 
-    .navbar {
-        background: linear-gradient(90deg, rgba(7, 52, 66, 0.96), rgba(7, 88, 106, 0.94));
-        border-bottom-color: rgba(117, 215, 239, 0.22);
-        box-shadow: 0 10px 28px rgba(7, 52, 66, 0.18);
-    }
+    /* 分组 stagger：同一容器内的 .reveal 依次淡入 */
+    .metric-strip .reveal:nth-child(1) { transition-delay: 0.05s; }
+    .metric-strip .reveal:nth-child(2) { transition-delay: 0.13s; }
+    .metric-strip .reveal:nth-child(3) { transition-delay: 0.21s; }
+    .metric-strip .reveal:nth-child(4) { transition-delay: 0.29s; }
+    .mission-band__stats .reveal:nth-child(1) { transition-delay: 0.06s; }
+    .mission-band__stats .reveal:nth-child(2) { transition-delay: 0.16s; }
+    .mission-band__stats .reveal:nth-child(3) { transition-delay: 0.26s; }
 
-    footer {
-        background:
-            linear-gradient(135deg, rgba(7, 52, 66, 0.98), rgba(7, 88, 106, 0.94));
-        border-top-color: rgba(117, 215, 239, 0.24);
+    /* 钓点地图区：右上角水纹装饰 */
+    .home-section { position: relative; }
+    .home-section__ripple {
+        position: absolute;
+        top: 6%;
+        right: -60px;
+        width: 260px;
+        height: 260px;
+        z-index: 0;
+    }
+    .home-section__inner { position: relative; z-index: 1; }
+
+    /* 卡片 hover 悬浮抬升在原 spot-card / post-card 已有过渡基础上，
+       统一为更柔和的抬升曲线 */
+    .spot-card,
+    .post-card,
+    .metric-item,
+    .feature-card {
+        transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+                    box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+                    border-color 0.3s ease, background 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lift);
     }
 
     .home-hero {
@@ -1242,13 +1264,20 @@
 </section>
 
 <section class="home-hero" aria-label="AnglrLog 渔迹录 首页">
+    <div class="anglr-mesh" aria-hidden="true">
+        <span class="anglr-mesh__blob anglr-mesh__blob--teal"></span>
+        <span class="anglr-mesh__blob anglr-mesh__blob--deep"></span>
+    </div>
+    <div class="anglr-particles" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+    </div>
     <div class="home-hero__inner">
         <div class="home-hero__content">
             <div class="home-hero__title-lockup">
-                <h1>AnglrLog</h1>
+                <h1 class="font-display">AnglrLog</h1>
                 <span class="home-hero__brand-cn">渔迹录</span>
             </div>
-            <p class="home-hero__lead">集中记录钓点、天气、鱼获与复盘，让每次出钓都有迹可循。</p>
+            <p class="home-hero__lead">每一杆抛竿，都是与自然的一次对话。我们把每一次出钓，转化为可沉淀的个人经验——水温、天光、风向与鱼获，都在落点的那一刻被安静地记下。</p>
             <div class="home-hero__actions">
                 <a href="/spots" class="btn btn-hero-primary">
                     <i class="fas fa-map-location-dot"></i> 查看钓点
@@ -1274,7 +1303,7 @@
                         <span class="hero-weather__label">当前位置天气</span>
                         <p class="hero-weather__status" id="currentWeatherStatus">允许定位后显示实时天气。</p>
                     </div>
-                    <span class="hero-weather__icon">
+                    <span class="hero-weather__icon anglr-breathe">
                         <i class="fas fa-cloud-sun"></i>
                     </span>
                 </div>
@@ -1324,12 +1353,12 @@
 </section>
 
 <section class="home-metrics-wrap" aria-label="核心模块">
-    <div class="flow-panel">
+    <div class="flow-panel reveal">
         <div class="flow-panel__header">
-            <h2>从一次出钓，到一套可复用经验</h2>
+            <h2 class="font-display">从一次出钓，到一套可复用经验</h2>
         </div>
         <div class="metric-strip">
-            <div class="metric-item">
+            <div class="metric-item reveal">
                 <div class="metric-item__head">
                     <span class="metric-item__index">1</span>
                     <span class="metric-item__icon"><i class="fas fa-location-crosshairs"></i></span>
@@ -1337,7 +1366,7 @@
                 <h3>选定钓点</h3>
                 <p>看位置、水体、坐标和周边信息，先判断是否值得去。</p>
             </div>
-            <div class="metric-item">
+            <div class="metric-item reveal">
                 <div class="metric-item__head">
                     <span class="metric-item__index">2</span>
                     <span class="metric-item__icon"><i class="fas fa-cloud-sun"></i></span>
@@ -1345,7 +1374,7 @@
                 <h3>记录条件</h3>
                 <p>把时间、天气、鱼种、饵料放在同一条记录里，形成可对比样本。</p>
             </div>
-            <div class="metric-item">
+            <div class="metric-item reveal">
                 <div class="metric-item__head">
                     <span class="metric-item__index">3</span>
                     <span class="metric-item__icon"><i class="fas fa-clipboard-list"></i></span>
@@ -1353,7 +1382,7 @@
                 <h3>复盘结果</h3>
                 <p>回看鱼获、空军、天气变化和用饵策略，找到规律。</p>
             </div>
-            <div class="metric-item">
+            <div class="metric-item reveal">
                 <div class="metric-item__head">
                     <span class="metric-item__index">4</span>
                     <span class="metric-item__icon"><i class="fas fa-layer-group"></i></span>
@@ -1446,10 +1475,13 @@
 </div>
 
 <section class="home-section home-section--light">
+    <div class="anglr-ripple home-section__ripple" aria-hidden="true">
+        <span></span><span></span><span></span>
+    </div>
     <div class="home-section__inner">
-        <div class="section-bar">
+        <div class="section-bar reveal">
             <div>
-                <h2 class="section-title">
+                <h2 class="section-title font-display">
                     <i class="fas fa-location-dot"></i>
                     全国钓点
                 </h2>
@@ -1519,9 +1551,9 @@
 
 <section class="home-section home-section--white">
     <div class="home-section__inner">
-        <div class="section-bar">
+        <div class="section-bar reveal">
             <div>
-                <h2 class="section-title">
+                <h2 class="section-title font-display">
                     <i class="fas fa-comments"></i>
                     热门讨论
                 </h2>
@@ -1550,8 +1582,8 @@
 </section>
 
 <section class="mission-band">
-    <div>
-        <h2>复盘更快，判断更准</h2>
+    <div class="reveal">
+        <h2 class="font-display">复盘更快，判断更准</h2>
         <p>看清不同季节、天气和钓点的变化，下一次出钓少靠感觉。</p>
         <div class="mission-band__actions">
             <a href="/spots" class="btn btn-hero-primary">
@@ -1563,15 +1595,15 @@
         </div>
     </div>
     <div class="mission-band__stats" aria-label="记录维度">
-        <div class="mission-band__stat">
+        <div class="mission-band__stat reveal">
             <span>位置维度</span>
             <strong>省市、水体、坐标</strong>
         </div>
-        <div class="mission-band__stat">
+        <div class="mission-band__stat reveal">
             <span>出钓维度</span>
             <strong>时间、天气、鱼种</strong>
         </div>
-        <div class="mission-band__stat">
+        <div class="mission-band__stat reveal">
             <span>复盘维度</span>
             <strong>策略、评论、讨论</strong>
         </div>
@@ -1949,9 +1981,10 @@
                     return;
                 }
 
-                allSpots.slice(0, 6).forEach((spot) => {
+                allSpots.slice(0, 6).forEach((spot, index) => {
                     const card = document.createElement('div');
-                    card.className = 'col-md-6 col-lg-4';
+                    card.className = 'col-md-6 col-lg-4 reveal';
+                    card.style.transitionDelay = (index * 0.07) + 's';
 
                     const waterType = getWaterTypeMeta(spot.water_type);
                     const name = escapeHTML(spot.name || '未命名钓点');
@@ -1996,6 +2029,7 @@
                     `;
                     spotsList.appendChild(card);
                 });
+                if (window.AnglrReveal) window.AnglrReveal(spotsList);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -2015,9 +2049,10 @@
                     return;
                 }
 
-                posts.slice(0, 6).forEach((post) => {
+                posts.slice(0, 6).forEach((post, index) => {
                     const postDiv = document.createElement('div');
-                    postDiv.className = 'col-md-6 col-lg-4';
+                    postDiv.className = 'col-md-6 col-lg-4 reveal';
+                    postDiv.style.transitionDelay = (index * 0.07) + 's';
 
                     const title = escapeHTML(post.title || '未命名帖子');
                     const content = escapeHTML(truncateContent(post.content, 86));
@@ -2059,6 +2094,7 @@
 
                     postsList.appendChild(postDiv);
                 });
+                if (window.AnglrReveal) window.AnglrReveal(postsList);
             })
             .catch(error => {
                 console.error('Error:', error);
