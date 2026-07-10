@@ -1120,6 +1120,63 @@
         html.dark .theme-toggle .fa-sun { display: inline-block; }
         html.dark .theme-toggle .fa-moon { display: none; }
 
+        /* ================= 深色模式 · Bootstrap 兼容层 =================
+           Bootstrap 的 .card / .text-muted 等把文字色写死为浅色主题下的深灰
+           （如 .card{color:var(--bs-body-color)=#212529}），在深色卡面上会
+           出现“深字压深底”不可读。这里统一改用主题 token 覆盖。 */
+        html.dark {
+            --bs-body-color: var(--text-dark);
+            --bs-body-bg: var(--surface);
+            --bs-secondary-color: var(--text-muted);
+            --bs-emphasis-color: var(--text-dark);
+            --bs-border-color: var(--border-soft);
+        }
+        html.dark .card,
+        html.dark .card-body,
+        html.dark .card-footer,
+        html.dark .data-card,
+        html.dark .shell-card,
+        html.dark .feature-card {
+            color: var(--text-dark);
+        }
+        /* Bootstrap 文字工具类：深色下改用可读的主题色 */
+        html.dark .text-muted,
+        html.dark .text-secondary,
+        html.dark small.text-muted,
+        html.dark .form-text.text-muted {
+            color: var(--text-muted) !important;
+        }
+        html.dark .text-dark,
+        html.dark .text-body,
+        html.dark .text-body-emphasis {
+            color: var(--text-dark) !important;
+        }
+        /* 卡片内 <strong> 标签文字（位置/水体/坐标 等）——保持标题绿以区分层级 */
+        html.dark .card-body strong,
+        html.dark .card-body b {
+            color: var(--brand-deep);
+        }
+        /* 分隔线、alert 在深色下的可读性 */
+        html.dark hr { border-color: var(--border-soft); opacity: 0.6; }
+        html.dark .alert-info {
+            background: rgba(var(--brand-mint-rgb), 0.12);
+            border-color: rgba(var(--brand-mint-rgb), 0.28);
+            color: var(--text-dark);
+        }
+        html.dark .badge-info {
+            background: rgba(var(--brand-mint-rgb), 0.16);
+            color: var(--brand-deep);
+            border-color: rgba(var(--brand-mint-rgb), 0.3);
+        }
+        /* 输入框深色适配 */
+        html.dark .form-control,
+        html.dark .form-select {
+            background: var(--surface-soft);
+            color: var(--text-dark);
+            border-color: var(--border-soft);
+        }
+        html.dark .form-control::placeholder { color: var(--text-muted); }
+
         @media (prefers-reduced-motion: reduce) {
             .reveal { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
             .anglr-mesh__blob,
