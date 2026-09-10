@@ -1,1152 +1,66 @@
+{% set asset_v = '20260910a' %}
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AnglrLog - 钓鱼记录{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            /* 主色系：深森林绿 #0A3C35 + 湖水青 #4ECDC4 + 暖米白 */
-            --brand-ink: #072A25;        /* 最深森林 */
-            --brand-deep: #0A3C35;       /* 主色 · 深森林绿 */
-            --brand-teal: #1F9E8D;       /* 功能强调（文字/图标，保证可读对比）*/
-            --brand-mint: #4ECDC4;       /* 湖水青 · 高光 / 渐变 */
-            --brand-amber: #E0A458;      /* 暖沙点缀 */
-            --brand-coral: #E0796B;
-            --brand-electric: #6FE0D2;   /* 亮青 */
-            --sky-wash: #E8F3EF;
-            --sky-soft: #F2F7F2;
-            --surface: #FCFAF4;          /* 卡面 · 暖米白 */
-            --surface-soft: #F1EEE4;
-            --surface-tint: #E7F1EC;
-            --surface-warm: #FBF4E6;
-            --glass-strong: rgba(252, 250, 244, 0.92);
-            --glass-dark: rgba(10, 60, 53, 0.9);
-            --border-soft: rgba(10, 60, 53, 0.14);
-            --border-strong: rgba(10, 60, 53, 0.2);
-            --text-dark: #14231F;
-            --text-muted: #5B6B63;
-            --primary-blue: var(--brand-teal);
-            --secondary-blue: var(--brand-deep);
-            --shadow-soft: 0 6px 24px rgba(10, 60, 53, 0.09);
-            --shadow-strong: 0 14px 44px rgba(10, 60, 53, 0.16);
-            --shadow-lift: 0 18px 40px rgba(10, 60, 53, 0.18);
-            --focus-ring: 0 0 0 0.25rem rgba(78, 205, 196, 0.28);
-            /* RGB 分量：供 rgba() 动态透明度使用 */
-            --brand-teal-rgb: 31, 158, 141;
-            --brand-deep-rgb: 10, 60, 53;
-            --brand-mint-rgb: 78, 205, 196;
-            --brand-amber-rgb: 224, 164, 88;
-            --brand-coral-rgb: 224, 121, 107;
-            /* 补齐历史遗漏的 surface token */
-            --surface-muted: #E8F0EA;
-            /* 页面画布（供 body 背景引用，深浅模式统一入口）*/
-            --page-bg-top: rgba(246, 243, 236, 0.94);
-            --page-bg-mid: rgba(248, 245, 238, 0.97);
-            --page-bg-bottom: rgba(250, 248, 242, 1);
-            --grid-line: rgba(10, 60, 53, 0.08);
-            /* 全局圆角标度 */
-            --radius: 14px;
-            --radius-lg: 18px;
-            --radius-pill: 999px;
-            /* 语义色（勋章 / 深琥珀文本 / 进度渐变） */
-            --text-amber-dark: #9a6b12;
-            --medal-gold: #f7d774;
-            --medal-silver: #dce5ea;
-            --medal-bronze: #efc39b;
-            --progress-start: var(--brand-teal);
-            --progress-mid: var(--brand-mint);
-            --progress-end: var(--brand-amber);
-            color-scheme: light;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Noto Sans SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
-            background:
-                linear-gradient(180deg, var(--page-bg-top) 0%, var(--page-bg-mid) 42%, var(--page-bg-bottom) 100%),
-                url('/static/fishing-lake-bg.svg') center top / cover fixed no-repeat;
-            color: var(--text-dark);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            isolation: isolate;
-            overflow-x: hidden;
-        }
-
-        body::before,
-        body::after {
-            content: "";
-            position: fixed;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        body::before {
-            inset: 0;
-            opacity: 0.16;
-            background-image:
-                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
-                linear-gradient(180deg, var(--grid-line) 1px, transparent 1px);
-            background-size: 84px 84px;
-            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent 72%);
-        }
-
-        body::after {
-            display: none;
-        }
-
-        /* 导航栏 */
-        .navbar {
-            position: relative;
-            z-index: 4;
-            background: linear-gradient(90deg, rgba(7, 52, 66, 0.96), rgba(7, 88, 106, 0.94));
-            backdrop-filter: blur(18px) saturate(1.15);
-            box-shadow: 0 10px 28px rgba(7, 52, 66, 0.18);
-            border-bottom: 1px solid rgba(117, 215, 239, 0.22);
-            min-height: 68px;
-        }
-
-        .navbar .container-fluid {
-            max-width: 1480px;
-            padding-left: clamp(18px, 4vw, 56px);
-            padding-right: clamp(18px, 4vw, 56px);
-        }
-
-        .navbar-brand {
-            font-weight: bold;
-            font-size: 1.36rem;
-            color: white !important;
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            letter-spacing: 0;
-        }
-
-        .navbar-brand i {
-            color: #aeefff;
-            font-size: 1.5rem;
-            filter: none;
-        }
-
-        .nav-link {
-            color: rgba(239, 254, 250, 0.86) !important;
-            font-weight: 500;
-            transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-            position: relative;
-            border-radius: var(--radius);
-            padding: 9px 12px !important;
-        }
-
-        .nav-link:hover {
-            color: #ffffff !important;
-            background: rgba(174, 239, 255, 0.12);
-            box-shadow: inset 0 0 0 1px rgba(174, 239, 255, 0.2);
-        }
-
-        .nav-link::after {
-            display: none;
-        }
-
-        .nav-link:hover::after {
-            width: 100%;
-        }
-
-        /* 主容器 */
-        main {
-            flex: 1;
-            padding: 0 0 64px;
-            width: 100%;
-            position: relative;
-            z-index: 1;
-        }
-
-        .container {
-            max-width: 1280px;
-        }
-
-        .site-main > :not(.bleed):not(.home-hero):not(.home-metrics-wrap):not(.home-announcement):not(.home-section):not(.mission-band) {
-            max-width: 1280px;
-            margin-left: auto;
-            margin-right: auto;
-            padding-left: clamp(16px, 3vw, 28px);
-            padding-right: clamp(16px, 3vw, 28px);
-        }
-
-        .site-main > :not(.bleed):not(.home-hero):not(.home-metrics-wrap):not(.home-announcement):not(.home-section):not(.mission-band):first-child {
-            margin-top: clamp(32px, 5vw, 56px);
-        }
-
-        /* 页面标题 */
-        .page-title {
-            font-size: clamp(1.9rem, 3.8vw, 3rem);
-            font-weight: 900;
-            color: var(--brand-deep);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            letter-spacing: 0;
-        }
-
-        .page-title i {
-            color: var(--brand-teal);
-            font-size: 0.92em;
-            filter: none;
-        }
-
-        .page-subtitle {
-            color: var(--text-muted);
-            font-size: 1.12rem;
-            margin-bottom: 34px;
-        }
-
-        /* 卡片 */
-        .card {
-            border: 1px solid var(--border-soft);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-soft);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-            overflow: hidden;
-            margin-bottom: 20px;
-            background: var(--glass-strong);
-            backdrop-filter: blur(10px) saturate(1.04);
-        }
-
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-strong);
-            border-color: rgba(14, 143, 163, 0.34);
-        }
-
-        .card-header {
-            background:
-                linear-gradient(135deg, #07586a, #0e8fa3);
-            color: white;
-            border: none;
-            font-weight: 600;
-            padding: 18px 22px;
-        }
-
-        .card-body {
-            padding: 25px;
-        }
-
-        /* 按钮 */
-        .btn {
-            border-radius: var(--radius);
-            font-weight: 600;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-            border: none;
-            padding: 10px 18px;
-        }
-
-        .btn-primary {
-            color: #062b35;
-            background: linear-gradient(135deg, #84ddf2, #8de3ca);
-            box-shadow: 0 10px 22px rgba(14, 143, 163, 0.18);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            color: #062b35;
-            box-shadow: 0 14px 30px rgba(14, 143, 163, 0.24);
-            background: linear-gradient(135deg, #b8f1ff, #a9eedc);
-        }
-
-        .btn-success {
-            color: #073642;
-            background: linear-gradient(135deg, #67d8b4, #c6e77b);
-            box-shadow: 0 10px 22px rgba(87, 199, 166, 0.18);
-        }
-
-        .btn-success:hover {
-            background: linear-gradient(135deg, #54c6a0, #b9dc69);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(52, 178, 123, 0.24);
-        }
-
-        .btn-danger {
-            background: #e96f5b;
-            color: #fff;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-        }
-
-        .btn-outline-primary {
-            color: var(--brand-teal);
-            border: 1px solid rgba(14, 143, 163, 0.34);
-            background: rgba(255, 255, 255, 0.72);
-        }
-
-        .btn-outline-primary:hover {
-            color: #fff;
-            background: var(--brand-teal);
-            box-shadow: 0 10px 22px rgba(22, 115, 122, 0.18);
-        }
-
-        .btn-outline-secondary {
-            color: var(--brand-deep);
-            border: 1px solid var(--border-soft);
-            background: rgba(255, 255, 255, 0.78);
-        }
-
-        .btn-secondary {
-            color: var(--brand-deep);
-            background: #e8f6fb;
-            border: 1px solid var(--border-soft);
-        }
-
-        .btn-secondary:hover {
-            color: var(--brand-deep);
-            background: #f5fcff;
-            box-shadow: var(--shadow-lift);
-        }
-
-        .btn-outline-secondary:hover {
-            color: var(--brand-deep);
-            background: #fff;
-            box-shadow: 0 10px 22px rgba(18, 53, 59, 0.1);
-        }
-
-        /* 输入框 */
-        .form-control, .form-select {
-            border: 1px solid var(--border-soft);
-            border-radius: var(--radius);
-            padding: 12px 15px;
-            font-size: 1rem;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            background: rgba(255, 255, 255, 0.94);
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--brand-teal);
-            box-shadow: var(--focus-ring);
-        }
-
-        .input-group .form-control {
-            min-height: 46px;
-        }
-
-        .dropdown-menu {
-            border: 1px solid var(--border-soft);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-strong);
-            padding: 8px;
-        }
-
-        .dropdown-item {
-            border-radius: 6px;
-            color: var(--text-dark);
-            padding: 9px 12px;
-        }
-
-        .dropdown-item:hover,
-        .dropdown-item:focus {
-            color: var(--brand-deep);
-            background: var(--surface-soft);
-        }
-
-        .table {
-            --bs-table-bg: transparent;
-            --bs-table-color: var(--text-dark);
-            margin-bottom: 0;
-        }
-
-        .table thead th {
-            color: var(--brand-deep);
-            background: var(--surface-soft);
-            border-bottom: 1px solid var(--border-soft);
-            font-size: 0.88rem;
-            font-weight: 800;
-        }
-
-        .table tbody td {
-            border-color: rgba(89, 169, 188, 0.16);
-        }
-
-        .table-hover tbody tr:hover {
-            --bs-table-hover-bg: rgba(223, 246, 255, 0.52);
-        }
-
-        .alert {
-            border-radius: var(--radius);
-            border: 1px solid var(--border-soft);
-            box-shadow: 0 10px 24px rgba(8, 88, 106, 0.06);
-        }
-
-        .modal {
-            z-index: 1080;
-        }
-
-        .modal-backdrop {
-            z-index: 1070;
-        }
-
-        body.modal-open .site-main {
-            z-index: auto;
-        }
-
-        /* 底部 */
-        footer {
-            position: relative;
-            z-index: 1;
-            background:
-                linear-gradient(135deg, rgba(7, 52, 66, 0.98), rgba(7, 88, 106, 0.94));
-            color: white;
-            padding: 42px 20px;
-            text-align: center;
-            margin-top: auto;
-            border-top: 1px solid rgba(117, 215, 239, 0.24);
-        }
-
-        footer p {
-            margin: 0;
-        }
-
-        /* 响应式 */
-        @media (max-width: 768px) {
-            .page-title {
-                font-size: 1.8rem;
-            }
-
-            main {
-                padding-bottom: 42px;
-            }
-        }
-
-        @media (max-width: 991.98px) {
-            .navbar {
-                min-height: 60px;
-            }
-
-            .navbar .container-fluid {
-                padding-left: 14px;
-                padding-right: 14px;
-            }
-
-            .navbar-brand {
-                font-size: 1.12rem;
-                gap: 8px;
-            }
-
-            .navbar-toggler {
-                border: 1px solid rgba(174, 239, 255, 0.28);
-                border-radius: var(--radius);
-                padding: 7px 9px;
-            }
-
-            .navbar-collapse {
-                margin-top: 12px;
-                padding: 10px 0 12px;
-                border-top: 1px solid rgba(174, 239, 255, 0.16);
-            }
-
-            .navbar-nav {
-                gap: 4px;
-            }
-
-            .nav-link {
-                width: 100%;
-                padding: 11px 12px !important;
-            }
-
-            .dropdown-menu {
-                position: static !important;
-                transform: none !important;
-                width: 100%;
-                margin-top: 6px;
-                background: rgba(255, 255, 255, 0.96);
-                box-shadow: none;
-            }
-        }
-
-        @media (max-width: 767.98px) {
-            body {
-                background-attachment: scroll;
-            }
-
-            body::before {
-                background-size: 56px 56px;
-                opacity: 0.1;
-            }
-
-            .site-main > :not(.bleed):not(.home-hero):not(.home-metrics-wrap):not(.home-announcement):not(.home-section):not(.mission-band) {
-                padding-left: 12px;
-                padding-right: 12px;
-            }
-
-            .site-main > :not(.bleed):not(.home-hero):not(.home-metrics-wrap):not(.home-announcement):not(.home-section):not(.mission-band):first-child {
-                margin-top: 22px;
-            }
-
-            .page-title {
-                font-size: 1.55rem;
-                gap: 10px;
-                line-height: 1.25;
-                flex-wrap: wrap;
-                margin-bottom: 8px;
-            }
-
-            .page-subtitle {
-                font-size: 0.98rem;
-                line-height: 1.55;
-                margin-bottom: 22px;
-            }
-
-            .card {
-                margin-bottom: 14px;
-            }
-
-            .card-header {
-                padding: 14px 16px;
-            }
-
-            .card-body {
-                padding: 16px;
-            }
-
-            .shell-card,
-            .feature-card,
-            .dashboard-card,
-            .level-panel {
-                padding: 16px !important;
-            }
-
-            .btn {
-                min-height: 42px;
-                padding: 9px 13px;
-            }
-
-            .btn-sm {
-                min-height: 36px;
-                padding: 7px 10px;
-            }
-
-            .form-control,
-            .form-select {
-                min-height: 44px;
-                font-size: 16px;
-                padding: 10px 12px;
-            }
-
-            textarea.form-control {
-                min-height: 118px;
-            }
-
-            .input-group {
-                align-items: stretch;
-            }
-
-            .table-responsive {
-                border: 1px solid var(--border-soft);
-                border-radius: var(--radius);
-            }
-
-            .table-responsive .table {
-                min-width: 680px;
-            }
-
-            .modal-dialog {
-                margin: 8px;
-            }
-
-            .modal-content {
-                border-radius: var(--radius);
-            }
-
-            .modal-body,
-            .modal-footer {
-                padding: 16px;
-            }
-
-            .modal-footer {
-                gap: 8px;
-            }
-
-            .card form .d-flex.gap-2 {
-                flex-direction: column;
-            }
-
-            .card form .d-flex.gap-2 .btn {
-                width: 100%;
-            }
-
-            .shell-card .d-flex.gap-2 {
-                flex-wrap: wrap;
-            }
-
-            .shell-card .d-flex.gap-2 .btn {
-                flex: 1 1 0;
-            }
-
-            /* ——— 全站移动端增强 ——— */
-            /* 认证卡（登录/注册）在窄屏铺满，减少边距浪费 */
-            .auth-wrap { min-height: auto; padding: 8px 0 24px; }
-            .auth-card { max-width: 100%; }
-            .auth-card__head { padding: 30px 20px; }
-            .auth-card__head i { font-size: 2.8rem; }
-            .auth-card__body { padding: 24px 20px; }
-
-            /* 表单内成对按钮（取消/提交）纵向堆叠更好按 */
-            .d-flex.justify-content-between > .btn,
-            .d-flex.justify-content-end > .btn { min-height: 44px; }
-
-            /* Leaflet 地图容器在窄屏降低高度，避免占满整屏 */
-            .map-container,
-            .nearby-map { min-height: 260px !important; height: 260px !important; }
-
-            /* 页脚在窄屏收紧并留出 iOS 底部安全区 */
-            footer {
-                padding: 30px 18px calc(30px + env(safe-area-inset-bottom, 0px));
-                font-size: 0.92rem;
-            }
-
-            /* 徽章/芯片在窄屏可换行，避免撑破容器 */
-            .chip { padding: 7px 10px; font-size: 0.82rem; }
-
-            /* 长坐标/链接等强制换行，杜绝横向滚动 */
-            .card-body,
-            .shell-card,
-            .data-card { overflow-wrap: anywhere; }
-        }
-
-        @media (hover: none) {
-            .card:hover,
-            .post-card:hover,
-            .spot-card:hover,
-            .btn:hover {
-                transform: none !important;
-            }
-        }
-
-        /* 徽章 */
-        .badge {
-            border-radius: var(--radius-pill);
-            padding: 7px 12px;
-            font-weight: 600;
-        }
-
-        .badge-primary {
-            background: var(--brand-deep);
-        }
-
-        .badge-success {
-            background: var(--brand-mint);
-        }
-
-        /* 主题化徽章：替代 Bootstrap 原生 bg-info / bg-warning / bg-secondary */
-        .badge-info {
-            background: rgba(var(--brand-teal-rgb), 0.12);
-            color: var(--brand-deep);
-            border: 1px solid rgba(var(--brand-teal-rgb), 0.2);
-        }
-
-        .badge-amber {
-            background: rgba(var(--brand-amber-rgb), 0.18);
-            color: var(--text-amber-dark);
-            border: 1px solid rgba(var(--brand-amber-rgb), 0.32);
-        }
-
-        .badge-muted {
-            background: var(--surface-muted);
-            color: var(--text-muted);
-            border: 1px solid var(--border-soft);
-        }
-
-        /* === 共享芯片组件（替代重复的 species-chip / target-species-chip）=== */
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 8px 12px;
-            border-radius: var(--radius-pill);
-            border: 1px solid rgba(var(--brand-teal-rgb), 0.2);
-            background: rgba(255, 255, 255, 0.82);
-            color: var(--text-dark);
-            font-size: 0.88rem;
-            font-weight: 600;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-            cursor: pointer;
-        }
-
-        .chip:hover:not(.chip--active) {
-            border-color: var(--brand-teal);
-            background: rgba(255, 255, 255, 0.96);
-        }
-
-        .chip--active {
-            color: #062b35;
-            background: linear-gradient(135deg, #84ddf2, #8de3ca);
-            border-color: rgba(var(--brand-teal-rgb), 0.34);
-            box-shadow: 0 4px 12px rgba(var(--brand-teal-rgb), 0.16);
-        }
-
-        .chip:focus-visible {
-            outline: none;
-            box-shadow: var(--focus-ring);
-        }
-
-        /* === 数据卡片：区别于营销用 feature-card（无顶部彩条）=== */
-        .data-card {
-            border: 1px solid var(--border-soft);
-            border-radius: var(--radius);
-            background: var(--glass-strong);
-            backdrop-filter: blur(10px) saturate(1.04);
-            box-shadow: var(--shadow-soft);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-            overflow: hidden;
-        }
-
-        .data-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lift);
-            border-color: rgba(var(--brand-teal-rgb), 0.28);
-        }
-
-        .data-card h5,
-        .data-card h6 {
-            color: var(--brand-deep);
-            font-weight: 700;
-        }
-
-        .data-card p {
-            color: var(--text-muted);
-            line-height: 1.7;
-            margin-bottom: 8px;
-        }
-
-        /* === 通用媒体缩略图（目录页图片）=== */
-        .media-thumb {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: var(--radius);
-        }
-
-        /* === 统计磁贴：用于详情页天气 / 数据面板 === */
-        .stat-tile {
-            padding: 16px;
-            border-radius: var(--radius);
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-        }
-
-        .stat-tile__label {
-            display: block;
-            color: var(--text-muted);
-            font-size: 0.78rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .stat-tile__value {
-            display: block;
-            color: var(--text-dark);
-            font-size: 1.2rem;
-            font-weight: 800;
-        }
-
-        /* === 通用键盘焦点环（可访问性）=== */
-        a:focus-visible,
-        button:focus-visible,
-        .btn:focus-visible,
-        [tabindex]:focus-visible {
-            outline: none;
-            box-shadow: var(--focus-ring);
-        }
-
-        /* 装饰线 */
-        .divider {
-            height: 2px;
-            background: linear-gradient(to right, transparent, var(--brand-electric), var(--brand-mint), var(--brand-amber), transparent);
-            margin: 20px 0;
-        }
-
-        .leaflet-container {
-            font-family: 'Noto Sans SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
-        }
-
-        .brand-panel {
-            background:
-                linear-gradient(135deg, rgba(7, 88, 106, 0.96), rgba(14, 143, 163, 0.9));
-            border: 1px solid rgba(117, 215, 239, 0.28);
-            border-radius: var(--radius);
-            color: #fff;
-            box-shadow: var(--shadow-strong);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .brand-panel__icon {
-            color: var(--brand-electric);
-            filter: none;
-        }
-
-        .shell-card {
-            background: rgba(255, 255, 255, 0.94);
-            border: 1px solid var(--border-soft);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-soft);
-            overflow: hidden;
-        }
-
-        .feature-card {
-            height: 100%;
-            padding: 26px;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px) saturate(1.04);
-            border: 1px solid var(--border-soft);
-            border-top: 4px solid var(--brand-electric);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-soft);
-        }
-
-        .feature-card--mint {
-            border-top-color: var(--brand-mint);
-        }
-
-        .feature-card--amber {
-            border-top-color: var(--brand-amber);
-        }
-
-        .feature-card--coral {
-            border-top-color: var(--brand-coral);
-        }
-
-        .feature-card__icon {
-            color: var(--brand-teal);
-            font-size: 2.1rem;
-            margin-bottom: 12px;
-        }
-
-        .feature-card--mint .feature-card__icon {
-            color: var(--brand-mint);
-        }
-
-        .feature-card--amber .feature-card__icon {
-            color: var(--brand-amber);
-        }
-
-        .feature-card--coral .feature-card__icon {
-            color: var(--brand-coral);
-        }
-
-        .feature-card h5,
-        .feature-card h6 {
-            color: var(--brand-deep);
-            font-weight: 700;
-        }
-
-        .feature-card p {
-            color: var(--text-muted);
-            line-height: 1.75;
-            margin-bottom: 0;
-        }
-
-        .auth-wrap {
-            min-height: 540px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .auth-card {
-            width: 100%;
-            max-width: 460px;
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid var(--border-soft);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-strong);
-            overflow: hidden;
-        }
-
-        .auth-card__head {
-            padding: 42px 24px;
-            text-align: center;
-        }
-
-        .auth-card__head i {
-            color: var(--brand-amber);
-            font-size: 3.4rem;
-            margin-bottom: 14px;
-        }
-
-        .auth-card__body {
-            padding: 34px 28px;
-        }
-
-        .form-label {
-            color: var(--brand-deep);
-            font-weight: 700;
-        }
-
-        .soft-divider {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            margin: 22px 0;
-        }
-
-        .soft-divider::before,
-        .soft-divider::after {
-            content: "";
-            height: 1px;
-            flex: 1;
-            background: var(--border-soft);
-        }
-
-        .text-link {
-            color: var(--brand-teal);
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        .text-link:hover {
-            color: var(--brand-deep);
-        }
-
-        .empty-state,
-        .error-state {
-            padding: 42px 24px;
-            text-align: center;
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px dashed var(--border-soft);
-            border-radius: var(--radius);
-        }
-
-        .error-state {
-            color: var(--brand-coral);
-            border-color: rgba(200, 90, 66, 0.28);
-            background: rgba(255, 248, 245, 0.8);
-        }
-
-        /* ================= 视觉升级：字体 / 动画 / 交互 ================= */
-
-        /* 展示字体：中文用 Noto Sans SC，拉丁标题回落到 Fraunces 衬线 */
-        .font-display {
-            font-family: 'Fraunces', 'Noto Sans SC', 'Microsoft YaHei', serif;
-            letter-spacing: 0.01em;
-        }
-
-        /* ——— 关键帧：仅 transform / opacity，GPU 安全 ——— */
-        @keyframes anglr-ripple {
-            0% { transform: translate(-50%, -50%) scale(0.55); opacity: 0.5; }
-            100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
-        }
-        @keyframes anglr-breathe {
-            0%, 100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.09); opacity: 1; }
-        }
-        @keyframes anglr-mesh {
-            0% { transform: translate3d(0, 0, 0) scale(1); }
-            50% { transform: translate3d(4%, -3%, 0) scale(1.12); }
-            100% { transform: translate3d(0, 0, 0) scale(1); }
-        }
-        @keyframes anglr-float-up {
-            0% { transform: translateY(0) rotate(0); opacity: 0; }
-            12% { opacity: 0.5; }
-            100% { transform: translateY(-130px) rotate(45deg); opacity: 0; }
-        }
-        @keyframes anglr-pulse-dot {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(var(--brand-mint-rgb), 0.5); }
-            50% { box-shadow: 0 0 0 12px rgba(var(--brand-mint-rgb), 0); }
-        }
-        @keyframes anglr-fade-in {
-            from { opacity: 0; transform: translateY(26px); filter: blur(6px); }
-            to { opacity: 1; transform: translateY(0); filter: blur(0); }
-        }
-
-        /* ——— 滚动渐显（配合 IntersectionObserver）——— */
-        .reveal {
-            opacity: 0;
-            transform: translateY(26px);
-            filter: blur(6px);
-            transition: opacity 0.7s cubic-bezier(0.32, 0.72, 0, 1),
-                        transform 0.7s cubic-bezier(0.32, 0.72, 0, 1),
-                        filter 0.7s cubic-bezier(0.32, 0.72, 0, 1);
-            will-change: opacity, transform;
-        }
-        .reveal.is-visible {
-            opacity: 1;
-            transform: translateY(0);
-            filter: blur(0);
-        }
-
-        /* ——— 湖光动态渐变色斑 ——— */
-        .anglr-mesh {
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .anglr-mesh__blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(60px);
-            opacity: 0.4;
-            animation: anglr-mesh 22s ease-in-out infinite;
-        }
-        .anglr-mesh__blob--teal {
-            top: -18%; left: -12%;
-            width: 60vh; height: 60vh;
-            background: radial-gradient(circle, var(--brand-mint), transparent 60%);
-        }
-        .anglr-mesh__blob--deep {
-            bottom: -22%; right: -14%;
-            width: 72vh; height: 72vh;
-            background: radial-gradient(circle, var(--brand-deep), transparent 62%);
-            opacity: 0.3;
-            animation-duration: 28s;
-            animation-direction: reverse;
-        }
-
-        /* ——— 自然粒子（≤4，低调）——— */
-        .anglr-particles {
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .anglr-particles span {
-            position: absolute;
-            bottom: 0;
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: rgba(var(--brand-mint-rgb), 0.28);
-            animation: anglr-float-up linear infinite;
-        }
-        .anglr-particles span:nth-child(1) { left: 18%; animation-duration: 13s; animation-delay: 0s; }
-        .anglr-particles span:nth-child(2) { left: 42%; animation-duration: 15s; animation-delay: 2.6s; }
-        .anglr-particles span:nth-child(3) { left: 66%; animation-duration: 17s; animation-delay: 5.2s; }
-        .anglr-particles span:nth-child(4) { left: 84%; animation-duration: 19s; animation-delay: 7.8s; }
-
-        /* ——— 水波纹（同心圆呼吸扩散）——— */
-        .anglr-ripple {
-            position: absolute;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .anglr-ripple span {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            border: 1px solid rgba(var(--brand-mint-rgb), 0.42);
-            animation: anglr-ripple 8s ease-out infinite;
-        }
-        .anglr-ripple span:nth-child(2) { animation-delay: 2.6s; }
-        .anglr-ripple span:nth-child(3) { animation-delay: 5.2s; }
-
-        /* ——— 呼吸图标 / 脉冲点 工具类 ——— */
-        .anglr-breathe { animation: anglr-breathe 3.6s ease-in-out infinite; }
-        .anglr-pulse-dot { animation: anglr-pulse-dot 2.4s infinite; }
-
-        /* ================= 文字对比度强化 =================
-           Bootstrap 默认的 label / placeholder 在暖米白背景上对比不足，
-           统一加深为主题深绿/深灰以保证可读性。 */
-        .form-label {
-            color: var(--text-dark);
-            font-weight: 600;
-        }
-        .form-control::placeholder,
-        .form-select::placeholder {
-            color: var(--text-muted);
-            opacity: 0.8;
-        }
-        /* 在浅色卡面（shell-card / card-body）内的表单，label 用深森林绿增强对比 */
-        .shell-card .form-label,
-        .card-body .form-label {
-            color: var(--brand-deep);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .reveal { opacity: 1 !important; transform: none !important; filter: none !important; transition: none !important; }
-            .anglr-mesh__blob,
-            .anglr-particles span,
-            .anglr-ripple span,
-            .anglr-breathe,
-            .anglr-pulse-dot { animation: none !important; }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0A3C35">
+    <title>{% block title %}AnglrLog 渔迹录 - 钓鱼记录{% endblock %}</title>
+    <link rel="stylesheet" href="/static/vendor/bootstrap/bootstrap.min.css?v={{ asset_v }}">
+    <link rel="stylesheet" href="/static/vendor/fontawesome/all.min.css?v={{ asset_v }}">
+    <link rel="stylesheet" href="/static/fonts/fonts.css?v={{ asset_v }}">
+    <link rel="stylesheet" href="/static/css/tokens.css?v={{ asset_v }}">
+    <link rel="stylesheet" href="/static/css/base.css?v={{ asset_v }}">
+    <link rel="stylesheet" href="/static/css/layout.css?v={{ asset_v }}">
+    <link rel="stylesheet" href="/static/css/components.css?v={{ asset_v }}">
+    {% if needs_map %}<link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css?v={{ asset_v }}">{% endif %}
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-fish"></i> AnglrLog
+<body class="{% block body_class %}{% endblock %}">
+    <nav class="topnav" aria-label="主导航">
+        <div class="container-app topnav__inner">
+            <a class="topnav__brand" href="/">
+                <i class="fas fa-fish"></i><span>AnglrLog</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">
-                            <i class="fas fa-home"></i> 首页
-                        </a>
-                    </li>
-                    <li class="nav-item" id="spotsNav">
-                        <a class="nav-link" href="/spots">
-                            <i class="fas fa-map-location-dot"></i> 我的钓点
-                        </a>
-                    </li>
-                    <li class="nav-item" id="levelNav" style="display: none;">
-                        <a class="nav-link" href="/level">
-                            <i class="fas fa-ranking-star"></i> 我的等级
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/forum">
-                            <i class="fas fa-comments"></i> 讨论专区
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/leaderboards">
-                            <i class="fas fa-trophy"></i> 排行榜
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/about">
-                            <i class="fas fa-info-circle"></i> 关于
-                        </a>
-                    </li>
-                    <li class="nav-item" id="adminNav" style="display: none;">
-                        <a class="nav-link" href="/admin/users">
-                            <i class="fas fa-user-shield"></i> 用户管理
-                        </a>
-                    </li>
-                    <li class="nav-item" id="authNav">
-                        <a class="nav-link" href="/login">
-                            <i class="fas fa-sign-in-alt"></i> 登录
-                        </a>
-                    </li>
-                </ul>
+            <ul class="topnav__menu">
+                <li><a class="topnav__link" href="/" data-nav="/"><i class="fas fa-house"></i>首页</a></li>
+                <li><a class="topnav__link" href="/spots" data-nav="/spots"><i class="fas fa-map-location-dot"></i>钓点</a></li>
+                <li data-auth-only hidden><a class="topnav__link" href="/records" data-nav="/records,/logs"><i class="fas fa-clipboard-list"></i>记录</a></li>
+                <li><a class="topnav__link" href="/forum" data-nav="/forum"><i class="fas fa-comments"></i>讨论</a></li>
+                <li><a class="topnav__link" href="/leaderboards" data-nav="/leaderboards"><i class="fas fa-trophy"></i>排行榜</a></li>
+            </ul>
+            <div class="topnav__actions">
+                <a class="btn btn-on-dark btn-sm topnav__cta" href="/logs/create" data-auth-only hidden>
+                    <i class="fas fa-plus"></i>记一笔
+                </a>
+                <div id="authNav">
+                    <a class="btn btn-on-dark-ghost btn-sm" href="/login" data-guest-only>
+                        <i class="fas fa-right-to-bracket"></i>登录
+                    </a>
+                </div>
+                <button class="topnav__toggle" type="button" data-bs-toggle="collapse" data-bs-target="#topnavMobile" aria-controls="topnavMobile" aria-expanded="false" aria-label="打开菜单">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
+        </div>
+        <div class="collapse topnav__mobile" id="topnavMobile">
+            <a href="/" data-nav="/"><i class="fas fa-house"></i>首页</a>
+            <a href="/spots" data-nav="/spots"><i class="fas fa-map-location-dot"></i>钓点</a>
+            <a href="/records" data-nav="/records,/logs" data-auth-only hidden><i class="fas fa-clipboard-list"></i>我的记录</a>
+            <a href="/forum" data-nav="/forum"><i class="fas fa-comments"></i>讨论</a>
+            <a href="/leaderboards" data-nav="/leaderboards"><i class="fas fa-trophy"></i>排行榜</a>
+            <hr>
+            <a href="/profile" data-nav="/profile" data-auth-only hidden><i class="fas fa-id-card"></i>个人中心</a>
+            <a href="/level" data-nav="/level" data-auth-only hidden><i class="fas fa-ranking-star"></i>我的等级</a>
+            <a href="/equipment" data-nav="/equipment" data-auth-only hidden><i class="fas fa-toolbox"></i>我的装备</a>
+            <a href="/species" data-nav="/species" data-auth-only hidden><i class="fas fa-fish"></i>鱼种库</a>
+            <a href="/baits" data-nav="/baits" data-auth-only hidden><i class="fas fa-worm"></i>饵料库</a>
+            <a href="/admin/users" data-nav="/admin" data-admin-only hidden><i class="fas fa-user-shield"></i>用户管理</a>
+            <a href="/about" data-nav="/about"><i class="fas fa-circle-info"></i>关于</a>
+            <hr data-auth-only hidden>
+            <a href="#" onclick="logout(); return false;" data-auth-only hidden><i class="fas fa-right-from-bracket"></i>退出登录</a>
+            <a class="btn btn-primary" href="/logs/create" data-auth-only hidden><i class="fas fa-plus"></i>记一笔</a>
+            <a class="btn btn-primary" href="/login" data-guest-only><i class="fas fa-right-to-bracket"></i>登录 / 注册</a>
         </div>
     </nav>
 
@@ -1154,21 +68,55 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer>
-        <p>
-            <i class="fas fa-copyright"></i> 2026 AnglrLog - 专业钓鱼记录工具
-        </p>
-        <p style="font-size: 0.9rem; margin-top: 10px;">
-            记录每一次出钓，积累渔获经验
-        </p>
-        <p style="font-size: 0.85rem; margin-top: 10px; line-height: 1.8;">
-            京ICP备2026039833号-1 | 京公网安备11011302008165号
-        </p>
+    <nav class="tabbar" id="tabbar" hidden aria-label="底部导航">
+        <a class="tabbar__item" href="/" data-nav="/"><i class="fas fa-house"></i><span>首页</span></a>
+        <a class="tabbar__item" href="/spots" data-nav="/spots"><i class="fas fa-map-location-dot"></i><span>钓点</span></a>
+        <a class="tabbar__item tabbar__item--cta" href="/logs/create" aria-label="记一笔"><i class="fas fa-plus"></i><span>记一笔</span></a>
+        <a class="tabbar__item" href="/forum" data-nav="/forum"><i class="fas fa-comments"></i><span>讨论</span></a>
+        <a class="tabbar__item" href="/profile" data-nav="/profile,/records,/logs,/level,/equipment"><i class="fas fa-user"></i><span>我的</span></a>
+    </nav>
+
+    <footer class="site-footer">
+        <div class="container-app site-footer__inner">
+            <div>
+                <div class="site-footer__brand"><i class="fas fa-fish"></i>AnglrLog 渔迹录</div>
+                <p class="site-footer__tag">记录每一次出钓，积累属于自己的钓鱼数据库。</p>
+            </div>
+            <div class="site-footer__links">
+                <a href="/about">关于</a>
+                <a href="/spots">钓点</a>
+                <a href="/forum">讨论专区</a>
+                <a href="/leaderboards">排行榜</a>
+            </div>
+        </div>
+        <div class="site-footer__legal">
+            <div class="container-app">
+                <span>© 2026 AnglrLog</span>
+                <span>京ICP备2026039833号-1 · 京公网安备11011302008165号</span>
+            </div>
+        </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.10/htmx.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+
+    <div class="modal fade" id="anglrConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="anglrConfirmTitle">确认操作</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body" id="anglrConfirmBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="anglrConfirmCancel">取消</button>
+                    <button type="button" class="btn btn-primary" id="anglrConfirmOk">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js?v={{ asset_v }}"></script>
+    {% if needs_map %}<script src="/static/vendor/leaflet/leaflet.js?v={{ asset_v }}"></script>{% endif %}
     <script>
         // ——— 全局滚动渐显：给任意 .reveal 元素加 is-visible ———
         window.AnglrReveal = function (root) {
@@ -1186,72 +134,170 @@
                         obs.unobserve(entry.target);
                     }
                 });
-            }, { threshold: 0.12, rootMargin: '0px 0px -80px 0px' });
+            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
             targets.forEach(el => io.observe(el));
         };
-        document.addEventListener('DOMContentLoaded', function () { window.AnglrReveal(); });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('token');
-            const authNav = document.getElementById('authNav');
-            const spotsNav = document.getElementById('spotsNav');
-            const levelNav = document.getElementById('levelNav');
-            const adminNav = document.getElementById('adminNav');
-
-            if (token && authNav) {
-                authNav.innerHTML = `
-                    <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle"></i> 账户
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-id-card"></i> 个人中心</a></li>
-                        <li><a class="dropdown-item" href="/records"><i class="fas fa-clipboard-list"></i> 我的记录</a></li>
-                        <li><a class="dropdown-item" href="/level"><i class="fas fa-ranking-star"></i> 我的等级</a></li>
-                        <li><a class="dropdown-item" href="/leaderboards"><i class="fas fa-trophy"></i> 排行榜</a></li>
-                        <li><a class="dropdown-item" href="/equipment"><i class="fas fa-toolbox"></i> 我的装备</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/species"><i class="fas fa-fish"></i> 鱼种库</a></li>
-                        <li><a class="dropdown-item" href="/baits"><i class="fas fa-worm"></i> 饵料库</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></li>
-                    </ul>
-                `;
-                authNav.classList.add('dropdown');
-                // 显示钓点管理链接
-                if (spotsNav) {
-                    spotsNav.style.display = 'block';
-                }
-                if (levelNav) {
-                    levelNav.style.display = 'block';
-                }
-                apiFetch('/api/auth/me')
-                    .then(user => {
-                        if (adminNav && user.is_admin) {
-                            adminNav.style.display = 'block';
-                        }
-                    })
-                    .catch(() => {
-                        if (adminNav) {
-                            adminNav.style.display = 'none';
-                        }
-                    });
-            } else {
-                // 隐藏需要登录的菜单项
-                if (spotsNav) {
-                    spotsNav.style.display = 'none';
-                }
-                if (levelNav) {
-                    levelNav.style.display = 'none';
-                }
-                if (adminNav) {
-                    adminNav.style.display = 'none';
-                }
+        // ——— Toast ———
+        window.AnglrToast = (function () {
+            const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+            function show(message, type = 'info', timeout = 3200) {
+                const stack = document.getElementById('toastStack');
+                if (!stack) { alert(message); return; }
+                const item = document.createElement('div');
+                item.className = `toast-item toast-item--${type}`;
+                item.setAttribute('role', type === 'error' ? 'alert' : 'status');
+                item.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><div class="toast-item__body"></div><button type="button" class="toast-item__close" aria-label="关闭">&times;</button>`;
+                item.querySelector('.toast-item__body').textContent = String(message ?? '');
+                const dismiss = () => {
+                    item.classList.remove('is-in');
+                    setTimeout(() => item.remove(), 260);
+                };
+                item.querySelector('.toast-item__close').addEventListener('click', dismiss);
+                stack.appendChild(item);
+                requestAnimationFrame(() => item.classList.add('is-in'));
+                if (timeout > 0) setTimeout(dismiss, timeout);
             }
+            return {
+                show,
+                success: (m, t) => show(m, 'success', t),
+                error: (m, t) => show(m, 'error', t ?? 5000),
+                warning: (m, t) => show(m, 'warning', t),
+                info: (m, t) => show(m, 'info', t)
+            };
+        })();
+
+        // ——— 确认弹窗：返回 Promise<boolean> ———
+        window.AnglrConfirm = function (options) {
+            const opts = typeof options === 'string' ? { body: options } : (options || {});
+            const el = document.getElementById('anglrConfirmModal');
+            if (!el || !window.bootstrap) return Promise.resolve(confirm(opts.body || '确认操作？'));
+            const title = document.getElementById('anglrConfirmTitle');
+            const body = document.getElementById('anglrConfirmBody');
+            const ok = document.getElementById('anglrConfirmOk');
+            const cancel = document.getElementById('anglrConfirmCancel');
+            title.textContent = opts.title || '确认操作';
+            body.textContent = opts.body || '';
+            ok.textContent = opts.okText || '确定';
+            cancel.textContent = opts.cancelText || '取消';
+            ok.className = 'btn ' + (opts.danger ? 'btn-danger' : 'btn-primary');
+            const modal = bootstrap.Modal.getOrCreateInstance(el);
+            return new Promise(resolve => {
+                let settled = false;
+                const done = value => {
+                    if (settled) return;
+                    settled = true;
+                    ok.removeEventListener('click', onOk);
+                    el.removeEventListener('hidden.bs.modal', onHide);
+                    resolve(value);
+                };
+                const onOk = () => { modal.hide(); done(true); };
+                const onHide = () => done(false);
+                ok.addEventListener('click', onOk);
+                el.addEventListener('hidden.bs.modal', onHide);
+                modal.show();
+            });
+        };
+
+        // ——— 骨架屏 ———
+        window.AnglrSkeleton = function (kind = 'card', count = 3) {
+            const card = `<div class="card skeleton-card"><span class="skeleton skeleton--media"></span><div class="card__body"><span class="skeleton skeleton--title"></span><span class="skeleton skeleton--text"></span><span class="skeleton skeleton--text"></span></div></div>`;
+            const row = `<div class="row-item"><span class="skeleton skeleton--circle"></span><div class="row-item__main"><span class="skeleton skeleton--title"></span><span class="skeleton skeleton--text"></span></div><span class="skeleton skeleton--btn"></span></div>`;
+            const block = `<div class="card"><div class="card__body"><span class="skeleton skeleton--title"></span><span class="skeleton skeleton--text"></span><span class="skeleton skeleton--text"></span></div></div>`;
+            const tpl = { card, row, block }[kind] || card;
+            if (kind === 'card') {
+                return Array.from({ length: count }, () => `<div class="col-md-6 col-xl-4">${tpl}</div>`).join('');
+            }
+            return Array.from({ length: count }, () => tpl).join('');
+        };
+
+        // ——— 状态区块 ———
+        window.AnglrState = function (options) {
+            const o = options || {};
+            const cls = o.type === 'error' ? 'state state--error' : 'state';
+            const icon = o.icon || (o.type === 'error' ? 'fa-triangle-exclamation' : 'fa-inbox');
+            const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const action = o.actionHref ? `<a class="btn btn-secondary btn-sm" href="${esc(o.actionHref)}">${esc(o.actionText || '去看看')}</a>` : '';
+            return `<div class="${cls}"><i class="fas ${esc(icon)}"></i>${o.title ? `<p class="state__title">${esc(o.title)}</p>` : ''}${o.text ? `<p>${esc(o.text)}</p>` : ''}${action}</div>`;
+        };
+
+        // ——— 导航状态 ———
+        (function () {
+            const path = window.location.pathname.replace(/\/+$/, '') || '/';
+            document.querySelectorAll('[data-nav]').forEach(link => {
+                const keys = link.getAttribute('data-nav').split(',');
+                const hit = keys.some(k => k === '/' ? path === '/' : path === k || path.startsWith(k + '/'));
+                if (hit) link.setAttribute('aria-current', 'page');
+            });
+        })();
+
+        function setAuthVisibility(loggedIn, isAdmin) {
+            document.querySelectorAll('[data-auth-only]').forEach(el => { el.hidden = !loggedIn; });
+            document.querySelectorAll('[data-guest-only]').forEach(el => { el.hidden = loggedIn; });
+            document.querySelectorAll('[data-admin-only]').forEach(el => { el.hidden = !(loggedIn && isAdmin); });
+            const tabbar = document.getElementById('tabbar');
+            if (tabbar) tabbar.hidden = !loggedIn;
+            document.body.classList.toggle('has-tabbar', !!loggedIn);
+        }
+
+        function renderUserMenu(user) {
+            const authNav = document.getElementById('authNav');
+            if (!authNav) return;
+            const name = (user && user.nickname) ? user.nickname : '账户';
+            const initial = name.trim().charAt(0).toUpperCase() || 'A';
+            const avatar = user && user.avatar
+                ? `<img class="topnav__avatar" src="${user.avatar.replace(/"/g, '&quot;')}" alt="">`
+                : `<span class="topnav__avatar">${initial}</span>`;
+            authNav.className = 'dropdown';
+            authNav.innerHTML = `
+                <button class="topnav__user dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    ${avatar}<span></span><i class="fas fa-chevron-down fs-xs"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><span class="dropdown-header">我的</span></li>
+                    <li><a class="dropdown-item" href="/profile"><i class="fas fa-id-card"></i>个人中心</a></li>
+                    <li><a class="dropdown-item" href="/records"><i class="fas fa-clipboard-list"></i>我的记录</a></li>
+                    <li><a class="dropdown-item" href="/level"><i class="fas fa-ranking-star"></i>我的等级</a></li>
+                    <li><a class="dropdown-item" href="/equipment"><i class="fas fa-toolbox"></i>我的装备</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><span class="dropdown-header">资料库</span></li>
+                    <li><a class="dropdown-item" href="/species"><i class="fas fa-fish"></i>鱼种库</a></li>
+                    <li><a class="dropdown-item" href="/baits"><i class="fas fa-worm"></i>饵料库</a></li>
+                    <li><a class="dropdown-item" href="/about"><i class="fas fa-circle-info"></i>关于</a></li>
+                    ${user && user.is_admin ? '<li><hr class="dropdown-divider"></li><li><a class="dropdown-item" href="/admin/users"><i class="fas fa-user-shield"></i>用户管理</a></li>' : ''}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="logout(); return false;"><i class="fas fa-right-from-bracket"></i>退出登录</a></li>
+                </ul>
+            `;
+            authNav.querySelector('.topnav__user > span').textContent = name;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            window.AnglrReveal();
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setAuthVisibility(false, false);
+                return;
+            }
+            setAuthVisibility(true, false);
+            renderUserMenu(null);
+            apiFetch('/api/auth/me')
+                .then(user => {
+                    renderUserMenu(user);
+                    setAuthVisibility(true, !!user.is_admin);
+                })
+                .catch(() => {
+                    setAuthVisibility(false, false);
+                    const authNav = document.getElementById('authNav');
+                    if (authNav) {
+                        authNav.className = '';
+                        authNav.innerHTML = '<a class="btn btn-on-dark-ghost btn-sm" href="/login"><i class="fas fa-right-to-bracket"></i>登录</a>';
+                    }
+                });
         });
 
         function logout() {
             localStorage.removeItem('token');
-            alert('已退出登录');
             window.location.href = '/';
         }
 
@@ -1304,9 +350,22 @@
         }
 
         function redirectToLogin(message) {
-            if (message) alert(message);
+            if (message) {
+                try { sessionStorage.setItem('anglr.flash', message); } catch (e) { /* ignore */ }
+            }
             window.location.href = '/login';
         }
+
+        // 跨页提示：上一页写入 sessionStorage 的消息在本页以 toast 显示
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                const flash = sessionStorage.getItem('anglr.flash');
+                if (flash) {
+                    sessionStorage.removeItem('anglr.flash');
+                    AnglrToast.info(flash);
+                }
+            } catch (e) { /* ignore */ }
+        });
 
         window.AnglrMap = (function() {
             const PI = Math.PI;

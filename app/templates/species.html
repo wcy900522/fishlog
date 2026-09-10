@@ -1,47 +1,67 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 
 {% block title %}鱼种库 - AnglrLog{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h1 class="page-title"><i class="fas fa-fish"></i> 鱼种库</h1>
-    <p class="page-subtitle">沉淀目标鱼种、常见钓法和常用饵料。</p>
-</div>
+<div class="container-app">
+    {% call page_head('鱼种库', icon='fa-fish', sub='沉淀目标鱼种、常见钓法和常用饵料。', sub_id='pageSub', eyebrow='资料库') %}
+        <button class="btn btn-primary" type="button" id="addBtn" onclick="openForm()" hidden><i class="fas fa-plus"></i>新增鱼种</button>
+    {% endcall %}
 
-<div class="shell-card p-4 mb-4">
-    <div class="row g-3 align-items-end">
-        <div class="col-md-5">
-            <label class="form-label">搜索鱼种</label>
-            <input class="form-control" id="keywordFilter" placeholder="名称、分类关键词">
+    <div class="toolbar reveal">
+        <div class="toolbar__search">
+            <i class="fas fa-magnifying-glass"></i>
+            <input class="form-control" id="keywordFilter" placeholder="搜索鱼种名称、分类" aria-label="搜索鱼种">
         </div>
-        <div class="col-md-4">
-            <label class="form-label">分类</label>
-            <input class="form-control" id="categoryFilter" placeholder="如：路亚、淡水、海水">
-        </div>
-        <div class="col-md-3 d-flex gap-2">
-            <button class="btn btn-primary flex-fill" onclick="loadSpecies()">筛选</button>
-            <button class="btn btn-outline-secondary" onclick="resetFilters()">重置</button>
+        <div class="toolbar__side">
+            <input class="form-control" id="categoryFilter" placeholder="分类：路亚 / 淡水 / 海水" aria-label="分类筛选">
+            <button class="btn btn-secondary" onclick="loadSpecies()">筛选</button>
+            <button class="btn btn-ghost" onclick="resetFilters()">重置</button>
         </div>
     </div>
-</div>
 
-<div class="shell-card p-4 mb-4" id="adminForm" hidden>
-    <h5 class="mb-3" id="formTitle">新增鱼种</h5>
-    <div class="row g-3">
-        <div class="col-md-3"><input class="form-control" id="name" placeholder="名称"></div>
-        <div class="col-md-3"><input class="form-control" id="category" placeholder="分类"></div>
-        <div class="col-md-6"><input class="form-control" id="imageUrl" placeholder="图片 URL"></div>
-        <div class="col-md-6"><input class="form-control" id="methods" placeholder="常见钓法"></div>
-        <div class="col-md-6"><input class="form-control" id="baits" placeholder="常用饵料"></div>
-        <div class="col-12"><textarea class="form-control" id="description" rows="3" placeholder="介绍"></textarea></div>
-        <div class="col-12 d-flex gap-2">
-            <button class="btn btn-primary" onclick="saveSpecies()" id="saveBtn">保存</button>
-            <button class="btn btn-outline-secondary" onclick="resetForm()" type="button">取消编辑</button>
+    <div class="card mb-4" id="adminForm" hidden>
+        <div class="card-header">
+            <h2 id="formTitle"><i class="fas fa-plus"></i>新增鱼种</h2>
+            <button class="btn btn-ghost btn-sm" type="button" onclick="resetForm(true)"><i class="fas fa-xmark"></i>收起</button>
+        </div>
+        <div class="card-body">
+            <div class="form-grid">
+                <div>
+                    <label class="form-label req" for="name">名称</label>
+                    <input class="form-control" id="name" placeholder="如：鲈鱼">
+                </div>
+                <div>
+                    <label class="form-label" for="category">分类</label>
+                    <input class="form-control" id="category" placeholder="如：路亚、淡水、海水">
+                </div>
+                <div class="span-all">
+                    <label class="form-label" for="imageUrl">图片 URL</label>
+                    <input class="form-control" id="imageUrl" placeholder="https://">
+                </div>
+                <div>
+                    <label class="form-label" for="methods">常见钓法</label>
+                    <input class="form-control" id="methods" placeholder="如：路亚、台钓">
+                </div>
+                <div>
+                    <label class="form-label" for="baits">常用饵料</label>
+                    <input class="form-control" id="baits" placeholder="如：软虫、亮片">
+                </div>
+                <div class="span-all">
+                    <label class="form-label" for="description">介绍</label>
+                    <textarea class="form-control" id="description" rows="3" placeholder="习性、季节、出没水层"></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="resetForm(true)" type="button">取消</button>
+                <button class="btn btn-primary" onclick="saveSpecies()" id="saveBtn">保存</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="row g-4" id="speciesList"></div>
+    <div class="row g-3" id="speciesList"></div>
+</div>
 
 <script>
 let currentUser = null;
@@ -51,52 +71,83 @@ function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
 
+function openForm() {
+    const card = document.getElementById('adminForm');
+    card.hidden = false;
+    card.scrollIntoView({behavior: 'smooth', block: 'start'});
+    document.getElementById('name').focus();
+}
+
 async function loadCurrentUser() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
         currentUser = await apiFetch('/api/auth/me');
-        if (currentUser.is_admin) document.getElementById('adminForm').hidden = false;
+        if (currentUser.is_admin) document.getElementById('addBtn').hidden = false;
     } catch (error) {
         currentUser = null;
     }
 }
 
 async function loadSpecies() {
+    const list = document.getElementById('speciesList');
     const params = new URLSearchParams();
     const keyword = document.getElementById('keywordFilter').value.trim();
     const category = document.getElementById('categoryFilter').value.trim();
     if (keyword) params.set('keyword', keyword);
     if (category) params.set('category', category);
-    const rows = await apiFetch(`/api/species${params.toString() ? `?${params}` : ''}`);
-    document.getElementById('speciesList').innerHTML = rows.length ? rows.map(item => `
-        <div class="col-md-6 col-lg-4">
-            <article class="data-card p-4 h-100">
-                ${item.image_url ? `<img src="${escapeHTML(item.image_url)}" alt="${escapeHTML(item.name)}鱼种图片" class="media-thumb mb-3">` : ''}
-                <h5>${escapeHTML(item.name)}</h5>
-                <p class="mb-2"><strong>${escapeHTML(item.category || '未分类')}</strong></p>
-                <p>${escapeHTML(item.description || '暂无介绍')}</p>
-                ${item.common_methods ? `<p><i class="fas fa-route"></i> ${escapeHTML(item.common_methods)}</p>` : ''}
-                ${item.common_baits ? `<p><i class="fas fa-worm"></i> ${escapeHTML(item.common_baits)}</p>` : ''}
-                ${currentUser?.is_admin ? `
-                    <div class="d-flex gap-2 mt-3">
-                        <button class="btn btn-sm btn-primary" onclick="editSpeciesById(${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteSpecies(${item.id})">删除</button>
+    list.innerHTML = AnglrSkeleton('card', 3);
+    let rows;
+    try {
+        rows = await apiFetch(`/api/species${params.toString() ? `?${params}` : ''}`);
+    } catch (error) {
+        list.innerHTML = `<div class="col-12">${AnglrState({type: 'error', title: '加载失败', text: error.message})}</div>`;
+        return;
+    }
+    document.getElementById('pageSub').textContent = `共 ${rows.length} 个鱼种 · 沉淀目标鱼种、常见钓法和常用饵料。`;
+    list.innerHTML = rows.length ? rows.map(item => `
+        <div class="col-md-6 col-xl-4">
+            <article class="card h-100">
+                ${item.image_url ? `<img src="${escapeHTML(item.image_url)}" alt="${escapeHTML(item.name)}" class="media-thumb media-thumb--flush" loading="lazy">` : ''}
+                <div class="card__body">
+                    <div class="card__eyebrow">
+                        <span class="badge badge-info">${escapeHTML(item.category || '未分类')}</span>
                     </div>
-                ` : ''}
+                    <h3 class="card__title">${escapeHTML(item.name)}</h3>
+                    <p class="card__desc clamp-3">${escapeHTML(item.description || '暂无介绍')}</p>
+                    <div class="card__meta">
+                        ${item.common_methods ? `<span><i class="fas fa-route"></i>${escapeHTML(item.common_methods)}</span>` : ''}
+                        ${item.common_baits ? `<span><i class="fas fa-worm"></i>${escapeHTML(item.common_baits)}</span>` : ''}
+                    </div>
+                    ${currentUser?.is_admin ? `
+                    <div class="card__foot">
+                        <button class="btn btn-sm btn-secondary" onclick="editSpeciesById(${item.id})"><i class="fas fa-pen"></i>编辑</button>
+                        <button class="btn btn-sm btn-ghost text-danger" onclick="deleteSpecies(${item.id})"><i class="fas fa-trash"></i>删除</button>
+                    </div>` : ''}
+                </div>
             </article>
         </div>
-    `).join('') : '<div class="col-12"><div class="empty-state">暂无鱼种数据</div></div>';
+    `).join('') : `<div class="col-12">${AnglrState({title: '没有匹配的鱼种', text: '换个关键词试试。', icon: 'fa-fish'})}</div>`;
 }
 
 async function editSpeciesById(id) {
-    const item = await apiFetch(`/api/species/${id}`);
-    editSpecies(item);
+    try {
+        const item = await apiFetch(`/api/species/${id}`);
+        editSpecies(item);
+    } catch (error) {
+        AnglrToast.error(error.message);
+    }
 }
 
 async function saveSpecies() {
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+        AnglrToast.warning('请填写鱼种名称');
+        document.getElementById('name').focus();
+        return;
+    }
     const payload = {
-        name: document.getElementById('name').value.trim(),
+        name,
         category: document.getElementById('category').value.trim() || null,
         image_url: document.getElementById('imageUrl').value.trim() || null,
         common_methods: document.getElementById('methods').value.trim() || null,
@@ -104,18 +155,27 @@ async function saveSpecies() {
         description: document.getElementById('description').value.trim() || null
     };
     const url = editingSpeciesId ? `/api/species/${editingSpeciesId}` : '/api/species';
-    await apiFetch(url, {
-        method: editingSpeciesId ? 'PUT' : 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-    });
-    resetForm();
-    await loadSpecies();
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    try {
+        await apiFetch(url, {
+            method: editingSpeciesId ? 'PUT' : 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        AnglrToast.success(editingSpeciesId ? '鱼种已更新' : '鱼种已添加');
+        resetForm(true);
+        await loadSpecies();
+    } catch (error) {
+        AnglrToast.error(error.message);
+    } finally {
+        btn.disabled = false;
+    }
 }
 
 function editSpecies(item) {
     editingSpeciesId = item.id;
-    document.getElementById('formTitle').textContent = '编辑鱼种';
+    document.getElementById('formTitle').innerHTML = '<i class="fas fa-pen"></i>编辑鱼种';
     document.getElementById('saveBtn').textContent = '保存修改';
     document.getElementById('name').value = item.name || '';
     document.getElementById('category').value = item.category || '';
@@ -123,20 +183,27 @@ function editSpecies(item) {
     document.getElementById('methods').value = item.common_methods || '';
     document.getElementById('baits').value = item.common_baits || '';
     document.getElementById('description').value = item.description || '';
-    document.getElementById('adminForm').scrollIntoView({behavior: 'smooth', block: 'start'});
+    openForm();
 }
 
 async function deleteSpecies(id) {
-    if (!confirm('确定删除这个鱼种吗？')) return;
-    await apiFetch(`/api/species/${id}`, {method: 'DELETE'});
-    await loadSpecies();
+    const ok = await AnglrConfirm({title: '删除鱼种', body: '删除后不可恢复，确定要删除这个鱼种吗？', okText: '删除', danger: true});
+    if (!ok) return;
+    try {
+        await apiFetch(`/api/species/${id}`, {method: 'DELETE'});
+        AnglrToast.success('已删除');
+        await loadSpecies();
+    } catch (error) {
+        AnglrToast.error(error.message);
+    }
 }
 
-function resetForm() {
+function resetForm(collapse) {
     editingSpeciesId = null;
-    document.getElementById('formTitle').textContent = '新增鱼种';
+    document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus"></i>新增鱼种';
     document.getElementById('saveBtn').textContent = '保存';
     document.querySelectorAll('#adminForm input, #adminForm textarea').forEach(el => el.value = '');
+    if (collapse) document.getElementById('adminForm').hidden = true;
 }
 
 function resetFilters() {
@@ -144,6 +211,8 @@ function resetFilters() {
     document.getElementById('categoryFilter').value = '';
     loadSpecies();
 }
+
+document.getElementById('keywordFilter').addEventListener('keydown', e => { if (e.key === 'Enter') loadSpecies(); });
 
 document.addEventListener('DOMContentLoaded', async function() {
     await loadCurrentUser();

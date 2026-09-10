@@ -3,54 +3,48 @@
 {% block title %}注册 - AnglrLog{% endblock %}
 
 {% block content %}
-<div class="auth-wrap">
-    <div class="auth-card">
-        <div class="brand-panel auth-card__head">
-            <i class="fas fa-fish"></i>
-            <h3 class="mb-0">创建钓鱼账户</h3>
-            <p class="mb-0 mt-2 opacity-75">加入钓鱼人社区</p>
-        </div>
+<div class="auth-layout">
+    <aside class="auth-layout__brand" aria-hidden="true">
+        <h2>渔迹录</h2>
+        <p>把每一次出钓，转化为可沉淀的个人经验。</p>
+    </aside>
+    <div class="auth-layout__form">
+        <div class="auth-card reveal">
+            <div class="auth-card__head">
+                <i class="fas fa-user-plus"></i>
+                <h1>创建账户</h1>
+                <p>注册后即可记录钓点、出钓与渔获。</p>
+            </div>
 
-        <div class="auth-card__body">
-                <div id="formAlert" class="alert d-none" role="alert"></div>
-                <form id="registerForm">
-                    <div class="mb-3">
-                        <label for="nickname" class="form-label">
-                            <i class="fas fa-user"></i> 昵称
-                        </label>
-                        <input type="text" class="form-control" id="nickname" name="nickname" placeholder="输入您的昵称" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">
-                            <i class="fas fa-phone"></i> 手机号
-                        </label>
-                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="输入手机号" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">
-                            <i class="fas fa-lock"></i> 密码
-                        </label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="设置密码" required>
-                        <small class="form-text text-muted d-block mt-2">至少8位，需同时包含字母和数字，不能使用连续数字或常见弱密码。</small>
-                    </div>
-                    <div class="mb-4">
-                        <label for="confirmPassword" class="form-label">
-                            <i class="fas fa-check-circle"></i> 确认密码
-                        </label>
-                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="确认密码" required>
-                        <small id="confirmHint" class="form-text d-block mt-2"></small>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">
-                        <i class="fas fa-user-plus"></i> 注册账户
-                    </button>
-                </form>
-
-                <div class="mt-4 pt-4 text-center border-top">
-                    <p class="text-muted mb-0">已有账户？</p>
-                    <a href="/login" class="text-link">
-                        <i class="fas fa-sign-in-alt"></i> 点击登录
-                    </a>
+            <div id="formAlert" class="alert d-none mb-4" role="alert"></div>
+            <form id="registerForm" class="stack stack--tight" novalidate>
+                <div>
+                    <label for="nickname" class="form-label">昵称</label>
+                    <input type="text" class="form-control" id="nickname" name="nickname" placeholder="其他钓友看到的名字" autocomplete="nickname" required>
                 </div>
+                <div>
+                    <label for="phone" class="form-label">手机号</label>
+                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="用于登录" autocomplete="username" inputmode="tel" required>
+                </div>
+                <div>
+                    <label for="password" class="form-label">密码</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="至少 8 位，包含字母和数字" autocomplete="new-password" required>
+                    <div class="pw-meter" aria-hidden="true"><span id="pwMeterBar"></span></div>
+                    <small class="form-hint" id="pwHint">至少 8 位，需同时包含字母和数字，不能使用连续数字或常见弱密码。</small>
+                </div>
+                <div>
+                    <label for="confirmPassword" class="form-label">确认密码</label>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="再输入一次" autocomplete="new-password" required>
+                    <small id="confirmHint" class="form-hint"></small>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">
+                    <i class="fas fa-user-plus"></i>注册账户
+                </button>
+            </form>
+
+            <p class="text-center text-2 fs-sm mt-4 mb-0">
+                已有账户？<a href="/login" class="text-link">直接登录</a>
+            </p>
         </div>
     </div>
 </div>
@@ -85,6 +79,17 @@
         return '';
     }
 
+    function passwordStrength(password) {
+        if (!password) return 0;
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (password.length >= 12) score++;
+        if (/[A-Za-z]/.test(password) && /\d/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+        if (getPasswordComplexityError(password)) score = Math.min(score, 1);
+        return score;
+    }
+
     function formatRegisterError(payload) {
         if (payload && typeof payload.message === 'string') {
             return payload.message;
@@ -107,8 +112,9 @@
     function showFormAlert(message, type = 'danger') {
         const box = document.getElementById('formAlert');
         const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
-        box.className = `alert alert-${type}`;
-        box.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+        box.className = `alert alert-${type} mb-4`;
+        box.innerHTML = `<i class="fas ${icon}"></i><span></span>`;
+        box.querySelector('span').textContent = message;
     }
 
     function clearFormAlert() {
@@ -116,10 +122,10 @@
         box.className = 'alert d-none';
     }
 
-    // 实时确认两次密码是否一致
     const confirmInput = document.getElementById('confirmPassword');
     const passwordInput = document.getElementById('password');
     const confirmHint = document.getElementById('confirmHint');
+    const meterBar = document.getElementById('pwMeterBar');
 
     function updateConfirmHint() {
         const confirm = confirmInput.value;
@@ -130,28 +136,38 @@
         }
         if (confirm === passwordInput.value) {
             confirmHint.textContent = '两次密码一致';
-            confirmHint.className = 'form-text d-block mt-2 text-success';
+            confirmHint.className = 'form-hint text-success';
             confirmInput.classList.add('is-valid');
             confirmInput.classList.remove('is-invalid');
         } else {
             confirmHint.textContent = '两次密码不一致';
-            confirmHint.className = 'form-text d-block mt-2 text-danger';
+            confirmHint.className = 'form-msg';
             confirmInput.classList.add('is-invalid');
             confirmInput.classList.remove('is-valid');
         }
     }
 
+    function updateMeter() {
+        const score = passwordStrength(passwordInput.value);
+        meterBar.dataset.level = String(score);
+    }
+
     confirmInput.addEventListener('input', updateConfirmHint);
-    passwordInput.addEventListener('input', updateConfirmHint);
+    passwordInput.addEventListener('input', () => { updateConfirmHint(); updateMeter(); });
 
     document.getElementById('registerForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         clearFormAlert();
 
-        const nickname = document.getElementById('nickname').value;
-        const phone = document.getElementById('phone').value;
+        const nickname = document.getElementById('nickname').value.trim();
+        const phone = document.getElementById('phone').value.trim();
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (!nickname || !phone) {
+            showFormAlert('请填写昵称和手机号');
+            return;
+        }
 
         if (password !== confirmPassword) {
             showFormAlert('两次输入的密码不一致');
@@ -168,7 +184,7 @@
         const originalText = btn.innerHTML;
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 注册中...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>注册中...';
 
         try {
             const response = await fetch('/api/auth/register', {

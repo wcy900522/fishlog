@@ -1,0 +1,141 @@
+/* ==========================================================================
+   AnglrLog 设计 Token
+   唯一的颜色 / 字号 / 间距 / 圆角 / 阴影 / 层级来源。页面与组件 CSS 只引用这里。
+   ========================================================================== */
+:root {
+    color-scheme: light;
+
+    /* ---- 品牌色 ---- */
+    --c-primary: #0F4C45;
+    --c-primary-hover: #0A3C35;
+    --c-primary-soft: #E3F1ED;
+    --c-primary-rgb: 15, 76, 69;
+    --c-accent: #1F9E8D;
+    --c-accent-hover: #17877A;
+    --c-accent-soft: #D7F0EC;
+    --c-accent-rgb: 31, 158, 141;
+    --c-amber: #D9953F;
+    --c-amber-text: #8A5A14;
+    --c-amber-soft: #FBEFD9;
+    --c-danger: #C94F3D;
+    --c-danger-hover: #A83E2E;
+    --c-danger-soft: #FBE9E5;
+    --c-success: #2E8B62;
+    --c-success-soft: #E1F3EA;
+    --c-info: #3A7FA5;
+    --c-info-soft: #E3EFF6;
+
+    /* ---- 表面 ---- */
+    --s-page: #F6F4EE;
+    --s-card: #FFFFFF;
+    --s-muted: #EEEBE3;
+    --s-inverse: #0A3C35;
+    --s-inverse-2: #0F4C45;
+    --s-inverse-rgb: 10, 60, 53;
+
+    /* ---- 文字 ---- */
+    --t-1: #14231F;
+    --t-2: #4A5A54;
+    --t-3: #7A8983;
+    --t-inverse: #F2F7F4;
+    --t-inverse-2: rgba(242, 247, 244, 0.72);
+
+    /* ---- 边框 ---- */
+    --b-1: #E2DED3;
+    --b-2: #CFCABD;
+    --b-inverse: rgba(255, 255, 255, 0.12);
+
+    /* ---- 阴影 ---- */
+    --sh-1: 0 1px 2px rgba(20, 35, 31, 0.06);
+    --sh-2: 0 4px 12px rgba(20, 35, 31, 0.08);
+    --sh-3: 0 12px 32px rgba(20, 35, 31, 0.14);
+    --focus-ring: 0 0 0 3px rgba(31, 158, 141, 0.32);
+
+    /* ---- 圆角 ---- */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-pill: 999px;
+
+    /* ---- 间距 ---- */
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
+    --sp-5: 24px;
+    --sp-6: 32px;
+    --sp-7: 48px;
+    --sp-8: 64px;
+
+    /* ---- 字体 ---- */
+    --ff-sans: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    --ff-display: 'Fraunces', 'Noto Sans SC', 'PingFang SC', serif;
+    --fs-xs: 0.75rem;
+    --fs-sm: 0.875rem;
+    --fs-md: 1rem;
+    --fs-lg: 1.125rem;
+    --fs-xl: 1.375rem;
+    --fs-2xl: 1.75rem;
+    --fs-3xl: 2.5rem;
+    --fs-4xl: clamp(2.75rem, 5vw, 4.25rem);
+    --lh-tight: 1.2;
+    --lh-body: 1.7;
+
+    /* ---- 层级 ---- */
+    --z-nav: 100;
+    --z-dropdown: 200;
+    --z-sticky: 90;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-toast: 1100;
+
+    /* ---- 布局 ---- */
+    --container-max: 1200px;
+    --container-pad: clamp(16px, 3vw, 32px);
+    --nav-h: 64px;
+    --tabbar-h: 60px;
+
+    /* ---- 勋章 / 语义色（保留旧名以兼容页面）---- */
+    --medal-gold: #E9C46A;
+    --medal-silver: #C9D1D6;
+    --medal-bronze: #D9A577;
+
+    /* ---- 兼容别名：旧 token 名映射到新体系，逐页迁移后删除 ---- */
+    --brand-ink: var(--s-inverse);
+    --brand-deep: var(--c-primary);
+    --brand-teal: var(--c-accent);
+    --brand-mint: var(--c-accent);
+    --brand-amber: var(--c-amber);
+    --brand-coral: var(--c-danger);
+    --brand-electric: var(--c-accent);
+    --brand-teal-rgb: var(--c-accent-rgb);
+    --brand-deep-rgb: var(--c-primary-rgb);
+    --brand-mint-rgb: var(--c-accent-rgb);
+    --brand-amber-rgb: 217, 149, 63;
+    --brand-coral-rgb: 201, 79, 61;
+    --surface: var(--s-card);
+    --surface-soft: var(--s-muted);
+    --surface-tint: var(--c-primary-soft);
+    --surface-warm: var(--c-amber-soft);
+    --surface-muted: var(--s-muted);
+    --sky-wash: var(--c-primary-soft);
+    --sky-soft: var(--s-page);
+    --glass-strong: var(--s-card);
+    --glass-dark: var(--s-inverse);
+    --border-soft: var(--b-1);
+    --border-strong: var(--b-2);
+    --text-dark: var(--t-1);
+    --text-muted: var(--t-2);
+    --text-amber-dark: var(--c-amber-text);
+    --primary-blue: var(--c-accent);
+    --secondary-blue: var(--c-primary);
+    --shadow-soft: var(--sh-1);
+    --shadow-strong: var(--sh-2);
+    --shadow-lift: var(--sh-3);
+    --radius: var(--r-md);
+    --radius-lg: var(--r-lg);
+    --radius-pill: var(--r-pill);
+    --progress-start: var(--c-accent);
+    --progress-mid: var(--c-accent);
+    --progress-end: var(--c-accent);
+}

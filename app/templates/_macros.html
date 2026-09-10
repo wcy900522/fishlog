@@ -1,0 +1,26 @@
+{# ---- 页头：所有内页统一使用 ----
+   用法：
+   {% call page_head('出钓记录', icon='fa-list', sub='共 128 条', eyebrow='我的数据') %}
+       <a class="btn btn-primary" href="/logs/create">记一笔</a>
+   {% endcall %}
+#}
+{% macro page_head(title, icon=None, sub=None, eyebrow=None, sub_id=None, id=None) -%}
+<header class="page-head reveal"{% if id %} id="{{ id }}"{% endif %}>
+    <div class="page-head__text">
+        {% if eyebrow %}<p class="page-head__eyebrow">{{ eyebrow }}</p>{% endif %}
+        <h1 class="page-head__title">{% if icon %}<i class="fas {{ icon }}" aria-hidden="true"></i>{% endif %}{{ title }}</h1>
+        {% if sub or sub_id %}<p class="page-head__sub"{% if sub_id %} id="{{ sub_id }}"{% endif %}>{{ sub or '' }}</p>{% endif %}
+    </div>
+    {% if caller %}<div class="page-head__actions">{{ caller() }}</div>{% endif %}
+</header>
+{%- endmacro %}
+
+{# ---- 状态区块（空 / 错误） ---- #}
+{% macro state(title, text=None, icon='fa-inbox', type='empty', action_href=None, action_text=None) -%}
+<div class="state{% if type == 'error' %} state--error{% endif %}">
+    <i class="fas {{ icon }}" aria-hidden="true"></i>
+    <p class="state__title">{{ title }}</p>
+    {% if text %}<p>{{ text }}</p>{% endif %}
+    {% if action_href %}<a class="btn btn-secondary btn-sm" href="{{ action_href }}">{{ action_text or '去看看' }}</a>{% endif %}
+</div>
+{%- endmacro %}

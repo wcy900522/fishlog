@@ -1,55 +1,76 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 
-{% block title %}装备库 - AnglrLog{% endblock %}
+{% block title %}我的装备 - AnglrLog{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h1 class="page-title"><i class="fas fa-toolbox"></i> 我的装备</h1>
-    <p class="page-subtitle">记录鱼竿、鱼轮、鱼线和路亚饵，建立自己的装备档案。</p>
-</div>
+<div class="container-app">
+    {% call page_head('我的装备', icon='fa-toolbox', sub='记录鱼竿、鱼轮、鱼线和路亚饵，建立自己的装备档案。', sub_id='pageSub') %}
+        <button class="btn btn-primary" type="button" id="toggleFormBtn" onclick="openForm()"><i class="fas fa-plus"></i>新增装备</button>
+    {% endcall %}
 
-<div class="shell-card p-4 mb-4">
-    <div class="row g-3 align-items-end">
-        <div class="col-md-5">
-            <label class="form-label">搜索装备</label>
-            <input class="form-control" id="keywordFilter" placeholder="名称、品牌、型号关键词">
+    <div class="toolbar reveal">
+        <div class="toolbar__search">
+            <i class="fas fa-magnifying-glass"></i>
+            <input class="form-control" id="keywordFilter" placeholder="搜索名称、品牌、型号" aria-label="搜索装备">
         </div>
-        <div class="col-md-4">
-            <label class="form-label">类型</label>
-            <select class="form-select" id="typeFilter">
+        <div class="toolbar__side">
+            <select class="form-select" id="typeFilter" aria-label="类型筛选">
                 <option value="">全部类型</option>
                 <option>鱼竿</option><option>鱼轮</option><option>鱼线</option><option>鱼钩</option><option>路亚饵</option><option>其他</option>
             </select>
-        </div>
-        <div class="col-md-3 d-flex gap-2">
-            <button class="btn btn-primary flex-fill" onclick="loadEquipment()">筛选</button>
-            <button class="btn btn-outline-secondary" onclick="resetFilters()">重置</button>
+            <button class="btn btn-secondary" onclick="loadEquipment()">筛选</button>
+            <button class="btn btn-ghost" onclick="resetFilters()">重置</button>
         </div>
     </div>
-</div>
 
-<div class="shell-card p-4 mb-4">
-    <h5 class="mb-3" id="formTitle">新增装备</h5>
-    <div class="row g-3">
-        <div class="col-md-3"><input class="form-control" id="name" placeholder="名称"></div>
-        <div class="col-md-3">
-            <select class="form-select" id="equipmentType">
-                <option>鱼竿</option><option>鱼轮</option><option>鱼线</option><option>鱼钩</option><option>路亚饵</option><option>其他</option>
-            </select>
+    <div class="card mb-4" id="formCard" hidden>
+        <div class="card-header">
+            <h2 id="formTitle"><i class="fas fa-plus"></i>新增装备</h2>
+            <button class="btn btn-ghost btn-sm" type="button" onclick="resetForm(true)"><i class="fas fa-xmark"></i>收起</button>
         </div>
-        <div class="col-md-3"><input class="form-control" id="brand" placeholder="品牌"></div>
-        <div class="col-md-3"><input class="form-control" id="model" placeholder="型号"></div>
-        <div class="col-md-4"><input class="form-control" id="purchasedAt" type="date" placeholder="购买时间"></div>
-        <div class="col-md-4"><input class="form-control" id="parameters" placeholder="参数"></div>
-        <div class="col-md-4"><input class="form-control" id="note" placeholder="备注"></div>
-        <div class="col-12 d-flex gap-2">
-            <button class="btn btn-primary" onclick="saveEquipment()" id="saveBtn">保存</button>
-            <button class="btn btn-outline-secondary" onclick="resetForm()" type="button">取消编辑</button>
+        <div class="card-body">
+            <div class="form-grid form-grid--3">
+                <div>
+                    <label class="form-label req" for="name">名称</label>
+                    <input class="form-control" id="name" placeholder="如：禧玛诺 Stradic">
+                </div>
+                <div>
+                    <label class="form-label" for="equipmentType">类型</label>
+                    <select class="form-select" id="equipmentType">
+                        <option>鱼竿</option><option>鱼轮</option><option>鱼线</option><option>鱼钩</option><option>路亚饵</option><option>其他</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" for="brand">品牌</label>
+                    <input class="form-control" id="brand" placeholder="品牌">
+                </div>
+                <div>
+                    <label class="form-label" for="model">型号</label>
+                    <input class="form-control" id="model" placeholder="型号">
+                </div>
+                <div>
+                    <label class="form-label" for="purchasedAt">购买时间</label>
+                    <input class="form-control" id="purchasedAt" type="date">
+                </div>
+                <div>
+                    <label class="form-label" for="parameters">参数</label>
+                    <input class="form-control" id="parameters" placeholder="如：2.1m / ML / 3000">
+                </div>
+                <div class="span-all">
+                    <label class="form-label" for="note">备注</label>
+                    <input class="form-control" id="note" placeholder="使用感受、搭配建议">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="resetForm(true)" type="button">取消</button>
+                <button class="btn btn-primary" onclick="saveEquipment()" id="saveBtn">保存</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="row g-4" id="equipmentList"></div>
+    <div class="row g-3" id="equipmentList"></div>
+</div>
 
 <script>
 let editingEquipmentId = null;
@@ -58,34 +79,63 @@ function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
 
+function openForm() {
+    const card = document.getElementById('formCard');
+    card.hidden = false;
+    card.scrollIntoView({behavior: 'smooth', block: 'start'});
+    document.getElementById('name').focus();
+}
+
 async function loadEquipment() {
+    const list = document.getElementById('equipmentList');
     const params = new URLSearchParams();
     const keyword = document.getElementById('keywordFilter').value.trim();
     const equipmentType = document.getElementById('typeFilter').value;
     if (keyword) params.set('keyword', keyword);
     if (equipmentType) params.set('equipment_type', equipmentType);
-    const rows = await apiFetch(`/api/equipment${params.toString() ? `?${params}` : ''}`);
-    document.getElementById('equipmentList').innerHTML = rows.length ? rows.map(item => `
-        <div class="col-md-6 col-lg-4">
-            <article class="data-card p-4 h-100">
-                <h5>${escapeHTML(item.name)}</h5>
-                <p><strong>${escapeHTML(item.equipment_type)}</strong>${item.brand ? ` · ${escapeHTML(item.brand)}` : ''}</p>
-                ${item.model ? `<p><i class="fas fa-barcode"></i> ${escapeHTML(item.model)}</p>` : ''}
-                ${item.purchased_at ? `<p><i class="fas fa-calendar"></i> ${new Date(item.purchased_at).toLocaleDateString('zh-CN')}</p>` : ''}
-                ${item.parameters ? `<p><i class="fas fa-sliders"></i> ${escapeHTML(item.parameters)}</p>` : ''}
-                ${item.note ? `<p>${escapeHTML(item.note)}</p>` : ''}
-                <div class="d-flex gap-2 mt-3">
-                    <button class="btn btn-sm btn-primary" onclick="editEquipment(${item.id})"><i class="fas fa-edit"></i> 编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteEquipment(${item.id})"><i class="fas fa-trash"></i> 删除</button>
+    list.innerHTML = AnglrSkeleton('card', 3);
+    let rows;
+    try {
+        rows = await apiFetch(`/api/equipment${params.toString() ? `?${params}` : ''}`);
+    } catch (error) {
+        list.innerHTML = `<div class="col-12">${AnglrState({type: 'error', title: '加载失败', text: error.message})}</div>`;
+        return;
+    }
+    document.getElementById('pageSub').textContent = `共 ${rows.length} 件装备 · 记录鱼竿、鱼轮、鱼线和路亚饵。`;
+    list.innerHTML = rows.length ? rows.map(item => `
+        <div class="col-md-6 col-xl-4">
+            <article class="card h-100">
+                <div class="card__body">
+                    <div class="card__eyebrow">
+                        <span class="badge badge-info">${escapeHTML(item.equipment_type)}</span>
+                        ${item.purchased_at ? `<span class="fs-xs text-3"><i class="fas fa-calendar"></i> ${new Date(item.purchased_at).toLocaleDateString('zh-CN')}</span>` : ''}
+                    </div>
+                    <h3 class="card__title">${escapeHTML(item.name)}</h3>
+                    <div class="card__meta">
+                        ${item.brand ? `<span><i class="fas fa-tag"></i>${escapeHTML(item.brand)}</span>` : ''}
+                        ${item.model ? `<span><i class="fas fa-barcode"></i>${escapeHTML(item.model)}</span>` : ''}
+                        ${item.parameters ? `<span><i class="fas fa-sliders"></i>${escapeHTML(item.parameters)}</span>` : ''}
+                    </div>
+                    ${item.note ? `<p class="card__desc clamp-2">${escapeHTML(item.note)}</p>` : ''}
+                    <div class="card__foot">
+                        <button class="btn btn-sm btn-secondary" onclick="editEquipment(${item.id})"><i class="fas fa-pen"></i>编辑</button>
+                        <button class="btn btn-sm btn-ghost text-danger" onclick="deleteEquipment(${item.id})"><i class="fas fa-trash"></i>删除</button>
+                    </div>
                 </div>
             </article>
         </div>
-    `).join('') : '<div class="col-12"><div class="empty-state">暂无装备数据</div></div>';
+    `).join('') : `<div class="col-12">${AnglrState({title: '还没有装备', text: '把常用的竿、轮、线记下来，出钓记录里可以直接引用。', icon: 'fa-toolbox'})}</div>`;
 }
 
 async function saveEquipment() {
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+        AnglrToast.warning('请填写装备名称');
+        document.getElementById('name').focus();
+        return;
+    }
     const payload = {
-        name: document.getElementById('name').value.trim(),
+        name,
         equipment_type: document.getElementById('equipmentType').value,
         brand: document.getElementById('brand').value.trim() || null,
         model: document.getElementById('model').value.trim() || null,
@@ -94,24 +144,39 @@ async function saveEquipment() {
         note: document.getElementById('note').value.trim() || null
     };
     const url = editingEquipmentId ? `/api/equipment/${editingEquipmentId}` : '/api/equipment';
-    await apiFetch(url, {
-        method: editingEquipmentId ? 'PUT' : 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-    });
-    resetForm();
-    await loadEquipment();
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    try {
+        await apiFetch(url, {
+            method: editingEquipmentId ? 'PUT' : 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        AnglrToast.success(editingEquipmentId ? '装备已更新' : '装备已添加');
+        resetForm(true);
+        await loadEquipment();
+    } catch (error) {
+        AnglrToast.error(error.message);
+    } finally {
+        btn.disabled = false;
+    }
 }
 
 async function editEquipment(id) {
-    const item = await apiFetch(`/api/equipment/${id}`);
+    let item;
+    try {
+        item = await apiFetch(`/api/equipment/${id}`);
+    } catch (error) {
+        AnglrToast.error(error.message);
+        return;
+    }
     if (!item) {
-        alert('装备不存在或已被删除');
+        AnglrToast.warning('装备不存在或已被删除');
         await loadEquipment();
         return;
     }
     editingEquipmentId = item.id;
-    document.getElementById('formTitle').textContent = '编辑装备';
+    document.getElementById('formTitle').innerHTML = '<i class="fas fa-pen"></i>编辑装备';
     document.getElementById('saveBtn').textContent = '保存修改';
     document.getElementById('name').value = item.name || '';
     document.getElementById('equipmentType').value = item.equipment_type || '鱼竿';
@@ -120,21 +185,28 @@ async function editEquipment(id) {
     document.getElementById('purchasedAt').value = item.purchased_at ? item.purchased_at.slice(0, 10) : '';
     document.getElementById('parameters').value = item.parameters || '';
     document.getElementById('note').value = item.note || '';
-    document.getElementById('formTitle').scrollIntoView({behavior: 'smooth', block: 'start'});
+    openForm();
 }
 
 async function deleteEquipment(id) {
-    if (!confirm('确定删除这件装备吗？')) return;
-    await apiFetch(`/api/equipment/${id}`, {method: 'DELETE'});
-    await loadEquipment();
+    const ok = await AnglrConfirm({title: '删除装备', body: '删除后不可恢复，确定要删除这件装备吗？', okText: '删除', danger: true});
+    if (!ok) return;
+    try {
+        await apiFetch(`/api/equipment/${id}`, {method: 'DELETE'});
+        AnglrToast.success('已删除');
+        await loadEquipment();
+    } catch (error) {
+        AnglrToast.error(error.message);
+    }
 }
 
-function resetForm() {
+function resetForm(collapse) {
     editingEquipmentId = null;
-    document.getElementById('formTitle').textContent = '新增装备';
+    document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus"></i>新增装备';
     document.getElementById('saveBtn').textContent = '保存';
     document.querySelectorAll('#name, #brand, #model, #purchasedAt, #parameters, #note').forEach(el => el.value = '');
     document.getElementById('equipmentType').value = '鱼竿';
+    if (collapse) document.getElementById('formCard').hidden = true;
 }
 
 function resetFilters() {
@@ -142,6 +214,8 @@ function resetFilters() {
     document.getElementById('typeFilter').value = '';
     loadEquipment();
 }
+
+document.getElementById('keywordFilter').addEventListener('keydown', e => { if (e.key === 'Enter') loadEquipment(); });
 
 document.addEventListener('DOMContentLoaded', async function() {
     if (!localStorage.getItem('token')) {
