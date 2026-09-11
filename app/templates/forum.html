@@ -1,197 +1,64 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 
 {% block title %}讨论专区 - AnglrLog{% endblock %}
 
 {% block extra_css %}
-<style>
-    .post-card {
-        cursor: pointer;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    .post-card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-strong);
-        border-color: rgba(var(--brand-teal-rgb), 0.28);
-    }
-
-    .post-card--link {
-        display: block;
-        text-decoration: none;
-        color: inherit;
-    }
-
-    .post-title {
-        color: var(--primary-blue);
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-    .post-title:hover {
-        color: var(--secondary-blue);
-        text-decoration: underline;
-    }
-
-    .post-meta {
-        font-size: 0.9rem;
-        color: var(--text-muted);
-    }
-
-    .post-content-preview {
-        color: var(--text-dark);
-        margin: 10px 0;
-        line-height: 1.6;
-    }
-
-    .search-box {
-        margin-bottom: 30px;
-    }
-
-    .posts-container {
-        gap: 20px;
-    }
-
-    .tag-filter {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 24px;
-    }
-
-    .tag-filter .btn {
-        border-radius: var(--radius);
-        padding: 6px 16px;
-    }
-
-    .post-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: 3px 10px;
-        border-radius: 999px;
-        background: var(--surface-soft);
-        color: var(--primary-blue);
-        font-size: 0.82rem;
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-
-    .level-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 2px 8px;
-        border-radius: 999px;
-        background: rgba(var(--brand-teal-rgb), 0.12);
-        color: var(--brand-deep);
-        font-size: 0.78rem;
-        font-weight: 700;
-        margin-left: 8px;
-    }
-
-    @media (max-width: 576px) {
-        .tag-filter {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            gap: 8px;
-            margin-left: -12px;
-            margin-right: -12px;
-            padding: 0 12px 12px;
-            scroll-snap-type: x proximity;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .tag-filter .btn {
-            flex: 0 0 auto;
-            scroll-snap-align: start;
-            padding: 7px 13px;
-            white-space: nowrap;
-        }
-
-        .search-box {
-            margin-bottom: 18px;
-        }
-
-        .search-box .input-group {
-            display: grid;
-            gap: 8px;
-        }
-
-        .search-box .input-group > * {
-            width: 100%;
-            border-radius: var(--radius) !important;
-        }
-
-        #createPostBtn {
-            width: 100%;
-        }
-
-        .post-card .card-body {
-            padding: 16px;
-        }
-
-        .post-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            line-height: 1.5;
-        }
-
-        .level-chip {
-            margin-left: 0;
-        }
-    }
-</style>
+<link rel="stylesheet" href="/static/css/pages/forum.css?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h1 class="page-title">
-        <i class="fas fa-comments"></i> 讨论专区
-    </h1>
-    <p class="page-subtitle">分享钓鱼经验，交流技术技巧</p>
-</div>
+<div class="container-app">
+    {% call page_head('讨论专区', icon='fa-comments', sub='分享钓鱼经验，交流技术技巧。', eyebrow='社区') %}
+        <a href="/forum/create" class="btn btn-primary" data-auth-only hidden>
+            <i class="fas fa-pen"></i>发布新帖
+        </a>
+        <a href="/login" class="btn btn-secondary" data-guest-only>
+            <i class="fas fa-right-to-bracket"></i>登录后发帖
+        </a>
+    {% endcall %}
 
-<div class="tag-filter" id="tagFilter">
-    <button type="button" class="btn btn-primary active" data-tag="" onclick="selectTag('')">全部</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="海钓" onclick="selectTag('海钓')">海钓</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="路亚" onclick="selectTag('路亚')">路亚</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="台钓" onclick="selectTag('台钓')">台钓</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="飞钓" onclick="selectTag('飞钓')">飞钓</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="黑坑" onclick="selectTag('黑坑')">黑坑</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="野钓" onclick="selectTag('野钓')">野钓</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="技术分享" onclick="selectTag('技术分享')">技术分享</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="装备评测" onclick="selectTag('装备评测')">装备评测</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="钓点攻略" onclick="selectTag('钓点攻略')">钓点攻略</button>
-    <button type="button" class="btn btn-outline-primary" data-tag="秀出鱼获" onclick="selectTag('秀出鱼获')">秀出鱼获</button>
-</div>
-
-<div class="search-box">
-    <div class="input-group">
-        <input type="text" class="form-control" id="searchInput" placeholder="搜索帖子标题或内容...">
-        <button class="btn btn-primary" type="button" onclick="searchPosts()">搜索</button>
+    <div class="toolbar reveal">
+        <div class="toolbar__search">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="text" class="form-control" id="searchInput" placeholder="搜索帖子标题或内容" aria-label="搜索帖子">
+        </div>
+        <button class="btn btn-secondary" type="button" onclick="searchPosts()">搜索</button>
+        <div class="toolbar__chips" id="tagFilter" role="group" aria-label="标签筛选">
+            <button type="button" class="chip chip--active" data-tag="" onclick="selectTag('')">全部</button>
+            <button type="button" class="chip" data-tag="海钓" onclick="selectTag('海钓')">海钓</button>
+            <button type="button" class="chip" data-tag="路亚" onclick="selectTag('路亚')">路亚</button>
+            <button type="button" class="chip" data-tag="台钓" onclick="selectTag('台钓')">台钓</button>
+            <button type="button" class="chip" data-tag="飞钓" onclick="selectTag('飞钓')">飞钓</button>
+            <button type="button" class="chip" data-tag="黑坑" onclick="selectTag('黑坑')">黑坑</button>
+            <button type="button" class="chip" data-tag="野钓" onclick="selectTag('野钓')">野钓</button>
+            <button type="button" class="chip" data-tag="技术分享" onclick="selectTag('技术分享')">技术分享</button>
+            <button type="button" class="chip" data-tag="装备评测" onclick="selectTag('装备评测')">装备评测</button>
+            <button type="button" class="chip" data-tag="钓点攻略" onclick="selectTag('钓点攻略')">钓点攻略</button>
+            <button type="button" class="chip" data-tag="秀出鱼获" onclick="selectTag('秀出鱼获')">秀出鱼获</button>
+        </div>
     </div>
-</div>
 
-<div class="mb-3">
-    <a href="/forum/create" class="btn btn-success" id="createPostBtn" style="display:none;">
-        <i class="fas fa-plus"></i> 发布新帖
-    </a>
-</div>
-
-<div id="postsContainer" class="posts-container">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">加载中...</span>
+    <div id="postsContainer" class="row-list"></div>
+    <div class="text-center mt-4" id="loadMoreWrap" hidden>
+        <button class="btn btn-secondary" type="button" id="loadMoreBtn" onclick="loadMore()">加载更多</button>
     </div>
 </div>
 
 <script>
     let currentPage = 0;
     let currentTag = '';
+    let currentKeyword = '';
     const postsPerPage = 10;
 
     function formatDate(dateString) {
         const date = new Date(dateString);
-        return date.toLocaleString('zh-CN');
+        if (Number.isNaN(date.getTime())) return '';
+        const now = new Date();
+        const sameYear = date.getFullYear() === now.getFullYear();
+        return date.toLocaleString('zh-CN', sameYear
+            ? { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+            : { year: 'numeric', month: 'numeric', day: 'numeric' });
     }
 
     function escapeHTML(value) {
@@ -206,14 +73,48 @@
         });
     }
 
-    function truncateContent(content, length = 100) {
-        if (content.length > length) {
-            return content.substring(0, length) + '...';
+    function truncateContent(content, length = 120) {
+        const text = String(content ?? '').replace(/\s+/g, ' ').trim();
+        if (text.length > length) {
+            return text.substring(0, length) + '…';
         }
-        return content;
+        return text;
     }
 
-    async function loadPosts(page = 0, keyword = null) {
+    function renderPost(post) {
+        const images = Array.isArray(post.image_urls) ? post.image_urls.slice(0, 3) : [];
+        const initial = String(post.user_nickname || '匿').trim().charAt(0).toUpperCase();
+        return `
+            <a href="/forum/posts/${post.id}" class="row-item row-item--link post-row">
+                <span class="avatar" aria-hidden="true">${escapeHTML(initial)}</span>
+                <div class="row-item__main">
+                    <div class="post-row__tags">
+                        <span class="badge badge-info">${escapeHTML(post.tag || '野钓')}</span>
+                        ${post.is_featured ? '<span class="badge badge-amber"><i class="fas fa-star"></i>精华</span>' : ''}
+                    </div>
+                    <h3 class="row-item__title">${escapeHTML(post.title)}</h3>
+                    <p class="post-row__excerpt clamp-2">${escapeHTML(truncateContent(post.content))}</p>
+                    ${images.length ? `<div class="post-row__images">${images.map(url => `<img src="${escapeHTML(url)}" alt="" loading="lazy">`).join('')}</div>` : ''}
+                    <div class="row-item__stats post-row__meta">
+                        <span><strong>${escapeHTML(post.user_nickname || '未知用户')}</strong><span class="post-row__level">Lv${post.user_level || 1} · ${escapeHTML(post.user_title || '初学钓手')}</span></span>
+                        <span><i class="fas fa-clock"></i>${formatDate(post.created_at)}</span>
+                    </div>
+                </div>
+                <div class="row-item__side post-row__side">
+                    <span><i class="fas fa-eye"></i>${post.view_count || 0}</span>
+                    <span><i class="fas fa-comment"></i>${post.comment_count || 0}</span>
+                    <span><i class="fas fa-heart"></i>${post.like_count || 0}</span>
+                </div>
+            </a>
+        `;
+    }
+
+    async function loadPosts(page = 0, keyword = '', append = false) {
+        const container = document.getElementById('postsContainer');
+        const moreWrap = document.getElementById('loadMoreWrap');
+        const moreBtn = document.getElementById('loadMoreBtn');
+        if (!append) container.innerHTML = AnglrSkeleton('row', 4);
+        moreBtn.disabled = true;
         try {
             const params = new URLSearchParams({
                 skip: page * postsPerPage,
@@ -227,66 +128,54 @@
                 : `/api/forum/posts?${params.toString()}`;
 
             const response = await fetch(url);
-            if (!response.ok) throw new Error('Failed to fetch posts');
+            if (!response.ok) throw new Error('帖子加载失败');
 
             const posts = await response.json();
-            const container = document.getElementById('postsContainer');
 
-            if (posts.length === 0) {
-                container.innerHTML = '<div class="alert alert-info">暂无帖子</div>';
+            if (!append && posts.length === 0) {
+                container.innerHTML = AnglrState({
+                    title: keyword || currentTag ? '没有匹配的帖子' : '还没有帖子',
+                    text: keyword || currentTag ? '换个关键词或标签试试。' : '来发第一篇吧。',
+                    icon: 'fa-comments'
+                });
+                moreWrap.hidden = true;
                 return;
             }
 
-            let html = '';
-            posts.forEach(post => {
-                html += `
-                    <a href="/forum/posts/${post.id}" class="card post-card post-card--link">
-                        <div class="card-body">
-                            <span class="post-tag">${escapeHTML(post.tag || '野钓')}</span>
-                            <h5 class="card-title post-title">${escapeHTML(post.title)}</h5>
-                            <p class="post-meta">
-                                <i class="fas fa-user"></i> ${escapeHTML(post.user_nickname || '未知用户')}
-                                <span class="level-chip">Lv${post.user_level || 1} ${escapeHTML(post.user_title || '初学钓手')}</span>
-                                <i class="fas fa-clock ms-3"></i> ${formatDate(post.created_at)}
-                                <i class="fas fa-eye ms-3"></i> ${post.view_count || 0}
-                                <i class="fas fa-comments ms-3"></i> ${post.comment_count} 条评论
-                                <i class="fas fa-heart ms-3"></i> ${post.like_count || 0}
-                                ${post.is_featured ? '<i class="fas fa-star ms-3 text-warning"></i> 精华' : ''}
-                            </p>
-                            ${Array.isArray(post.image_urls) && post.image_urls.length ? `
-                                <div class="d-flex gap-2 flex-wrap my-2">
-                                    ${post.image_urls.slice(0, 3).map(url => `<img src="${escapeHTML(url)}" alt="帖子图片" class="rounded" style="width: 96px; height: 68px; object-fit: cover;">`).join('')}
-                                </div>
-                            ` : ''}
-                            <p class="post-content-preview">${escapeHTML(truncateContent(post.content))}</p>
-                        </div>
-                    </a>
-                `;
-            });
-
-            container.innerHTML = html;
+            const html = posts.map(renderPost).join('');
+            if (append) {
+                container.insertAdjacentHTML('beforeend', html);
+            } else {
+                container.innerHTML = html;
+            }
+            currentPage = page;
+            moreWrap.hidden = posts.length < postsPerPage;
         } catch (error) {
             console.error('Error loading posts:', error);
-            document.getElementById('postsContainer').innerHTML = '<div class="alert alert-danger">加载失败</div>';
+            if (!append) container.innerHTML = AnglrState({ type: 'error', title: '加载失败', text: error.message });
+            else AnglrToast.error(error.message);
+        } finally {
+            moreBtn.disabled = false;
         }
     }
 
+    function loadMore() {
+        loadPosts(currentPage + 1, currentKeyword, true);
+    }
+
     function searchPosts() {
-        const keyword = document.getElementById('searchInput').value.trim();
-        currentPage = 0;
-        loadPosts(currentPage, keyword);
+        currentKeyword = document.getElementById('searchInput').value.trim();
+        loadPosts(0, currentKeyword);
     }
 
     function selectTag(tag) {
         currentTag = tag;
-        currentPage = 0;
-        document.querySelectorAll('#tagFilter button').forEach(button => {
+        document.querySelectorAll('#tagFilter .chip').forEach(button => {
             const isActive = button.dataset.tag === tag;
-            button.classList.toggle('active', isActive);
-            button.classList.toggle('btn-primary', isActive);
-            button.classList.toggle('btn-outline-primary', !isActive);
+            button.classList.toggle('chip--active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
-        loadPosts(0, document.getElementById('searchInput').value.trim());
+        loadPosts(0, currentKeyword);
     }
 
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
@@ -296,10 +185,6 @@
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        const token = localStorage.getItem('token');
-        if (token) {
-            document.getElementById('createPostBtn').style.display = 'block';
-        }
         loadPosts(0);
     });
 </script>

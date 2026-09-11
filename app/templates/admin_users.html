@@ -1,166 +1,77 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 
 {% block title %}用户管理 - AnglrLog{% endblock %}
 
 {% block extra_css %}
-<style>
-    .admin-summary {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-
-    .admin-summary__item {
-        padding: 20px;
-        border: 1px solid var(--border-soft);
-        border-radius: var(--radius);
-        background: rgba(255, 255, 255, 0.94);
-        box-shadow: var(--shadow-soft);
-    }
-
-    .admin-summary__item span {
-        color: var(--text-muted);
-        font-size: 0.88rem;
-    }
-
-    .admin-summary__item strong {
-        display: block;
-        margin-top: 6px;
-        color: var(--brand-deep);
-        font-size: 1.7rem;
-    }
-
-    .user-table {
-        vertical-align: middle;
-    }
-
-    .user-table th {
-        color: var(--brand-deep);
-        font-size: 0.9rem;
-        white-space: nowrap;
-    }
-
-    .user-table td {
-        color: var(--text-dark);
-    }
-
-    .user-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 10px;
-        border-radius: 999px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        background: var(--surface-tint);
-        color: var(--brand-teal);
-    }
-
-    .status-pill--danger {
-        background: rgba(var(--brand-coral-rgb), 0.12);
-        color: var(--brand-coral);
-    }
-
-    .status-pill--admin {
-        background: rgba(var(--brand-amber-rgb), 0.18);
-        color: var(--text-amber-dark);
-    }
-
-    @media (max-width: 992px) {
-        .admin-summary {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
-    @media (max-width: 576px) {
-        .admin-summary {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
+<link rel="stylesheet" href="/static/css/pages/admin.css?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
-<div id="adminGate" class="empty-state">
-    <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
-    <h5>正在验证管理员权限...</h5>
-</div>
-
-<div id="adminContent" hidden>
-    <div class="page-title">
-        <i class="fas fa-user-shield"></i> 用户管理
-    </div>
-    <p class="page-subtitle">查看注册用户数量，并管理账号状态、发言权限和管理员权限。</p>
-
-    <div class="admin-summary" id="adminSummary">
-        <div class="admin-summary__item">
-            <span>注册用户</span>
-            <strong id="totalUsers">-</strong>
-        </div>
-        <div class="admin-summary__item">
-            <span>管理员</span>
-            <strong id="adminUsers">-</strong>
-        </div>
-        <div class="admin-summary__item">
-            <span>已禁用</span>
-            <strong id="disabledUsers">-</strong>
-        </div>
-        <div class="admin-summary__item">
-            <span>已禁言</span>
-            <strong id="mutedUsers">-</strong>
-        </div>
+<div class="container-app container-app--wide">
+    <div id="adminGate" class="state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p class="state__title">正在验证管理员权限…</p>
     </div>
 
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-users-cog"></i> 用户列表</h5>
-            <button class="btn btn-sm btn-outline-secondary" type="button" onclick="loadUsers()">
-                <i class="fas fa-rotate"></i> 刷新
+    <div id="adminContent" hidden>
+        {% call page_head('用户管理', icon='fa-user-shield', sub='查看注册用户数量，并管理账号状态、发言权限和管理员权限。', eyebrow='管理后台') %}
+            <button class="btn btn-secondary" type="button" onclick="loadUsers()">
+                <i class="fas fa-rotate"></i>刷新
             </button>
+        {% endcall %}
+
+        <div class="stat-grid mb-4">
+            <div class="stat-tile"><span class="stat-tile__label">注册用户</span><span class="stat-tile__value" id="totalUsers">-</span></div>
+            <div class="stat-tile"><span class="stat-tile__label">管理员</span><span class="stat-tile__value" id="adminUsers">-</span></div>
+            <div class="stat-tile"><span class="stat-tile__label">已禁用</span><span class="stat-tile__value" id="disabledUsers">-</span></div>
+            <div class="stat-tile"><span class="stat-tile__label">已禁言</span><span class="stat-tile__value" id="mutedUsers">-</span></div>
         </div>
-        <div class="card-body">
-            <div id="usersState" class="text-center py-4 text-muted">
-                <i class="fas fa-spinner fa-spin"></i> 正在加载用户...
+
+        <div class="toolbar">
+            <div class="toolbar__search">
+                <i class="fas fa-magnifying-glass"></i>
+                <input class="form-control" id="userSearch" placeholder="按昵称、手机号筛选" aria-label="筛选用户" oninput="filterUsers()">
             </div>
-            <div class="table-responsive" id="usersTableWrap" hidden>
-                <table class="table user-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>用户</th>
-                            <th>状态</th>
-                            <th>内容</th>
-                            <th>注册时间</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTable"></tbody>
-                </table>
+            <div class="toolbar__chips" id="userStatusFilter">
+                <button type="button" class="chip chip--active" data-filter="" onclick="setUserFilter('')">全部</button>
+                <button type="button" class="chip" data-filter="admin" onclick="setUserFilter('admin')">管理员</button>
+                <button type="button" class="chip" data-filter="disabled" onclick="setUserFilter('disabled')">已禁用</button>
+                <button type="button" class="chip" data-filter="muted" onclick="setUserFilter('muted')">已禁言</button>
             </div>
+        </div>
+
+        <div id="usersState"></div>
+        <div class="table-responsive table-cards" id="usersTableWrap" hidden>
+            <table class="table user-table">
+                <thead>
+                    <tr>
+                        <th>用户</th>
+                        <th>状态</th>
+                        <th>内容</th>
+                        <th>注册时间</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="resetPasswordModalLabel"><i class="fas fa-key"></i> 重置密码</h5>
+                <h2 class="modal-title" id="resetPasswordModalLabel"><i class="fas fa-key"></i>重置密码</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
             </div>
             <form id="resetPasswordForm">
                 <div class="modal-body">
                     <label for="resetPasswordInput" class="form-label">新密码</label>
-                    <input type="password" class="form-control" id="resetPasswordInput" autocomplete="new-password" placeholder="至少8位，必须同时包含字母和数字" required>
-                    <div class="form-text">至少8位，必须同时包含字母和数字。</div>
-                    <div class="text-danger small mt-2" id="resetPasswordError" hidden></div>
+                    <input type="password" class="form-control" id="resetPasswordInput" autocomplete="new-password" placeholder="至少 8 位，必须同时包含字母和数字" required>
+                    <div class="form-hint">至少 8 位，必须同时包含字母和数字。</div>
+                    <div class="form-msg" id="resetPasswordError" hidden></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -175,6 +86,8 @@
 {% block extra_js %}
 <script>
 let currentUser = null;
+let allUsers = [];
+let userFilter = '';
 const SUPER_ADMIN_PHONES = ['18610137321'];
 const ROOT_ADMIN_NICKNAMES = ['Demo', 'Demo用户'];
 const DAILY_SUPER_ADMIN_NICKNAMES = ['wang_77'];
@@ -210,8 +123,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         currentUser = await apiFetch('/api/auth/me');
         if (!currentUser.is_admin) {
-            gate.className = 'error-state';
-            gate.innerHTML = '<i class="fas fa-lock fa-2x mb-3"></i><h5>需要管理员权限</h5><p class="mb-0">当前账号不能查看用户管理页面。</p>';
+            gate.outerHTML = AnglrState({ type: 'error', icon: 'fa-lock', title: '需要管理员权限', text: '当前账号不能查看用户管理页面。', actionHref: '/', actionText: '返回首页' });
             return;
         }
         gate.hidden = true;
@@ -222,8 +134,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             redirectToLogin(error.message);
             return;
         }
-        gate.className = 'error-state';
-        gate.innerHTML = `<i class="fas fa-triangle-exclamation fa-2x mb-3"></i><h5>无法进入用户管理</h5><p class="mb-0">${escapeHTML(error.message)}</p>`;
+        gate.outerHTML = AnglrState({ type: 'error', title: '无法进入用户管理', text: error.message });
     }
 });
 
@@ -231,17 +142,17 @@ async function loadUsers() {
     const state = document.getElementById('usersState');
     const wrap = document.getElementById('usersTableWrap');
     state.hidden = false;
-    state.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在加载用户...';
+    state.innerHTML = AnglrSkeleton('row', 3);
     wrap.hidden = true;
 
     try {
         const data = await apiFetch('/api/admin/users');
-        const users = data.users || [];
-        document.getElementById('totalUsers').textContent = data.total ?? users.length;
-        document.getElementById('adminUsers').textContent = users.filter(user => user.is_admin).length;
-        document.getElementById('disabledUsers').textContent = users.filter(user => user.is_disabled).length;
-        document.getElementById('mutedUsers').textContent = users.filter(user => !user.can_post).length;
-        renderUsers(users);
+        allUsers = data.users || [];
+        document.getElementById('totalUsers').textContent = data.total ?? allUsers.length;
+        document.getElementById('adminUsers').textContent = allUsers.filter(user => user.is_admin).length;
+        document.getElementById('disabledUsers').textContent = allUsers.filter(user => user.is_disabled).length;
+        document.getElementById('mutedUsers').textContent = allUsers.filter(user => !user.can_post).length;
+        filterUsers();
         state.hidden = true;
         wrap.hidden = false;
     } catch (error) {
@@ -249,12 +160,38 @@ async function loadUsers() {
             redirectToLogin(error.message);
             return;
         }
-        state.innerHTML = `<div class="error-state">加载用户失败：${escapeHTML(error.message)}</div>`;
+        state.innerHTML = AnglrState({ type: 'error', title: '加载用户失败', text: error.message });
     }
+}
+
+function setUserFilter(value) {
+    userFilter = value;
+    document.querySelectorAll('#userStatusFilter .chip').forEach(chip => {
+        chip.classList.toggle('chip--active', chip.dataset.filter === value);
+    });
+    filterUsers();
+}
+
+function filterUsers() {
+    const keyword = document.getElementById('userSearch').value.trim().toLowerCase();
+    const rows = allUsers.filter(user => {
+        if (userFilter === 'admin' && !user.is_admin) return false;
+        if (userFilter === 'disabled' && !user.is_disabled) return false;
+        if (userFilter === 'muted' && user.can_post) return false;
+        if (!keyword) return true;
+        return String(user.nickname || '').toLowerCase().includes(keyword)
+            || String(user.phone || '').includes(keyword)
+            || String(user.id) === keyword;
+    });
+    renderUsers(rows);
 }
 
 function renderUsers(users) {
     const tbody = document.getElementById('usersTable');
+    if (!users.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-0">${AnglrState({ title: '没有匹配的用户', icon: 'fa-users' })}</td></tr>`;
+        return;
+    }
     tbody.innerHTML = users.map(user => {
         const isSelf = currentUser && currentUser.id === user.id;
         const isRootAdmin = isRootAdminUser(user);
@@ -266,43 +203,47 @@ function renderUsers(users) {
         const canOperate = !protectedFromCurrentAdmin;
         const identity = user.phone || user.wechat_openid || '未绑定手机号';
         const statuses = [
-            isRootAdmin ? '<span class="status-pill status-pill--admin"><i class="fas fa-crown"></i> 最大管理账号</span>' : '',
-            isSuperAdmin && !isRootAdmin ? '<span class="status-pill status-pill--admin"><i class="fas fa-crown"></i> 超级管理员</span>' : '',
-            user.is_admin ? '<span class="status-pill status-pill--admin"><i class="fas fa-user-shield"></i> 管理员</span>' : '',
-            user.is_disabled ? '<span class="status-pill status-pill--danger"><i class="fas fa-ban"></i> 已禁用</span>' : '<span class="status-pill"><i class="fas fa-circle-check"></i> 正常</span>',
-            user.can_post ? '<span class="status-pill"><i class="fas fa-comment"></i> 可发言</span>' : '<span class="status-pill status-pill--danger"><i class="fas fa-comment-slash"></i> 已禁言</span>'
+            isRootAdmin ? '<span class="badge badge-amber"><i class="fas fa-crown"></i>最大管理账号</span>' : '',
+            isSuperAdmin && !isRootAdmin ? '<span class="badge badge-amber"><i class="fas fa-crown"></i>超级管理员</span>' : '',
+            user.is_admin ? '<span class="badge badge-amber"><i class="fas fa-user-shield"></i>管理员</span>' : '',
+            user.is_disabled ? '<span class="badge badge-danger"><i class="fas fa-ban"></i>已禁用</span>' : '<span class="badge badge-success"><i class="fas fa-circle-check"></i>正常</span>',
+            user.can_post ? '<span class="badge badge-muted"><i class="fas fa-comment"></i>可发言</span>' : '<span class="badge badge-danger"><i class="fas fa-comment-slash"></i>已禁言</span>'
         ].filter(Boolean).join(' ');
 
         return `
             <tr>
-                <td>${user.id}</td>
-                <td>
-                    <strong>${escapeHTML(user.nickname)}</strong>
-                    ${isSelf ? '<span class="badge badge-primary ms-1">当前账号</span>' : ''}
-                    ${protectedFromCurrentAdmin ? '<span class="badge badge-info ms-1">受保护</span>' : ''}
-                    <div class="text-muted small">${escapeHTML(identity)}</div>
+                <td data-label="用户">
+                    <div class="user-cell">
+                        <span class="avatar avatar--sm">${escapeHTML(String(user.nickname || '?').charAt(0).toUpperCase())}</span>
+                        <div>
+                            <strong>${escapeHTML(user.nickname)}</strong>
+                            ${isSelf ? '<span class="badge badge-primary ms-1">当前账号</span>' : ''}
+                            ${protectedFromCurrentAdmin ? '<span class="badge badge-info ms-1">受保护</span>' : ''}
+                            <div class="text-3 fs-xs">#${user.id} · ${escapeHTML(identity)}</div>
+                        </div>
+                    </div>
                 </td>
-                <td>${statuses}</td>
-                <td class="small text-muted">
+                <td data-label="状态"><div class="user-status">${statuses}</div></td>
+                <td data-label="内容" class="fs-xs text-2">
                     帖子 ${user.post_count || 0} · 评论 ${user.comment_count || 0}<br>
                     钓点 ${user.spot_count || 0} · 记录 ${user.log_count || 0}
                 </td>
-                <td>${new Date(user.created_at).toLocaleString('zh-CN')}</td>
-                <td>
+                <td data-label="注册时间" class="fs-xs text-2 text-nowrap">${new Date(user.created_at).toLocaleDateString('zh-CN')}</td>
+                <td class="is-actions">
                     <div class="user-actions">
-                        <button class="btn btn-sm btn-outline-primary" onclick="toggleUser(${user.id}, 'can_post', ${!user.can_post})" ${!canOperate ? 'disabled title="超级管理员账号不允许被其他管理员管理"' : ''}>
+                        <button class="btn btn-sm btn-secondary" onclick="toggleUser(${user.id}, 'can_post', ${!user.can_post})" ${!canOperate ? 'disabled title="超级管理员账号不允许被其他管理员管理"' : ''}>
                             ${user.can_post ? '禁言' : '解禁发言'}
                         </button>
-                        <button class="btn btn-sm btn-outline-primary" onclick="toggleUser(${user.id}, 'is_disabled', ${!user.is_disabled})" ${isSelf || !canOperate ? 'disabled' : ''}>
+                        <button class="btn btn-sm btn-secondary" onclick="toggleUser(${user.id}, 'is_disabled', ${!user.is_disabled})" ${isSelf || !canOperate ? 'disabled' : ''}>
                             ${user.is_disabled ? '启用' : '禁用'}
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleUser(${user.id}, 'is_admin', ${!user.is_admin})" ${!canManageAdminRole ? 'disabled title="只有超级管理员可以授权或取消管理员权限"' : ''}>
+                        <button class="btn btn-sm btn-secondary" onclick="toggleUser(${user.id}, 'is_admin', ${!user.is_admin})" ${!canManageAdminRole ? 'disabled title="只有超级管理员可以授权或取消管理员权限"' : ''}>
                             ${user.is_admin ? '取消管理员' : '设为管理员'}
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="resetPassword(${user.id})" ${!canOperate ? 'disabled' : ''}>
+                        <button class="btn btn-sm btn-secondary" onclick="resetPassword(${user.id})" ${!canOperate ? 'disabled' : ''}>
                             重置密码
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id}, '${escapeHTML(user.nickname)}')" ${isSelf || !canOperate ? 'disabled' : ''}>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id}, this.dataset.nickname)" data-nickname="${escapeHTML(user.nickname)}" ${isSelf || !canOperate ? 'disabled' : ''}>
                             删除
                         </button>
                     </div>
@@ -319,19 +260,21 @@ async function toggleUser(userId, field, value) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ [field]: value })
         });
+        AnglrToast.success('已更新');
         await loadUsers();
     } catch (error) {
-        alert(`操作失败：${error.message}`);
+        AnglrToast.error(`操作失败：${error.message}`);
     }
 }
 
 async function resetPassword(userId) {
-    const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('resetPasswordModal'));
     const form = document.getElementById('resetPasswordForm');
     const input = document.getElementById('resetPasswordInput');
     const error = document.getElementById('resetPasswordError');
 
     input.value = '';
+    input.classList.remove('is-invalid');
     error.hidden = true;
     modal.show();
 
@@ -346,24 +289,30 @@ async function resetPassword(userId) {
                 body: JSON.stringify({ password })
             });
             modal.hide();
-            alert('密码已重置');
+            AnglrToast.success('密码已重置');
         } catch (err) {
             error.textContent = `重置失败：${err.message}`;
             error.hidden = false;
+            input.classList.add('is-invalid');
         }
     };
 }
 
 async function deleteUser(userId, nickname) {
-    if (!confirm(`确定删除用户「${nickname}」吗？该用户的帖子、评论、钓点和记录会一并删除。`)) {
-        return;
-    }
+    const ok = await AnglrConfirm({
+        title: '删除用户',
+        body: `确定删除用户「${nickname}」吗？该用户的帖子、评论、钓点和记录会一并删除。`,
+        okText: '删除',
+        danger: true
+    });
+    if (!ok) return;
 
     try {
         await apiFetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+        AnglrToast.success('用户已删除');
         await loadUsers();
     } catch (error) {
-        alert(`删除失败：${error.message}`);
+        AnglrToast.error(`删除失败：${error.message}`);
     }
 }
 </script>

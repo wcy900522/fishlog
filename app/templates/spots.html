@@ -1,342 +1,89 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
+{% set needs_map = true %}
 
-{% block title %}钓点管理 - AnglrLog{% endblock %}
+{% block title %}我的钓点 - AnglrLog{% endblock %}
 
 {% block extra_css %}
-<style>
-    .spot-photo-preview {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-    }
-
-    .spot-photo-preview__item {
-        aspect-ratio: 1;
-        border: 1px solid var(--border-soft);
-        border-radius: var(--radius);
-        overflow: hidden;
-        background: var(--surface-soft);
-    }
-
-    .spot-photo-preview__item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
-    .spot-tag-picker {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .spot-tag-option {
-        border-radius: var(--radius);
-        padding: 7px 12px;
-        font-weight: 700;
-    }
-
-    .target-species-picker {
-        display: grid;
-        gap: 10px;
-        margin-top: 10px;
-    }
-
-    .target-species-picker__group {
-        display: grid;
-        gap: 8px;
-    }
-
-    .target-species-picker__label {
-        color: var(--text-muted);
-        font-size: 0.84rem;
-        font-weight: 800;
-    }
-
-    .target-species-chip-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    /* 复用全局 .chip token；仅保留本页字重差异 */
-    .target-species-chip {
-        border: 1px solid rgba(var(--brand-teal-rgb), 0.24);
-        border-radius: var(--radius-pill);
-        background: #fff;
-        color: var(--brand-deep);
-        padding: 6px 11px;
-        font-size: 0.88rem;
-        font-weight: 800;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-    }
-
-    .target-species-chip:focus-visible {
-        outline: none;
-        box-shadow: var(--focus-ring);
-    }
-
-    .target-species-chip.active {
-        color: #062b35;
-        background: linear-gradient(135deg, #84ddf2, #8de3ca);
-        border-color: rgba(var(--brand-teal-rgb), 0.34);
-        box-shadow: 0 8px 18px rgba(var(--brand-teal-rgb), 0.14);
-    }
-
-    .spot-page-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-    }
-
-    .spot-card-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-    }
-
-    .spot-card-actions .btn-record {
-        grid-column: 1 / -1;
-        min-height: 42px;
-        font-weight: 800;
-    }
-
-    .spot-location-picker {
-        display: grid;
-        gap: 10px;
-        padding: 14px;
-        border: 1px solid var(--border-soft);
-        border-radius: var(--radius);
-        background: rgba(238, 250, 255, 0.62);
-    }
-
-    .spot-location-map {
-        height: 280px;
-        border-radius: var(--radius);
-        border: 1px solid var(--border-soft);
-        overflow: hidden;
-        background: var(--surface-soft);
-    }
-
-    .spot-location-results {
-        display: grid;
-        gap: 8px;
-    }
-
-    .spot-location-result {
-        width: 100%;
-        border: 1px solid rgba(14, 143, 163, 0.2);
-        border-radius: var(--radius);
-        background: #fff;
-        padding: 10px 12px;
-        text-align: left;
-        color: var(--text-dark);
-    }
-
-    .spot-location-result:hover {
-        background: var(--surface-soft);
-    }
-
-    .spot-location-result__content {
-        min-width: 0;
-    }
-
-    .spot-location-result__action {
-        flex: 0 0 auto;
-        min-width: 112px;
-        font-weight: 800;
-    }
-
-    .spot-location-confirm {
-        border: 1px solid rgba(87, 199, 166, 0.34);
-        border-radius: var(--radius);
-        background: rgba(226, 250, 238, 0.9);
-        color: #0d5c4a;
-        padding: 10px 12px;
-        font-weight: 800;
-    }
-
-    .spot-location-selected {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: center;
-        color: var(--text-muted);
-        font-size: 0.92rem;
-    }
-
-    @media (max-width: 767.98px) {
-        .spots-page {
-            margin-top: 0 !important;
-            padding-left: 0;
-            padding-right: 0;
-        }
-
-        .spot-page-actions,
-        #addSpotBtn,
-        .spot-page-actions .btn {
-            width: 100%;
-        }
-
-        .spot-filter-actions {
-            width: 100%;
-        }
-
-        .spot-filter-actions .btn {
-            flex: 1 1 0;
-        }
-
-        #spotsMap {
-            height: 300px !important;
-        }
-
-        .spot-location-map {
-            height: 240px;
-        }
-
-        .spot-location-result {
-            align-items: stretch !important;
-            flex-direction: column;
-        }
-
-        .spot-location-result__action {
-            width: 100%;
-        }
-
-        .spot-tag-picker {
-            gap: 7px;
-        }
-
-        .spot-tag-option {
-            flex: 1 1 calc(33.333% - 7px);
-            min-width: 84px;
-        }
-
-        #spotModal .modal-dialog {
-            margin: 8px;
-        }
-    }
-</style>
+<link rel="stylesheet" href="/static/css/pages/spots.css?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5 spots-page">
-    <div class="page-title">
-        <i class="fas fa-map-location-dot"></i> 钓点管理
-    </div>
-    <p class="page-subtitle">添加和管理你的钓点</p>
+<div class="container-app container-app--wide">
+    {% call page_head('我的钓点', icon='fa-map-location-dot', sub='正在加载…', sub_id='spotsSummary', eyebrow='我的数据') %}
+        <a class="btn btn-secondary" href="/logs/create"><i class="fas fa-pen"></i>记一笔</a>
+        <button class="btn btn-primary" id="addSpotBtn" type="button"><i class="fas fa-plus"></i>新增钓点</button>
+    {% endcall %}
 
-    <!-- 创建新钓点按钮 -->
-    <div class="mb-4 spot-page-actions">
-        <button class="btn btn-primary btn-lg" id="addSpotBtn" data-bs-toggle="modal" data-bs-target="#spotModal">
-            <i class="fas fa-plus"></i> 新增钓点
-        </button>
-        <a class="btn btn-success btn-lg" href="/logs/create">
-            <i class="fas fa-pen"></i> 新增出钓记录
-        </a>
-    </div>
-
-    <div class="shell-card p-4 mb-4">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">搜索钓点</label>
-                <input type="text" class="form-control" id="spotKeywordFilter" placeholder="名称、城市、目标鱼、描述">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">水体类型</label>
-                <select class="form-select" id="spotWaterFilter">
-                    <option value="">全部水体</option>
-                    <option value="river">河流</option>
-                    <option value="lake">湖泊</option>
-                    <option value="reservoir">水库</option>
-                    <option value="sea">海水</option>
-                    <option value="pond">池塘</option>
-                    <option value="pay_pond">黑坑</option>
-                    <option value="other">其他</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">标签</label>
-                <input type="text" class="form-control" id="spotTagFilter" placeholder="路亚、黑坑、夜钓">
-            </div>
-            <div class="col-md-2 d-flex gap-2 spot-filter-actions">
-                <button class="btn btn-primary flex-fill" id="applySpotFiltersBtn">筛选</button>
-                <button class="btn btn-outline-secondary" id="resetSpotFiltersBtn">重置</button>
-            </div>
+    <div class="toolbar reveal">
+        <div class="toolbar__search">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="text" class="form-control" id="spotKeywordFilter" placeholder="搜索名称、城市、目标鱼、描述" aria-label="搜索钓点">
+        </div>
+        <div class="toolbar__side">
+            <select class="form-select" id="spotWaterFilter" aria-label="水体类型">
+                <option value="">全部水体</option>
+                <option value="river">河流</option>
+                <option value="lake">湖泊</option>
+                <option value="reservoir">水库</option>
+                <option value="sea">海水</option>
+                <option value="pond">池塘</option>
+                <option value="pay_pond">黑坑</option>
+                <option value="other">其他</option>
+            </select>
+            <input type="text" class="form-control" id="spotTagFilter" placeholder="标签：路亚、黑坑、夜钓" aria-label="标签">
+            <button class="btn btn-secondary" id="applySpotFiltersBtn">筛选</button>
+            <button class="btn btn-ghost" id="resetSpotFiltersBtn">重置</button>
         </div>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0"><i class="fas fa-map"></i> 钓点地图</h5>
-        </div>
-        <div class="card-body p-0">
-            <div id="spotsMap" style="height: 420px;"></div>
-        </div>
-    </div>
+    <button class="btn btn-secondary w-100 spots-map-toggle" type="button" id="spotsMapToggle" aria-expanded="false" aria-controls="spotsMapPanel">
+        <i class="fas fa-map"></i>展开地图
+    </button>
 
-    <!-- 我的钓点列表 -->
-    <div class="row" id="mySpots">
-        <div class="col-12">
-            <div class="text-center py-5">
-                <p class="text-muted">
-                    <i class="fas fa-spinner fa-spin"></i> 加载中...
-                </p>
+    <div class="spots-layout">
+        <aside class="spots-layout__map" id="spotsMapPanel">
+            <div class="map-frame">
+                <div id="spotsMap" class="spots-map"></div>
             </div>
+        </aside>
+        <div class="spots-layout__list">
+            <div class="row g-3" id="mySpots"></div>
         </div>
     </div>
 </div>
 
-<!-- 钓点编辑/新增 Modal -->
-<div class="modal fade" id="spotModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="spotModalTitle">
-                    <i class="fas fa-plus"></i> 新增钓点
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="spotForm">
-                    <!-- 省份和城市选择 -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-map"></i> 省份 <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select" id="provinceSelect" required>
-                                <option value="">-- 选择省份 --</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-city"></i> 城市 <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select" id="citySelect" required>
-                                <option value="">-- 先选择省份 --</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- 钓点名称 -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="fas fa-signature"></i> 钓点名称 <span class="text-danger">*</span>
-                        </label>
+<!-- 钓点编辑/新增 抽屉 -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="spotModal" aria-labelledby="spotModalTitle">
+    <div class="offcanvas-header">
+        <h2 class="offcanvas-title" id="spotModalTitle"><i class="fas fa-plus"></i> 新增钓点</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="关闭"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form id="spotForm" novalidate>
+            <fieldset class="form-section">
+                <legend><i class="fas fa-signature"></i>基本信息</legend>
+                <div class="form-grid">
+                    <div class="span-all">
+                        <label class="form-label req" for="spotName">钓点名称</label>
                         <input type="text" class="form-control" id="spotName" placeholder="例如：某某河、某某湖" required>
-                        <small class="form-text text-muted">给你的钓点起个名字</small>
                     </div>
-
-                    <!-- 水体类型 -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="fas fa-water"></i> 水体类型 <span class="text-danger">*</span>
-                        </label>
+                    <div>
+                        <label class="form-label req" for="provinceSelect">省份</label>
+                        <select class="form-select" id="provinceSelect" required>
+                            <option value="">选择省份</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label req" for="citySelect">城市</label>
+                        <select class="form-select" id="citySelect" required>
+                            <option value="">先选择省份</option>
+                        </select>
+                    </div>
+                    <div class="span-all">
+                        <label class="form-label req" for="waterType">水体类型</label>
                         <select class="form-select" id="waterType" required>
-                            <option value="">-- 选择水体类型 --</option>
+                            <option value="">选择水体类型</option>
                             <option value="river">河流</option>
                             <option value="lake">湖泊</option>
                             <option value="reservoir">水库</option>
@@ -346,117 +93,98 @@
                             <option value="other">其他</option>
                         </select>
                     </div>
+                </div>
+            </fieldset>
 
-                    <!-- 地图选点 -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="fas fa-map-pin"></i> 钓点位置 <span class="text-danger">*</span>
-                        </label>
-                        <div class="spot-location-picker">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="spotLocationKeyword" placeholder="搜索任意水库、河段、公园、村镇或附近地名">
-                                <button type="button" class="btn btn-primary" id="searchSpotLocationBtn">
-                                    <i class="fas fa-search"></i> 搜索
-                                </button>
-                                <button type="button" class="btn btn-outline-primary" id="useCurrentLocationBtn">
-                                    <i class="fas fa-location-crosshairs"></i> 当前位置
-                                </button>
+            <fieldset class="form-section">
+                <legend><i class="fas fa-map-pin"></i>钓点位置 <small>必填</small></legend>
+                <div class="spot-location-picker">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="spotLocationKeyword" placeholder="搜索水库、河段、公园、村镇或附近地名">
+                        <button type="button" class="btn btn-secondary" id="searchSpotLocationBtn" aria-label="搜索位置">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="useCurrentLocationBtn" aria-label="使用当前位置">
+                            <i class="fas fa-location-crosshairs"></i>
+                        </button>
+                    </div>
+                    <div class="spot-location-results" id="spotLocationResults"></div>
+                    <div class="spot-location-map" id="spotPickerMap"></div>
+                    <div class="spot-location-selected" id="selectedLocationText">
+                        <i class="fas fa-circle-info"></i> 搜索地图地名后点“使用此位置”，或直接在地图上点选。
+                    </div>
+                    <input type="hidden" id="latitude" required>
+                    <input type="hidden" id="longitude" required>
+                </div>
+                <small class="form-hint" id="locationStatus">地图会按国内坐标显示；选择位置后系统自动保存经纬度。</small>
+            </fieldset>
+
+            <fieldset class="form-section">
+                <legend><i class="fas fa-fish"></i>鱼情与标签</legend>
+                <div class="form-grid">
+                    <div class="span-all">
+                        <label class="form-label" for="targetSpecies">目标鱼种</label>
+                        <input type="text" class="form-control" id="targetSpecies" placeholder="例如：鲈鱼、白鲳、黑鱼">
+                        <div class="species-picker" id="targetSpeciesPicker">
+                            <div class="species-picker__group">
+                                <span class="species-picker__label">常见台钓鱼种</span>
+                                <div class="chip-row" id="spotFloatSpeciesChips"></div>
                             </div>
-                            <div class="spot-location-results" id="spotLocationResults"></div>
-                            <div class="spot-location-map" id="spotPickerMap"></div>
-                            <div class="spot-location-selected" id="selectedLocationText">
-                                <i class="fas fa-circle-info"></i> 搜索的是地图地名，不匹配已有钓点；找到后点“使用此位置”。
+                            <div class="species-picker__group">
+                                <span class="species-picker__label">常见路亚鱼种</span>
+                                <div class="chip-row" id="spotLureSpeciesChips"></div>
                             </div>
-                            <input type="hidden" id="latitude" required>
-                            <input type="hidden" id="longitude" required>
                         </div>
+                        <small class="form-hint">可多选；标签内没有的鱼种可直接手动输入。</small>
                     </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-fish"></i> 目标鱼种
-                            </label>
-                            <input type="text" class="form-control" id="targetSpecies" placeholder="例如：鲈鱼、白鲳、黑鱼">
-                            <div class="target-species-picker" id="targetSpeciesPicker">
-                                <div class="target-species-picker__group">
-                                    <span class="target-species-picker__label">常见台钓鱼种</span>
-                                    <div class="target-species-chip-row" id="spotFloatSpeciesChips"></div>
-                                </div>
-                                <div class="target-species-picker__group">
-                                    <span class="target-species-picker__label">常见路亚鱼种</span>
-                                    <div class="target-species-chip-row" id="spotLureSpeciesChips"></div>
-                                </div>
-                            </div>
-                            <small class="form-text text-muted">可多选；标签内没有的鱼种可直接手动输入。</small>
+                    <div class="span-all">
+                        <label class="form-label" for="bestSeason">最佳季节</label>
+                        <input type="text" class="form-control" id="bestSeason" placeholder="例如：春末夏初、秋季">
+                    </div>
+                    <div class="span-all">
+                        <span class="form-label">标签</span>
+                        <div class="chip-row" id="spotTags">
+                            <button class="chip chip--sm spot-tag-option" type="button" data-tag="海钓">海钓</button>
+                            <button class="chip chip--sm spot-tag-option" type="button" data-tag="路亚">路亚</button>
+                            <button class="chip chip--sm spot-tag-option" type="button" data-tag="台钓">台钓</button>
+                            <button class="chip chip--sm spot-tag-option" type="button" data-tag="飞钓">飞钓</button>
+                            <button class="chip chip--sm spot-tag-option" type="button" data-tag="黑坑">黑坑</button>
+                            <button class="chip chip--sm spot-tag-option" type="button" data-tag="野钓">野钓</button>
+                            <button class="chip chip--sm spot-tag-option" type="button" data-tag="技术分享">技术分享</button>
+                            <button class="chip chip--sm spot-tag-option" type="button" data-tag="装备评测">装备评测</button>
+                            <button class="chip chip--sm spot-tag-option" type="button" data-tag="钓点攻略">钓点攻略</button>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-calendar-days"></i> 最佳季节
-                            </label>
-                            <input type="text" class="form-control" id="bestSeason" placeholder="例如：春末夏初、秋季">
-                        </div>
+                        <small class="form-hint">最多选择 2 个标签</small>
                     </div>
+                </div>
+            </fieldset>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-tags"></i> 标签
-                            </label>
-                            <div class="spot-tag-picker" id="spotTags">
-                                <button class="btn btn-outline-primary btn-sm spot-tag-option" type="button" data-tag="海钓">海钓</button>
-                                <button class="btn btn-outline-primary btn-sm spot-tag-option" type="button" data-tag="路亚">路亚</button>
-                                <button class="btn btn-outline-primary btn-sm spot-tag-option" type="button" data-tag="台钓">台钓</button>
-                                <button class="btn btn-outline-primary btn-sm spot-tag-option" type="button" data-tag="飞钓">飞钓</button>
-                                <button class="btn btn-outline-primary btn-sm spot-tag-option" type="button" data-tag="黑坑">黑坑</button>
-                                <button class="btn btn-outline-primary btn-sm spot-tag-option" type="button" data-tag="野钓">野钓</button>
-                                <button class="btn btn-outline-primary btn-sm spot-tag-option" type="button" data-tag="技术分享">技术分享</button>
-                                <button class="btn btn-outline-primary btn-sm spot-tag-option" type="button" data-tag="装备评测">装备评测</button>
-                                <button class="btn btn-outline-primary btn-sm spot-tag-option" type="button" data-tag="钓点攻略">钓点攻略</button>
-                            </div>
-                            <small class="form-text text-muted">最多选择 2 个标签</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-image"></i> 钓点照片
-                            </label>
-                            <input type="file" class="form-control" id="spotImages" accept="image/*" capture="environment" multiple>
-                            <small class="form-text text-muted">可拍照或从手机相册选择，最多上传 3 张</small>
-                            <div class="spot-photo-preview mt-2" id="spotPhotoPreview"></div>
-                        </div>
+            <fieldset class="form-section">
+                <legend><i class="fas fa-image"></i>照片与描述</legend>
+                <div class="form-grid">
+                    <div class="span-all">
+                        <label class="form-label" for="spotImages">钓点照片</label>
+                        <input type="file" class="form-control" id="spotImages" accept="image/*" capture="environment" multiple>
+                        <small class="form-hint">可拍照或从相册选择，最多 3 张</small>
+                        <div class="spot-photo-preview mt-2" id="spotPhotoPreview"></div>
                     </div>
-
-                    <small class="form-text text-muted d-block mb-3" id="locationStatus">
-                        地图会按国内坐标显示；选择位置后系统自动保存经纬度。
-                    </small>
-
-                    <!-- 钓点描述 -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <i class="fas fa-pen"></i> 钓点描述
-                        </label>
-                        <textarea class="form-control" id="spotDesc" rows="4" placeholder="描述钓点的特点、通常能钓到的鱼种、最佳钓鱼时间等..."></textarea>
-                        <small class="form-text text-muted">可选，但详细的描述能帮助你以后更好地规划钓鱼</small>
+                    <div class="span-all">
+                        <label class="form-label" for="spotDesc">钓点描述</label>
+                        <textarea class="form-control" id="spotDesc" rows="4" placeholder="钓点特点、常见鱼种、最佳钓鱼时间…"></textarea>
                     </div>
-
-                    <!-- 提示信息 -->
-                    <div class="alert alert-info" role="alert">
-                        <i class="fas fa-lightbulb"></i>
-                        <strong>提示：</strong>如果搜索不到位置，可以先点“当前位置”，也可以在地图上直接点选钓点。
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" id="saveSpotBtn">
-                    <i class="fas fa-save"></i> 保存钓点
-                </button>
-            </div>
-        </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <div class="offcanvas-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="offcanvas">取消</button>
+        <button type="button" class="btn btn-primary" id="saveSpotBtn">
+            <i class="fas fa-check"></i>保存钓点
+        </button>
     </div>
 </div>
-
 {% endblock %}
+
 
 {% block extra_js %}
 <script>
@@ -499,24 +227,13 @@ function escapeHTML(value) {
 
 function renderSpotsMessage(type, title, detail = '') {
     const container = document.getElementById('mySpots');
-    const stateClass = type === 'error' ? 'error-state' : 'empty-state';
-    const icon = type === 'error' ? 'fa-triangle-exclamation' : 'fa-inbox';
-    container.innerHTML = `
-        <div class="col-12">
-            <div class="${stateClass}">
-                <i class="fas ${icon} fa-2x mb-3"></i>
-                <h5>${escapeHTML(title)}</h5>
-                ${detail ? `<p class="mb-0">${escapeHTML(detail)}</p>` : ''}
-            </div>
-        </div>
-    `;
+    container.innerHTML = `<div class="col-12">${AnglrState({ type, title, text: detail })}</div>`;
 }
 
 // 初始化
 document.addEventListener('DOMContentLoaded', async function() {
     if (!token) {
-        alert('请先登录');
-        window.location.href = '/login';
+        redirectToLogin('请先登录');
         return;
     }
 
@@ -524,6 +241,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (spotModal && spotModal.parentElement !== document.body) {
         document.body.appendChild(spotModal);
     }
+    document.getElementById('mySpots').innerHTML = AnglrSkeleton('card', 3);
+
+    const mapToggle = document.getElementById('spotsMapToggle');
+    const mapPanel = document.getElementById('spotsMapPanel');
+    mapToggle.addEventListener('click', () => {
+        const open = !mapPanel.classList.contains('is-open');
+        mapPanel.classList.toggle('is-open', open);
+        mapToggle.setAttribute('aria-expanded', String(open));
+        mapToggle.innerHTML = `<i class="fas fa-map"></i>${open ? '收起地图' : '展开地图'}`;
+        if (open && spotsMap) setTimeout(() => spotsMap.invalidateSize(), 60);
+    });
 
     // 加载省份数据
     await loadProvinces();
@@ -534,7 +262,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 绑定事件
     document.getElementById('provinceSelect').addEventListener('change', () => updateCities());
-    document.getElementById('addSpotBtn').addEventListener('click', resetForm);
+    document.getElementById('addSpotBtn').addEventListener('click', () => {
+        resetForm();
+        bootstrap.Offcanvas.getOrCreateInstance(spotModal).show();
+    });
     document.getElementById('saveSpotBtn').addEventListener('click', saveSpot);
     document.getElementById('useCurrentLocationBtn').addEventListener('click', fillCurrentLocation);
     document.getElementById('searchSpotLocationBtn').addEventListener('click', searchSpotLocation);
@@ -558,7 +289,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (event.key === 'Enter') applySpotFilters();
     });
 
-    spotModal.addEventListener('shown.bs.modal', () => {
+    spotModal.addEventListener('shown.bs.offcanvas', () => {
         ensureSpotPickerMap();
         setTimeout(() => spotPickerMap && spotPickerMap.invalidateSize(), 80);
     });
@@ -571,7 +302,7 @@ async function loadProvinces() {
         provinces = Array.isArray(data?.provinces) ? data.provinces : (Array.isArray(data) ? data : []);
 
         const select = document.getElementById('provinceSelect');
-        select.innerHTML = '<option value="">-- 选择省份 --</option>';
+        select.innerHTML = '<option value="">选择省份</option>';
         provinces.forEach(province => {
             if (!province || !province.name) return;
             const option = document.createElement('option');
@@ -581,7 +312,7 @@ async function loadProvinces() {
         });
     } catch (error) {
         console.error('Error loading provinces:', error);
-        alert('加载省份列表失败：' + error.message);
+        AnglrToast.error('加载省份列表失败：' + error.message);
     }
 }
 
@@ -604,7 +335,7 @@ function updateCities(selectedCity = '') {
     const citySelect = document.getElementById('citySelect');
     const selectedProvince = provinceSelect.value;
 
-    citySelect.innerHTML = '<option value="">-- 选择城市 --</option>';
+    citySelect.innerHTML = '<option value="">选择城市</option>';
 
     if (!selectedProvince) {
         appendMissingOption(citySelect, selectedCity);
@@ -631,7 +362,7 @@ function resetForm() {
     existingSpotImageUrls = [];
     document.getElementById('spotForm').reset();
     document.getElementById('spotModalTitle').innerHTML = '<i class="fas fa-plus"></i> 新增钓点';
-    document.getElementById('citySelect').innerHTML = '<option value="">-- 先选择省份 --</option>';
+    document.getElementById('citySelect').innerHTML = '<option value="">先选择省份</option>';
     document.getElementById('locationStatus').textContent = '地图会按国内坐标显示；选择位置后系统自动保存经纬度。';
     document.getElementById('spotLocationKeyword').value = '';
     document.getElementById('spotLocationResults').innerHTML = '';
@@ -745,13 +476,13 @@ async function searchSpotLocation() {
 function renderSpotLocationResults(results) {
     const resultsContainer = document.getElementById('spotLocationResults');
     resultsContainer.innerHTML = results.map((result, index) => `
-            <div class="spot-location-result d-flex justify-content-between align-items-center gap-3">
+            <div class="spot-location-result">
                 <div class="spot-location-result__content">
                     <strong>${escapeHTML(result.name || '位置')}</strong>
                     <small class="d-block text-muted">${escapeHTML([result.province, result.city, result.district, result.address].filter(Boolean).join(' '))}</small>
                     ${result.needs_click ? '<small class="d-block text-muted">这是区域辅助定位，请在地图上点击实际桥位或钓点。</small>' : ''}
                 </div>
-                <button type="button" class="btn btn-sm btn-primary spot-location-result__action" data-index="${index}">
+                <button type="button" class="btn btn-sm btn-secondary spot-location-result__action" data-index="${index}">
                     <i class="fas fa-check"></i> ${result.needs_click ? '定位到附近' : '使用此位置'}
                 </button>
             </div>
@@ -846,7 +577,7 @@ function renderTargetSpeciesChipGroup(containerId, speciesList) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = speciesList.map(species => `
-        <button type="button" class="target-species-chip" data-species="${escapeHTML(species)}">${escapeHTML(species)}</button>
+        <button type="button" class="chip chip--sm target-species-chip" data-species="${escapeHTML(species)}">${escapeHTML(species)}</button>
     `).join('');
     container.querySelectorAll('.target-species-chip').forEach(button => {
         button.addEventListener('click', () => toggleTargetSpecies(button.dataset.species));
@@ -889,7 +620,7 @@ function parseSpeciesText(value) {
 
 function updateTargetSpeciesChipState() {
     document.querySelectorAll('.target-species-chip').forEach(button => {
-        button.classList.toggle('active', selectedTargetSpecies.has(button.dataset.species));
+        button.classList.toggle('chip--active', selectedTargetSpecies.has(button.dataset.species));
     });
 }
 
@@ -902,8 +633,7 @@ function setSelectedSpotTags(tags) {
     document.querySelectorAll('#spotTags .spot-tag-option').forEach(button => {
         const selected = values.has(button.dataset.tag);
         button.classList.toggle('active', selected);
-        button.classList.toggle('btn-primary', selected);
-        button.classList.toggle('btn-outline-primary', !selected);
+        button.classList.toggle('chip--active', selected);
     });
 }
 
@@ -911,13 +641,12 @@ function toggleSpotTag(event) {
     const button = event.currentTarget;
     const selected = getSelectedSpotTags();
     if (!button.classList.contains('active') && selected.length >= 2) {
-        alert('标签最多选择 2 个');
+        AnglrToast.warning('标签最多选择 2 个');
         return;
     }
     const nextSelected = !button.classList.contains('active');
     button.classList.toggle('active', nextSelected);
-    button.classList.toggle('btn-primary', nextSelected);
-    button.classList.toggle('btn-outline-primary', !nextSelected);
+    button.classList.toggle('chip--active', nextSelected);
 }
 
 function parseSpotImageUrls(value) {
@@ -938,7 +667,7 @@ function previewSpotImages() {
     const input = document.getElementById('spotImages');
     const files = Array.from(input.files || []);
     if (files.length > 3) {
-        alert('最多上传 3 张钓点照片');
+        AnglrToast.warning('最多上传 3 张钓点照片');
         input.value = '';
         renderSpotPhotoPreview(existingSpotImageUrls);
         return;
@@ -1026,7 +755,7 @@ async function saveSpot() {
     const description = document.getElementById('spotDesc').value.trim();
 
     if (!name || !province || !city || !waterType || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-        alert('请填写所有必填项');
+        AnglrToast.warning('请填写所有必填项');
         return;
     }
 
@@ -1068,8 +797,8 @@ async function saveSpot() {
             body: JSON.stringify(spotData)
         });
 
-        alert('保存成功！');
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('spotModal')).hide();
+        AnglrToast.success(currentSpotId ? '钓点已更新' : '钓点已添加');
+        bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('spotModal')).hide();
         await loadMySpots();
     } catch (error) {
         console.error('Error saving spot:', error);
@@ -1077,7 +806,7 @@ async function saveSpot() {
             redirectToLogin(error.message);
             return;
         }
-        alert('保存失败：' + error.message);
+        AnglrToast.error('保存失败：' + error.message);
     } finally {
         isSavingSpot = false;
         saveBtn.disabled = false;
@@ -1126,6 +855,12 @@ function getFilteredSpots() {
 
 function applySpotFilters() {
     const spots = getFilteredSpots();
+    const summary = document.getElementById('spotsSummary');
+    if (summary) {
+        summary.textContent = allMySpots.length
+            ? `共 ${allMySpots.length} 个钓点${spots.length !== allMySpots.length ? ` · 筛选出 ${spots.length} 个` : ''}`
+            : '还没有钓点，先把常去的水域记下来。';
+    }
     renderSpotMap(spots);
     renderSpotCards(spots);
 }
@@ -1151,7 +886,7 @@ function renderSpotMap(spots) {
     const bounds = [];
     spots.forEach(spot => {
         if (!Number.isFinite(Number(spot.latitude)) || !Number.isFinite(Number(spot.longitude))) return;
-        const marker = L.marker([spot.latitude, spot.longitude]).addTo(spotsMap).bindPopup(`
+        const marker = L.marker([spot.latitude, spot.longitude], { spotId: spot.id }).addTo(spotsMap).bindPopup(`
             <strong>${escapeHTML(spot.name)}</strong><br>
             ${escapeHTML(spot.city || '')} ${escapeHTML(getWaterTypePlainLabel(spot.water_type))}<br>
             ${spot.target_species ? `目标鱼：${escapeHTML(spot.target_species)}<br>` : ''}
@@ -1171,94 +906,66 @@ function renderSpotMap(spots) {
 }
 
 function renderSpotCards(spots) {
-        const container = document.getElementById('mySpots');
+    const container = document.getElementById('mySpots');
 
-        if (spots.length === 0) {
-            const hasAnySpot = allMySpots.length > 0;
-            container.innerHTML = `
-                <div class="col-12">
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <p>${hasAnySpot ? '没有匹配当前筛选条件的钓点。' : '还没有添加钓点，<a href="#" onclick="document.getElementById(&quot;addSpotBtn&quot;).click()">立即新增</a>'}</p>
-                    </div>
-                </div>
-            `;
-            return;
+    if (spots.length === 0) {
+        const hasAnySpot = allMySpots.length > 0;
+        container.innerHTML = `<div class="col-12">${AnglrState(hasAnySpot
+            ? { title: '没有匹配的钓点', text: '换个关键词或水体类型试试。', icon: 'fa-map-location-dot' }
+            : { title: '还没有钓点', text: '先把常去的水域记下来，出钓记录就能挂在钓点上。', icon: 'fa-map-location-dot' })}</div>`;
+        if (!hasAnySpot) {
+            container.querySelector('.state').insertAdjacentHTML('beforeend', '<button class="btn btn-primary btn-sm" type="button" onclick="document.getElementById(\'addSpotBtn\').click()"><i class="fas fa-plus"></i>新增钓点</button>');
         }
+        return;
+    }
 
-        container.innerHTML = spots.map(spot => `
-            <div class="col-md-6 col-lg-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-location-dot"></i> ${escapeHTML(spot.name)}
-                        </h5>
+    container.innerHTML = spots.map(spot => {
+        const images = parseSpotImageUrls(spot.image_url);
+        const tags = String(spot.tags || '').split(',').map(tag => tag.trim()).filter(Boolean);
+        return `
+            <div class="col-md-6 col-xxl-4">
+                <article class="card card--spot h-100" data-spot-id="${spot.id}">
+                    <div class="card__media"${images.length ? ` style="background-image: linear-gradient(180deg, rgba(10,60,53,0.1), rgba(10,60,53,0.82)), url('${escapeHTML(images[0])}')"` : ''}>
+                        <div class="card__eyebrow">
+                            <span class="card__tag"><i class="fas fa-water"></i>${escapeHTML(getWaterTypePlainLabel(spot.water_type))}</span>
+                            <span class="card__tag"><i class="fas fa-location-dot"></i>${escapeHTML([spot.province, spot.city].filter(Boolean).join(' ') || '未知位置')}</span>
+                        </div>
+                        <h3><a href="/spots/${spot.id}" class="stretched-link-safe">${escapeHTML(spot.name)}</a></h3>
                     </div>
-                    <div class="card-body">
-                        ${parseSpotImageUrls(spot.image_url).length ? `
-                            <div class="ratio ratio-16x9 mb-3 rounded overflow-hidden">
-                                <img src="${escapeHTML(parseSpotImageUrls(spot.image_url)[0])}" alt="${escapeHTML(spot.name)}" class="w-100 h-100" style="object-fit: cover;">
+                    <div class="card__body">
+                        <div class="card__meta">
+                            ${spot.target_species ? `<span><i class="fas fa-fish"></i>${escapeHTML(spot.target_species)}</span>` : ''}
+                            ${spot.best_season ? `<span><i class="fas fa-calendar-days"></i>${escapeHTML(spot.best_season)}</span>` : ''}
+                            <span><i class="fas fa-clock"></i>${new Date(spot.created_at).toLocaleDateString('zh-CN')}</span>
+                        </div>
+                        ${tags.length ? `<div class="chip-row">${tags.map(tag => `<span class="chip chip--sm chip--static">${escapeHTML(tag)}</span>`).join('')}</div>` : ''}
+                        ${spot.description ? `<p class="card__desc clamp-2">${escapeHTML(spot.description)}</p>` : ''}
+                        <div class="card__foot">
+                            <a class="btn btn-sm btn-primary" href="/logs/create?spot_id=${spot.id}"><i class="fas fa-pen"></i>记一笔</a>
+                            <div class="row-item__actions">
+                                <button class="btn btn-sm btn-secondary" type="button" onclick="focusSpotOnMap(${spot.id})" aria-label="在地图上查看"><i class="fas fa-map"></i></button>
+                                <button class="btn btn-sm btn-secondary" type="button" onclick="editSpot(${spot.id})" aria-label="编辑"><i class="fas fa-pen-to-square"></i></button>
+                                <button class="btn btn-sm btn-ghost text-danger" type="button" onclick="deleteSpot(${spot.id})" aria-label="删除"><i class="fas fa-trash"></i></button>
                             </div>
-                        ` : ''}
-                        <p class="mb-2">
-                            <strong><i class="fas fa-map"></i> 位置：</strong>
-                            ${escapeHTML(spot.province || '未知')} ${escapeHTML(spot.city || '')}
-                        </p>
-                        <p class="mb-2">
-                            <strong><i class="fas fa-water"></i> 水体：</strong>
-                            ${getWaterTypeLabel(spot.water_type)}
-                        </p>
-                        ${spot.target_species ? `
-                            <p class="mb-2">
-                                <strong><i class="fas fa-fish"></i> 目标鱼：</strong>
-                                ${escapeHTML(spot.target_species)}
-                            </p>
-                        ` : ''}
-                        ${spot.best_season ? `
-                            <p class="mb-2">
-                                <strong><i class="fas fa-calendar-days"></i> 最佳季节：</strong>
-                                ${escapeHTML(spot.best_season)}
-                            </p>
-                        ` : ''}
-                        ${spot.tags ? `
-                            <p class="mb-2">
-                                ${spot.tags.split(',').map(tag => `<span class="badge badge-info me-1">${escapeHTML(tag.trim())}</span>`).join('')}
-                            </p>
-                        ` : ''}
-                        ${spot.user_nickname ? `
-                            <p class="mb-2">
-                                <strong><i class="fas fa-user"></i> 创建者：</strong>
-                                ${escapeHTML(spot.user_nickname)}
-                            </p>
-                        ` : ''}
-                        <p class="mb-2">
-                            <strong><i class="fas fa-globe"></i> 坐标：</strong>
-                            ${Number(spot.latitude).toFixed(5)}, ${Number(spot.longitude).toFixed(5)}
-                        </p>
-                        ${spot.description ? `
-                            <p class="mb-2">
-                                <strong><i class="fas fa-pen"></i> 描述：</strong><br>
-                                <small>${escapeHTML(spot.description)}</small>
-                            </p>
-                        ` : ''}
-                        <small class="text-muted">
-                            <i class="fas fa-clock"></i> ${new Date(spot.created_at).toLocaleDateString('zh-CN')}
-                        </small>
+                        </div>
                     </div>
-                    <div class="card-footer spot-card-actions">
-                        <a class="btn btn-sm btn-success btn-record" href="/logs/create?spot_id=${spot.id}">
-                            <i class="fas fa-pen"></i> 新增出钓记录
-                        </a>
-                        <button class="btn btn-sm btn-primary" onclick="editSpot(${spot.id})">
-                            <i class="fas fa-edit"></i> 编辑
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteSpot(${spot.id})">
-                            <i class="fas fa-trash"></i> 删除
-                        </button>
-                    </div>
-                </div>
+                </article>
             </div>
-        `).join('');
+        `;
+    }).join('');
+}
+
+function focusSpotOnMap(spotId) {
+    const spot = allMySpots.find(item => item.id === spotId);
+    if (!spot || !spotsMap) return;
+    const panel = document.getElementById('spotsMapPanel');
+    if (window.innerWidth < 992 && !panel.classList.contains('is-open')) {
+        document.getElementById('spotsMapToggle').click();
+    }
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    spotsMap.setView([spot.latitude, spot.longitude], 14);
+    const marker = spotMarkers.find(m => m.options.spotId === spotId);
+    if (marker) marker.openPopup();
 }
 
 // 水体类型标签
@@ -1313,27 +1020,28 @@ async function editSpot(spotId) {
         document.getElementById('spotDesc').value = spot.description || '';
 
         document.getElementById('spotModalTitle').innerHTML = '<i class="fas fa-edit"></i> 编辑钓点';
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('spotModal')).show();
+        bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('spotModal')).show();
     } catch (error) {
         console.error('Error loading spot:', error);
         if (error.message.includes('登录状态已失效')) {
             redirectToLogin(error.message);
             return;
         }
-        alert('加载钓点信息失败：' + error.message);
+        AnglrToast.error('加载钓点信息失败：' + error.message);
     }
 }
 
 // 删除钓点
 async function deleteSpot(spotId) {
-    if (!confirm('确定要删除这个钓点吗？')) return;
+    const ok = await AnglrConfirm({ title: '删除钓点', body: '删除后不可恢复，确定要删除这个钓点吗？', okText: '删除', danger: true });
+    if (!ok) return;
 
     try {
         await apiFetch(`/api/spots/${spotId}`, {
             method: 'DELETE'
         });
 
-        alert('删除成功！');
+        AnglrToast.success('钓点已删除');
         await loadMySpots();
     } catch (error) {
         console.error('Error deleting spot:', error);
@@ -1341,7 +1049,7 @@ async function deleteSpot(spotId) {
             redirectToLogin(error.message);
             return;
         }
-        alert('删除失败：' + error.message);
+        AnglrToast.error('删除失败：' + error.message);
     }
 }
 </script>

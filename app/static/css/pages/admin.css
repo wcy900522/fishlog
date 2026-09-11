@@ -1,0 +1,30 @@
+/* 用户管理 */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 200px;
+}
+
+.user-cell strong { color: var(--t-1); }
+
+.user-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+    max-width: 260px;
+}
+
+.user-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--sp-1);
+}
+
+@media (max-width: 767.98px) {
+    .user-cell { min-width: 0; }
+    .user-status { justify-content: flex-end; max-width: none; }
+    .user-actions { justify-content: flex-start; }
+    .user-actions .btn { flex: 1 1 auto; }
+}

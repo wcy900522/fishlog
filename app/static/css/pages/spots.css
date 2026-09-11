@@ -1,0 +1,142 @@
+/* 钓点列表 */
+.spots-layout {
+    display: grid;
+    grid-template-columns: minmax(320px, 5fr) minmax(0, 7fr);
+    gap: var(--sp-5);
+    align-items: start;
+}
+
+.spots-layout__map {
+    position: sticky;
+    top: calc(var(--nav-h) + var(--sp-4));
+}
+
+.spots-map {
+    height: calc(100vh - var(--nav-h) - var(--sp-8));
+    min-height: 420px;
+    max-height: 720px;
+}
+
+.spots-map-toggle { display: none; }
+
+.card--spot .card__media h3 a { color: inherit; }
+.card--spot .card__media h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.card--spot .card__media[style] { background-size: cover; background-position: center; }
+
+@media (max-width: 991.98px) {
+    .spots-layout { grid-template-columns: 1fr; }
+    .spots-layout__map { position: static; display: none; }
+    .spots-layout__map.is-open { display: block; }
+    .spots-map { height: 320px; min-height: 0; }
+    .spots-map-toggle { display: inline-flex; margin-bottom: var(--sp-4); }
+}
+
+/* 钓点抽屉 */
+.offcanvas-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-5) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--b-1);
+    background: var(--s-card);
+}
+
+.spot-location-picker {
+    display: grid;
+    gap: var(--sp-3);
+}
+
+.spot-location-map {
+    height: 280px;
+    border: 1px solid var(--b-1);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background: var(--s-muted);
+}
+
+.spot-location-results { display: grid; gap: var(--sp-2); }
+.spot-location-results:empty { display: none; }
+
+.spot-location-result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-3);
+    border: 1px solid var(--b-1);
+    border-radius: var(--r-md);
+    background: var(--s-card);
+    text-align: left;
+    color: var(--t-1);
+    font-size: var(--fs-sm);
+}
+
+.spot-location-result__content { min-width: 0; }
+.spot-location-result__action { flex: 0 0 auto; }
+
+.spot-location-confirm {
+    padding: var(--sp-3);
+    border: 1px solid rgba(46, 139, 98, 0.35);
+    border-radius: var(--r-md);
+    background: var(--c-success-soft);
+    color: var(--c-success);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+}
+
+.spot-location-selected {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    align-items: center;
+    color: var(--t-2);
+    font-size: var(--fs-sm);
+}
+
+.spot-location-selected strong { color: var(--t-1); }
+
+.species-picker {
+    display: grid;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+}
+
+.species-picker__group { display: grid; gap: var(--sp-2); }
+
+.species-picker__label {
+    color: var(--t-3);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+}
+
+.spot-photo-preview {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-2);
+}
+
+.spot-photo-preview:empty { display: none; }
+
+.spot-photo-preview__item {
+    aspect-ratio: 1;
+    border: 1px solid var(--b-1);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background: var(--s-muted);
+}
+
+.spot-photo-preview__item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+@media (max-width: 767.98px) {
+    .offcanvas-end { width: 100vw; }
+    .spot-location-map { height: 240px; }
+    .spot-location-result { flex-direction: column; align-items: stretch; }
+    .offcanvas-footer { padding-inline: var(--sp-4); }
+    .offcanvas-footer .btn { flex: 1 1 auto; }
+}

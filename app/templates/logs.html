@@ -1,132 +1,65 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 
 {% block title %}我的记录 - AnglrLog{% endblock %}
 
 {% block extra_css %}
-<style>
-    @media (max-width: 767.98px) {
-        .logs-page-head {
-            gap: 14px;
-        }
-
-        .logs-page-actions {
-            text-align: left !important;
-        }
-
-        .logs-page-actions .btn {
-            width: 100%;
-        }
-
-        .logs-filter-actions {
-            width: 100%;
-        }
-
-        .logs-filter-actions .btn {
-            flex: 1 1 0;
-        }
-
-        .log-card-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 14px;
-            text-align: left !important;
-        }
-
-        .log-card-actions .btn {
-            width: 100%;
-        }
-
-        #logsList .card-title {
-            font-size: 1.06rem;
-            line-height: 1.45;
-        }
-
-        #logsList .weather-info small {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-    }
-
-    .log-thumb {
-        width: 76px;
-        height: 56px;
-        object-fit: cover;
-        border-radius: var(--radius);
-    }
-</style>
+<link rel="stylesheet" href="/static/css/pages/logs.css?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
-<div class="row mb-4 logs-page-head">
-    <div class="col-md-8">
-        <h1 class="page-title mb-0"><i class="fas fa-list"></i> 我的出钓记录</h1>
-    </div>
-    <div class="col-md-4 text-end logs-page-actions">
-        <a href="{{ create_url | default('/logs/create') }}" class="btn btn-success">
-            <i class="fas fa-plus"></i> 新建记录
+<div class="container-app">
+    {% call page_head('出钓记录', icon='fa-clipboard-list', sub='正在加载…', sub_id="logsSummary", eyebrow='我的数据') %}
+        <a href="{{ create_url | default('/logs/create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>记一笔
         </a>
-    </div>
-</div>
+    {% endcall %}
 
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-2">
-                <label class="form-label">开始日期</label>
-                <input type="date" class="form-control" id="filterDateFrom">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">结束日期</label>
-                <input type="date" class="form-control" id="filterDateTo">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">钓点</label>
-                <select class="form-select" id="filterSpot">
-                    <option value="">全部钓点</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">鱼种</label>
-                <input type="text" class="form-control" id="filterSpecies" placeholder="鲈鱼">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">饵料</label>
-                <input type="text" class="form-control" id="filterBait" placeholder="亮片">
-            </div>
-            <div class="col-md-2 d-flex gap-2 logs-filter-actions">
-                <button class="btn btn-primary flex-fill" id="applyFiltersBtn">筛选</button>
-                <button class="btn btn-outline-secondary" id="resetFiltersBtn">重置</button>
-            </div>
+    <div class="stat-grid mb-4 reveal" id="logsStats" hidden>
+        <div class="stat-tile"><span class="stat-tile__label">出钓次数</span><span class="stat-tile__value" id="statCount">0</span></div>
+        <div class="stat-tile"><span class="stat-tile__label">总渔获</span><span class="stat-tile__value" id="statQty">0<small>条</small></span></div>
+        <div class="stat-tile"><span class="stat-tile__label">总重量</span><span class="stat-tile__value" id="statWeight">0<small>kg</small></span></div>
+        <div class="stat-tile"><span class="stat-tile__label">累计时长</span><span class="stat-tile__value" id="statHours">0<small>小时</small></span></div>
+    </div>
+
+    <div class="toolbar reveal">
+        <div class="toolbar__search">
+            <i class="fas fa-fish"></i>
+            <input type="text" class="form-control" id="filterSpecies" placeholder="按鱼种搜索" aria-label="鱼种">
+        </div>
+        <div class="toolbar__side logs-toolbar__side">
+            <select class="form-select" id="filterSpot" aria-label="钓点">
+                <option value="">全部钓点</option>
+            </select>
+            <input type="text" class="form-control" id="filterBait" placeholder="饵料" aria-label="饵料">
+            <input type="date" class="form-control" id="filterDateFrom" aria-label="开始日期">
+            <input type="date" class="form-control" id="filterDateTo" aria-label="结束日期">
+            <button class="btn btn-secondary" id="applyFiltersBtn">筛选</button>
+            <button class="btn btn-ghost" id="resetFiltersBtn">重置</button>
         </div>
     </div>
-</div>
 
-<div id="logsList">
-    <div class="text-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">加载中...</span>
-        </div>
-    </div>
+    <div id="logsList" class="stack stack--tight"></div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    const spotNames = new Map();
+
     document.addEventListener('DOMContentLoaded', function() {
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('请先登录');
-            window.location.href = '/login';
+            redirectToLogin('请先登录');
             return;
         }
 
-        loadFilterSpots();
-        loadLogs();
+        loadFilterSpots().then(loadLogs);
         document.getElementById('applyFiltersBtn').addEventListener('click', loadLogs);
         document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
+        ['filterSpecies', 'filterBait'].forEach(id => {
+            document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') loadLogs(); });
+        });
     });
 
     function escapeHTML(value) {
@@ -142,88 +75,127 @@
     function formatDurationHours(minutes) {
         const hours = Number(minutes || 0) / 60;
         if (!Number.isFinite(hours) || hours <= 0) return '未记录';
-        return `${Number.isInteger(hours) ? hours : hours.toFixed(1).replace(/\.0$/, '')}小时`;
+        return `${Number.isInteger(hours) ? hours : hours.toFixed(1).replace(/\.0$/, '')} 小时`;
+    }
+
+    function formatNumber(value, digits = 1) {
+        const n = Number(value || 0);
+        return Number.isInteger(n) ? String(n) : n.toFixed(digits).replace(/\.0$/, '');
+    }
+
+    function monthKey(date) {
+        return `${date.getFullYear()}年${date.getMonth() + 1}月`;
+    }
+
+    function renderLog(log) {
+        const date = new Date(log.fishing_at);
+        const valid = !Number.isNaN(date.getTime());
+        const day = valid ? String(date.getDate()).padStart(2, '0') : '--';
+        const weekday = valid ? ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()] : '';
+        const time = valid ? date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : '';
+        const spot = spotNames.get(log.spot_id);
+        const photos = Array.isArray(log.photo_urls) ? log.photo_urls.slice(0, 3) : [];
+        const weatherBits = [];
+        if (log.temperature != null) weatherBits.push(`<span><i class="fas fa-temperature-half"></i>${formatNumber(log.temperature)}°C</span>`);
+        if (log.wind_speed != null) weatherBits.push(`<span><i class="fas fa-wind"></i>${formatNumber(log.wind_speed)} m/s</span>`);
+        if (log.pressure != null) weatherBits.push(`<span><i class="fas fa-gauge"></i>${formatNumber(log.pressure, 0)} hPa</span>`);
+        const gearBits = [];
+        if (log.tide) gearBits.push(`<span><i class="fas fa-water"></i>${escapeHTML(log.tide)}</span>`);
+        if (log.rod) gearBits.push(`<span><i class="fas fa-grip-lines"></i>${escapeHTML(log.rod)}</span>`);
+        if (log.line_group) gearBits.push(`<span><i class="fas fa-link"></i>${escapeHTML(log.line_group)}</span>`);
+        if (log.equipment) gearBits.push(`<span><i class="fas fa-toolbox"></i>${escapeHTML(log.equipment)}</span>`);
+
+        return `
+            <article class="row-item log-row">
+                <div class="row-item__lead">
+                    <strong>${day}</strong>
+                    <span>${weekday}</span>
+                </div>
+                <div class="row-item__main">
+                    <h3 class="row-item__title">
+                        ${escapeHTML(log.species || '未记录鱼种')}
+                        <span class="badge badge-info ms-1">${log.quantity || 0} 条</span>
+                        ${log.weight ? `<span class="badge badge-muted">${formatNumber(log.weight, 2)} kg</span>` : ''}
+                    </h3>
+                    <div class="row-item__stats">
+                        ${spot ? `<span><i class="fas fa-location-dot"></i><a href="/spots/${log.spot_id}">${escapeHTML(spot)}</a></span>` : ''}
+                        <span><i class="fas fa-clock"></i>${time} · ${formatDurationHours(log.duration)}</span>
+                        ${log.bait ? `<span><i class="fas fa-worm"></i>${escapeHTML(log.bait)}</span>` : ''}
+                        ${log.user_nickname ? `<span><i class="fas fa-user"></i>${escapeHTML(log.user_nickname)}</span>` : ''}
+                    </div>
+                    ${gearBits.length ? `<div class="row-item__stats log-row__gear">${gearBits.join('')}</div>` : ''}
+                    ${log.note ? `<p class="log-row__note clamp-2">${escapeHTML(log.note)}</p>` : ''}
+                    ${photos.length ? `<div class="log-row__photos">${photos.map(url => `<img src="${escapeHTML(url)}" alt="渔获照片" loading="lazy">`).join('')}</div>` : ''}
+                </div>
+                <div class="row-item__side">
+                    ${weatherBits.length ? `<div class="log-row__weather">${weatherBits.join('')}</div>` : '<span></span>'}
+                    <div class="row-item__actions">
+                        <button class="btn btn-sm btn-secondary" onclick="editLog(${log.id})"><i class="fas fa-pen"></i>编辑</button>
+                        <button class="btn btn-sm btn-ghost text-danger" onclick="deleteLog(${log.id})" aria-label="删除记录"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderStats(logs) {
+        const stats = document.getElementById('logsStats');
+        if (!logs.length) { stats.hidden = true; return; }
+        const qty = logs.reduce((s, l) => s + Number(l.quantity || 0), 0);
+        const weight = logs.reduce((s, l) => s + Number(l.weight || 0), 0);
+        const hours = logs.reduce((s, l) => s + Number(l.duration || 0), 0) / 60;
+        document.getElementById('statCount').textContent = logs.length;
+        document.getElementById('statQty').innerHTML = `${qty}<small>条</small>`;
+        document.getElementById('statWeight').innerHTML = `${formatNumber(weight, 1)}<small>kg</small>`;
+        document.getElementById('statHours').innerHTML = `${formatNumber(hours, 1)}<small>小时</small>`;
+        stats.hidden = false;
+        window.AnglrReveal(stats.parentElement);
     }
 
     async function loadLogs() {
+        const logsList = document.getElementById('logsList');
+        logsList.innerHTML = AnglrSkeleton('row', 4);
         try {
             const logs = await apiFetch(buildLogsUrl());
-            const logsList = document.getElementById('logsList');
+            const latest = logs[0] ? new Date(logs[0].fishing_at) : null;
+            document.getElementById('logsSummary').textContent = logs.length
+                ? `共 ${logs.length} 条记录${latest && !Number.isNaN(latest.getTime()) ? ` · 最近一次 ${latest.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}` : ''}`
+                : '还没有记录，从第一次出钓开始积累。';
+            renderStats(logs);
 
             if (logs.length === 0) {
-                logsList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-info-circle"></i> 您还没有任何记录，<a href="{{ create_url | default('/logs/create') }}">创建第一条记录</a>
-                    </div>
-                `;
+                logsList.innerHTML = AnglrState({
+                    title: '还没有出钓记录',
+                    text: '记下时间、钓点、鱼种和天气，慢慢就能看出规律。',
+                    icon: 'fa-clipboard-list',
+                    actionHref: "{{ create_url | default('/logs/create') }}",
+                    actionText: '记第一笔'
+                });
                 return;
             }
 
-            logsList.innerHTML = logs.map(log => `
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h5 class="card-title mb-2">
-                                    <i class="fas fa-fish"></i>
-                                    ${escapeHTML(log.species || '未知鱼种')}
-                                    <span class="badge badge-muted">${log.quantity || 0}条</span>
-                                </h5>
-                                <p class="card-text text-muted mb-2">
-                                    <small>
-                                        <i class="fas fa-calendar"></i>
-                                        ${new Date(log.fishing_at).toLocaleString('zh-CN')}
-                                        ${log.user_nickname ? ` <span class="ms-3"><i class="fas fa-user"></i> ${escapeHTML(log.user_nickname)}</span>` : ''}
-                                    </small>
-                                </p>
-                                <p class="card-text">
-                                    <small>
-                                        <i class="fas fa-hourglass-end"></i> 作钓时长: ${formatDurationHours(log.duration)}
-                                        ${log.bait ? `| <i class="fas fa-worm"></i> 饵料: ${escapeHTML(log.bait)}` : ''}
-                                        ${log.weight ? `| <i class="fas fa-weight-hanging"></i> 重量: ${escapeHTML(log.weight)} kg` : ''}
-                                    </small>
-                                </p>
-                                <p class="card-text">
-                                    <small class="text-muted">
-                                        ${log.tide ? `<span class="me-3"><i class="fas fa-water"></i> 潮汐: ${escapeHTML(log.tide)}</span>` : ''}
-                                        ${log.rod ? `<span class="me-3"><i class="fas fa-grip-lines"></i> 鱼竿: ${escapeHTML(log.rod)}</span>` : ''}
-                                        ${log.line_group ? `<span class="me-3"><i class="fas fa-link"></i> 线组: ${escapeHTML(log.line_group)}</span>` : ''}
-                                        ${log.equipment ? `<span class="me-3"><i class="fas fa-toolbox"></i> 装备: ${escapeHTML(log.equipment)}</span>` : ''}
-                                    </small>
-                                </p>
-                                ${Array.isArray(log.photo_urls) && log.photo_urls.length ? `
-                                    <div class="d-flex gap-2 flex-wrap mb-2">
-                                        ${log.photo_urls.slice(0, 4).map(url => `<img src="${escapeHTML(url)}" alt="渔获照片" class="log-thumb">`).join('')}
-                                    </div>
-                                ` : ''}
-                                ${log.note ? `<p class="card-text"><small>${escapeHTML(log.note)}</small></p>` : ''}
-                                <div class="weather-info mt-2">
-                                    <small class="text-muted">
-                                        <i class="fas fa-cloud"></i> ${log.temperature || '?'}°C |
-                                        <i class="fas fa-wind"></i> ${log.wind_speed || '?'} m/s |
-                                        <i class="fas fa-gauge"></i> ${log.pressure || '?'} hPa
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="col-md-4 text-end log-card-actions">
-                                <button class="btn btn-sm btn-primary" onclick="editLog(${log.id})">
-                                    <i class="fas fa-edit"></i> 编辑
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteLog(${log.id})">
-                                    <i class="fas fa-trash"></i> 删除
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+            const groups = new Map();
+            logs.forEach(log => {
+                const d = new Date(log.fishing_at);
+                const key = Number.isNaN(d.getTime()) ? '未知时间' : monthKey(d);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(log);
+            });
+
+            logsList.innerHTML = Array.from(groups.entries()).map(([key, items]) => `
+                <div class="reveal">
+                    <div class="group-label">${escapeHTML(key)} · ${items.length} 次</div>
+                    <div class="row-list">${items.map(renderLog).join('')}</div>
                 </div>
             `).join('');
+            window.AnglrReveal(logsList);
         } catch (error) {
             console.error('Error:', error);
             if (error.message.includes('登录状态已失效')) {
                 redirectToLogin(error.message);
                 return;
             }
-            document.getElementById('logsList').innerHTML = `<div class="error-state">加载失败：${escapeHTML(error.message)}</div>`;
+            logsList.innerHTML = AnglrState({ type: 'error', title: '加载失败', text: error.message });
         }
     }
 
@@ -250,6 +222,7 @@
             const spots = await apiFetch('/api/spots');
             const select = document.getElementById('filterSpot');
             spots.forEach(spot => {
+                spotNames.set(spot.id, spot.name);
                 const option = document.createElement('option');
                 option.value = spot.id;
                 option.textContent = `${spot.name} (${spot.city || '未知'})`;
@@ -270,16 +243,14 @@
     }
 
     async function deleteLog(logId) {
-        if (!confirm('确认删除此记录？')) {
-            return;
-        }
+        const ok = await AnglrConfirm({ title: '删除记录', body: '删除后不可恢复，确认删除这条出钓记录？', okText: '删除', danger: true });
+        if (!ok) return;
 
         try {
             await apiFetch(`{{ api_url | default('/api/logs') }}/${logId}`, {
                 method: 'DELETE'
             });
-
-            alert('记录已删除');
+            AnglrToast.success('记录已删除');
             loadLogs();
         } catch (error) {
             console.error('Error:', error);
@@ -287,7 +258,7 @@
                 redirectToLogin(error.message);
                 return;
             }
-            alert('删除失败：' + error.message);
+            AnglrToast.error('删除失败：' + error.message);
         }
     }
 

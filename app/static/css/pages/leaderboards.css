@@ -1,0 +1,90 @@
+/* 排行榜 */
+.board__rule {
+    margin: var(--sp-1) 0 0;
+    color: var(--t-3);
+    font-size: var(--fs-xs);
+    font-weight: 400;
+}
+
+.podium {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-3);
+    padding: var(--sp-5);
+    background: linear-gradient(180deg, var(--c-primary-soft), var(--s-card));
+}
+
+.podium__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-4) var(--sp-3);
+    border: 1px solid var(--b-1);
+    border-radius: var(--r-lg);
+    background: var(--s-card);
+    text-align: center;
+}
+
+.podium__item--1 { order: 2; border-color: var(--medal-gold); box-shadow: var(--sh-2); }
+.podium__item--2 { order: 1; }
+.podium__item--3 { order: 3; }
+
+.podium__item--1 .avatar--lg { width: 84px; height: 84px; }
+
+.podium__name {
+    font-size: var(--fs-md);
+    color: var(--t-1);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.podium__level { color: var(--t-3); font-size: var(--fs-xs); }
+
+.podium__score {
+    color: var(--c-primary);
+    font-size: var(--fs-xl);
+    font-variant-numeric: tabular-nums;
+}
+
+.podium__score small {
+    display: block;
+    margin-top: 2px;
+    color: var(--t-3);
+    font-family: var(--ff-sans);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+}
+
+.board-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.board-list__row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: var(--sp-3);
+    align-items: center;
+    padding: var(--sp-3) var(--sp-5);
+    border-top: 1px solid var(--b-1);
+}
+
+.board-list__user { min-width: 0; }
+.board-list__user strong { display: block; color: var(--t-1); font-size: var(--fs-sm); }
+.board-list__user span { display: block; color: var(--t-3); font-size: var(--fs-xs); }
+
+.board-list__score {
+    color: var(--c-primary);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 575.98px) {
+    .podium { grid-template-columns: 1fr; padding: var(--sp-4); }
+    .podium__item--1, .podium__item--2, .podium__item--3 { order: 0; }
+    .board-list__row { padding-inline: var(--sp-4); }
+}
