@@ -97,7 +97,7 @@
         const photos = Array.isArray(log.photo_urls) ? log.photo_urls.slice(0, 3) : [];
         const weatherBits = [];
         if (log.temperature != null) weatherBits.push(`<span><i class="fas fa-temperature-half"></i>${formatNumber(log.temperature)}°C</span>`);
-        if (log.wind_speed != null) weatherBits.push(`<span><i class="fas fa-wind"></i>${formatNumber(log.wind_speed)} m/s</span>`);
+        if (log.wind_speed != null) weatherBits.push(`<span><i class="fas fa-wind"></i>${formatNumber(log.wind_speed)} km/h</span>`);
         if (log.pressure != null) weatherBits.push(`<span><i class="fas fa-gauge"></i>${formatNumber(log.pressure, 0)} hPa</span>`);
         const gearBits = [];
         if (log.tide) gearBits.push(`<span><i class="fas fa-water"></i>${escapeHTML(log.tide)}</span>`);

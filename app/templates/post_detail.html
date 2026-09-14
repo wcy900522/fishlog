@@ -3,179 +3,34 @@
 {% block title %}帖子详情 - AnglrLog{% endblock %}
 
 {% block extra_css %}
-<style>
-    .post-header {
-        background: linear-gradient(135deg, var(--surface), var(--surface-tint));
-        padding: 30px;
-        border-radius: var(--radius-lg);
-        margin-bottom: 30px;
-        border-left: 4px solid var(--brand-teal);
-    }
-
-    .post-title {
-        color: var(--brand-deep);
-        font-weight: bold;
-        font-size: 2rem;
-        margin-bottom: 10px;
-    }
-
-    .post-meta {
-        color: var(--text-muted);
-        font-size: 0.95rem;
-    }
-
-    .post-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 12px;
-        border-radius: var(--radius-lg);
-        background: var(--surface-tint);
-        color: var(--brand-teal);
-        font-size: 0.9rem;
-        font-weight: 600;
-        margin-bottom: 12px;
-    }
-
-    .post-content {
-        font-size: 1.1rem;
-        line-height: 1.8;
-        color: var(--text-dark);
-        margin: 30px 0;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-    }
-
-    .comments-section {
-        margin-top: 40px;
-        padding-top: 30px;
-        border-top: 2px solid var(--border-soft);
-    }
-
-    .comment {
-        background: var(--surface-soft);
-        padding: 20px;
-        border-radius: var(--radius);
-        margin-bottom: 15px;
-        border-left: 3px solid var(--brand-mint);
-    }
-
-    .comment-author {
-        font-weight: 600;
-        color: var(--brand-deep);
-        margin-bottom: 5px;
-    }
-
-    .comment-meta {
-        font-size: 0.85rem;
-        color: var(--text-muted);
-        margin-bottom: 10px;
-    }
-
-    .comment-content {
-        color: var(--text-dark);
-        line-height: 1.6;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-    }
-
-    .comment-delete-btn {
-        font-size: 0.8rem;
-        margin-top: 10px;
-    }
-
-    .new-comment-form {
-        background: var(--surface-soft);
-        padding: 20px;
-        border-radius: var(--radius);
-        margin-bottom: 30px;
-    }
-
-    .post-actions {
-        margin-bottom: 20px;
-    }
-
-    .post-actions .btn {
-        margin-right: 10px;
-    }
-
-    .level-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 2px 8px;
-        border-radius: 999px;
-        background: rgba(var(--brand-teal-rgb), 0.12);
-        color: var(--brand-deep);
-        font-size: 0.78rem;
-        font-weight: 700;
-        margin-left: 8px;
-    }
-
-    @media (max-width: 576px) {
-        .post-header {
-            padding: 18px;
-            border-radius: var(--radius);
-            margin-bottom: 18px;
-        }
-
-        .post-title {
-            font-size: 1.45rem;
-            line-height: 1.35;
-        }
-
-        .post-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            line-height: 1.5;
-        }
-
-        .post-content {
-            font-size: 1rem;
-            line-height: 1.75;
-            margin: 20px 0;
-        }
-
-        .post-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .post-actions .btn {
-            margin-right: 0;
-            width: 100%;
-        }
-
-        .new-comment-form,
-        .comment {
-            padding: 16px;
-            border-radius: var(--radius);
-        }
-
-        .comment-delete-btn {
-            width: 100%;
-            margin-right: 0;
-        }
-    }
-</style>
+<link rel="stylesheet" href="/static/css/pages/post_detail.css?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <a href="/forum" class="btn btn-outline-secondary btn-sm">
-        <i class="fas fa-arrow-left"></i> 返回讨论列表
-    </a>
-</div>
+<div class="container-app container-app--narrow">
+    <ol class="breadcrumb-app" aria-label="面包屑">
+        <li><a href="/">首页</a></li>
+        <li><a href="/forum">讨论专区</a></li>
+        <li id="crumb-post">帖子</li>
+    </ol>
 
-<div id="postContent">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">加载中...</span>
+    <div id="postContent">
+        <div class="post-head">
+            <span class="skeleton skeleton--title"></span>
+            <span class="skeleton skeleton--text"></span>
+        </div>
+        <span class="skeleton skeleton--text"></span>
+        <span class="skeleton skeleton--text"></span>
+        <span class="skeleton skeleton--text"></span>
+        <span class="skeleton skeleton--text"></span>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
     const postId = {{ post_id }};
+    const POST_TAGS = ['海钓', '路亚', '台钓', '飞钓', '黑坑', '野钓', '技术分享', '装备评测', '钓点攻略', '秀出鱼获'];
     let currentUserId = null;
     let currentUserIsAdmin = false;
     let postUserId = null;
@@ -183,7 +38,8 @@
 
     function formatDate(dateString) {
         const date = new Date(dateString);
-        return date.toLocaleString('zh-CN');
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
     function escapeHTML(value) {
@@ -198,269 +54,236 @@
         });
     }
 
-    async function loadPost() {
-        try {
-            const response = await fetch(`/api/forum/posts/${postId}`);
-            if (!response.ok) throw new Error('Failed to load post');
+    function initialOf(name) {
+        return escapeHTML(String(name || '匿').trim().charAt(0).toUpperCase() || '匿');
+    }
 
-            const post = await response.json();
-            currentPost = post;
-            postUserId = post.user_id;
+    function levelChip(level, title) {
+        return `<span class="post-level">Lv${Number(level) || 1} · ${escapeHTML(title || '初学钓手')}</span>`;
+    }
 
-            let html = `
-                <div class="post-header">
-                    <span class="post-tag">${escapeHTML(post.tag || '野钓')}</span>
-                    <h1 class="post-title">${escapeHTML(post.title)}</h1>
-                    <div class="post-meta">
-                        <i class="fas fa-user"></i> ${escapeHTML(post.user_nickname || '未知用户')}
-                        <span class="level-chip">Lv${post.user_level || 1} ${escapeHTML(post.user_title || '初学钓手')}</span>
-                        <i class="fas fa-clock ms-3"></i> ${formatDate(post.created_at)}
-                        <i class="fas fa-eye ms-3"></i> ${post.view_count || 0}
-                        <button class="btn btn-sm btn-outline-primary ms-3" onclick="likePost(event)">
-                            <i class="fas fa-heart"></i> ${post.like_count || 0}
-                        </button>
-                        ${post.is_featured ? '<span class="badge badge-amber ms-2"><i class="fas fa-star"></i> 精华</span>' : ''}
-            `;
+    function handleError(error, prefix) {
+        console.error('Error:', error);
+        if (String(error.message).includes('登录状态已失效')) {
+            redirectToLogin(error.message);
+            return;
+        }
+        AnglrToast.error(prefix ? `${prefix}：${error.message}` : error.message);
+    }
 
-            const token = localStorage.getItem('token');
-            const isLoggedIn = Boolean(token && currentUserId);
-            if (isLoggedIn && (currentUserId === postUserId || currentUserIsAdmin)) {
-                html += `
-                    <div class="post-actions mt-3">
-                        <button class="btn btn-sm btn-warning" onclick="editPost()">
-                            <i class="fas fa-edit"></i> 编辑
+    function requireLogin(message) {
+        if (localStorage.getItem('token')) return true;
+        redirectToLogin(message || '请先登录');
+        return false;
+    }
+
+    function renderComment(comment, isLoggedIn) {
+        const canManage = isLoggedIn && (currentUserId === comment.user_id || currentUserIsAdmin);
+        return `
+            <article class="comment" id="comment-${comment.id}">
+                <span class="avatar avatar--sm" aria-hidden="true">${initialOf(comment.user_nickname)}</span>
+                <div class="comment__main">
+                    <div class="comment__head">
+                        <strong>${escapeHTML(comment.user_nickname || '未知用户')}</strong>
+                        ${levelChip(comment.user_level, comment.user_title)}
+                        <time datetime="${escapeHTML(comment.created_at)}">${formatDate(comment.created_at)}</time>
+                    </div>
+                    <div class="comment__content" id="comment-content-${comment.id}">${escapeHTML(comment.content)}</div>
+                    <div class="comment__actions">
+                        <button class="btn btn-sm btn-ghost" type="button" onclick="likeComment(event, ${comment.id})" aria-label="点赞评论">
+                            <i class="fas fa-heart"></i>${comment.like_count || 0}
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="deletePost()">
-                            <i class="fas fa-trash"></i> 删除
-                        </button>
-                        ${currentUserIsAdmin && !post.is_featured ? `
-                            <button class="btn btn-sm btn-outline-primary" onclick="featurePost()">
-                                <i class="fas fa-star"></i> 设为精华
-                            </button>
+                        ${canManage ? `
+                            <button class="btn btn-sm btn-ghost" type="button" onclick="editComment(${comment.id})"><i class="fas fa-pen"></i>编辑</button>
+                            <button class="btn btn-sm btn-ghost text-danger" type="button" onclick="deleteComment(${comment.id})"><i class="fas fa-trash"></i>删除</button>
                         ` : ''}
                     </div>
-                `;
-            }
-
-            html += `
-                    </div>
                 </div>
+            </article>
+        `;
+    }
 
-                <div class="post-content">${escapeHTML(post.content)}</div>
+    async function loadPost() {
+        const container = document.getElementById('postContent');
+        try {
+            const post = await apiFetch(`/api/forum/posts/${postId}`);
+            currentPost = post;
+            postUserId = post.user_id;
+            document.title = `${post.title} - 讨论专区 - AnglrLog`;
+            document.getElementById('crumb-post').textContent = post.title;
 
-                ${Array.isArray(post.image_urls) && post.image_urls.length ? `
-                    <div class="row g-3 mb-4">
-                        ${post.image_urls.map(url => `
-                            <div class="col-md-4">
-                                <a href="${escapeHTML(url)}" target="_blank" rel="noopener">
-                                    <img src="${escapeHTML(url)}" alt="帖子图片" class="w-100 rounded shadow-sm" style="height: 220px; object-fit: cover;">
-                                </a>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
+            const isLoggedIn = Boolean(localStorage.getItem('token') && currentUserId);
+            const canManage = isLoggedIn && (currentUserId === postUserId || currentUserIsAdmin);
+            const images = Array.isArray(post.image_urls) ? post.image_urls.filter(Boolean) : [];
+            const comments = Array.isArray(post.comments) ? post.comments : [];
 
-                <div class="comments-section">
-                    <h3><i class="fas fa-comments"></i> 评论 (${post.comments.length})</h3>
-                    <div class="divider"></div>
-            `;
-
-            if (isLoggedIn) {
-                html += `
-                    <div class="new-comment-form">
-                        <div class="mb-3">
-                            <label for="newComment" class="form-label">发表评论</label>
-                            <textarea class="form-control" id="newComment" rows="3" placeholder="输入你的评论..."></textarea>
+            container.innerHTML = `
+                <article>
+                    <header class="post-head">
+                        <div class="post-head__tags">
+                            <span class="badge badge-info">${escapeHTML(post.tag || '野钓')}</span>
+                            ${post.is_featured ? '<span class="badge badge-amber"><i class="fas fa-star"></i>精华</span>' : ''}
                         </div>
-                        <button class="btn btn-primary" onclick="submitComment()">
-                            <i class="fas fa-comment"></i> 发表评论
+                        <h1 class="post-head__title">${escapeHTML(post.title)}</h1>
+                        <div class="post-head__meta">
+                            <span class="post-head__author">
+                                <span class="avatar avatar--sm" aria-hidden="true">${initialOf(post.user_nickname)}</span>
+                                <strong>${escapeHTML(post.user_nickname || '未知用户')}</strong>
+                                ${levelChip(post.user_level, post.user_title)}
+                            </span>
+                            <span><i class="fas fa-clock"></i>${formatDate(post.created_at)}</span>
+                            <span><i class="fas fa-eye"></i>${post.view_count || 0} 次浏览</span>
+                        </div>
+                    </header>
+
+                    <div class="post-body">${escapeHTML(post.content)}</div>
+
+                    ${images.length ? `
+                        <div class="post-gallery post-gallery--${Math.min(images.length, 3)}">
+                            ${images.map(url => `
+                                <a href="${escapeHTML(url)}" target="_blank" rel="noopener">
+                                    <img src="${escapeHTML(url)}" alt="帖子图片" loading="lazy">
+                                </a>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <div class="post-actions">
+                        <button class="btn btn-secondary" type="button" onclick="likePost(event)">
+                            <i class="fas fa-heart"></i>赞 ${post.like_count || 0}
                         </button>
+                        <a class="btn btn-ghost" href="#comments"><i class="fas fa-comment"></i>评论 ${comments.length}</a>
+                        <span class="post-actions__spacer"></span>
+                        ${canManage ? `
+                            <button class="btn btn-secondary" type="button" onclick="editPost()"><i class="fas fa-pen"></i>编辑</button>
+                            <button class="btn btn-danger" type="button" onclick="deletePost()"><i class="fas fa-trash"></i>删除</button>
+                        ` : ''}
+                        ${currentUserIsAdmin && !post.is_featured ? `
+                            <button class="btn btn-secondary" type="button" onclick="featurePost()"><i class="fas fa-star"></i>设为精华</button>
+                        ` : ''}
                     </div>
-                `;
-            } else {
-                html += `
-                    <div class="alert alert-info">
-                        <i class="fas fa-right-to-bracket"></i>
-                        <a href="/login">登录后评论</a>
-                    </div>
-                `;
-            }
+                </article>
 
-            if (post.comments.length === 0) {
-                if (isLoggedIn) {
-                    html += '<p class="text-muted">还没有评论，成为第一个评论者吧！</p>';
-                } else {
-                    html += '<p class="text-muted">还没有评论，<a href="/login">登录后评论</a>。</p>';
-                }
-            } else {
-                post.comments.forEach(comment => {
-                    html += `
-                        <div class="comment">
-                            <div class="comment-author">
-                                ${escapeHTML(comment.user_nickname || '未知用户')}
-                                <span class="level-chip">Lv${comment.user_level || 1} ${escapeHTML(comment.user_title || '初学钓手')}</span>
+                <section id="comments" aria-labelledby="commentsTitle">
+                    <div class="section-bar">
+                        <h2 class="section-title" id="commentsTitle"><i class="fas fa-comments" aria-hidden="true"></i>评论<span class="section-count">· ${comments.length} 条</span></h2>
+                    </div>
+
+                    ${isLoggedIn ? `
+                        <div class="card comment-form">
+                            <div class="card-body">
+                                <label for="newComment" class="form-label">发表评论</label>
+                                <textarea class="form-control" id="newComment" rows="3" maxlength="2000" placeholder="说说你的看法或经验…"></textarea>
+                                <div class="comment-form__actions">
+                                    <button class="btn btn-primary" type="button" id="submitCommentBtn" onclick="submitComment()"><i class="fas fa-paper-plane"></i>发表评论</button>
+                                </div>
                             </div>
-                            <div class="comment-meta">${formatDate(comment.created_at)}</div>
-                            <div class="comment-content" id="comment-content-${comment.id}">${escapeHTML(comment.content)}</div>
-                            <button class="btn btn-sm btn-outline-primary comment-delete-btn" onclick="likeComment(event, ${comment.id})">
-                                <i class="fas fa-heart"></i> ${comment.like_count || 0}
-                            </button>
-                    `;
+                        </div>
+                    ` : `
+                        <div class="alert alert-info comment-form">
+                            <i class="fas fa-right-to-bracket"></i>
+                            <span><a href="/login">登录</a> 后即可点赞和评论。</span>
+                        </div>
+                    `}
 
-                    if (isLoggedIn && (currentUserId === comment.user_id || currentUserIsAdmin)) {
-                        html += `
-                            <button class="btn btn-sm btn-warning comment-delete-btn" onclick="editComment(${comment.id})">
-                                <i class="fas fa-edit"></i> 编辑
-                            </button>
-                            <button class="btn btn-sm btn-danger comment-delete-btn" onclick="deleteComment(${comment.id})">
-                                <i class="fas fa-trash"></i> 删除
-                            </button>
-                        `;
-                    }
-
-                    html += '</div>';
-                });
-            }
-
-            html += '</div>';
-
-            document.getElementById('postContent').innerHTML = html;
+                    <div class="comment-list">
+                        ${comments.length
+                            ? comments.map(comment => renderComment(comment, isLoggedIn)).join('')
+                            : AnglrState({ title: '还没有评论', text: isLoggedIn ? '说点什么，成为第一个评论的人。' : '登录后可以第一个发表看法。', icon: 'fa-comment-dots' })}
+                    </div>
+                </section>
+            `;
         } catch (error) {
             console.error('Error:', error);
-            document.getElementById('postContent').innerHTML = '<div class="alert alert-danger">加载失败</div>';
+            container.innerHTML = AnglrState({ type: 'error', title: '帖子加载失败', text: error.message, actionHref: '/forum', actionText: '返回讨论专区' });
         }
     }
 
     async function submitComment() {
-        const content = document.getElementById('newComment').value.trim();
-        const token = localStorage.getItem('token');
-
+        const input = document.getElementById('newComment');
+        const content = input.value.trim();
         if (!content) {
-            alert('评论内容不能为空');
+            AnglrToast.warning('评论内容不能为空');
+            input.focus();
             return;
         }
+        if (!requireLogin('登录后即可评论')) return;
 
-        if (!token) {
-            alert('请先登录');
-            return;
-        }
-
+        const button = document.getElementById('submitCommentBtn');
+        button.disabled = true;
         try {
-            const response = await fetch(`/api/forum/posts/${postId}/comments`, {
+            await apiFetch(`/api/forum/posts/${postId}/comments`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ content: content })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
             });
-
-            if (!response.ok) throw new Error('Failed to submit comment');
-
-            document.getElementById('newComment').value = '';
+            AnglrToast.success('评论已发表');
             loadPost();
         } catch (error) {
-            console.error('Error:', error);
-            alert('评论失败');
+            button.disabled = false;
+            handleError(error, '评论失败');
         }
     }
 
     async function likePost(event) {
         event.stopPropagation();
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('请先登录');
-            return;
-        }
+        if (!requireLogin('登录后即可点赞')) return;
         try {
-            const response = await fetch(`/api/forum/posts/${postId}/likes`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({}));
-                throw new Error(error.detail || '点赞失败');
-            }
+            await apiFetch(`/api/forum/posts/${postId}/likes`, { method: 'POST' });
             loadPost();
         } catch (error) {
-            alert(error.message);
+            handleError(error);
         }
     }
 
     async function likeComment(event, commentId) {
         event.stopPropagation();
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('请先登录');
-            return;
-        }
+        if (!requireLogin('登录后即可点赞')) return;
         try {
-            const response = await fetch(`/api/forum/comments/${commentId}/likes`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({}));
-                throw new Error(error.detail || '点赞失败');
-            }
+            await apiFetch(`/api/forum/comments/${commentId}/likes`, { method: 'POST' });
             loadPost();
         } catch (error) {
-            alert(error.message);
+            handleError(error);
         }
     }
 
     async function featurePost() {
-        const token = localStorage.getItem('token');
-        if (!confirm('确定将该帖子设为精华并奖励作者 100 XP 吗？')) return;
+        const ok = await AnglrConfirm({ title: '设为精华', body: '将该帖子设为精华并奖励作者 100 XP？', okText: '设为精华' });
+        if (!ok) return;
         try {
-            const response = await fetch(`/api/forum/posts/${postId}/feature`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({}));
-                throw new Error(error.detail || '设置失败');
-            }
+            await apiFetch(`/api/forum/posts/${postId}/feature`, { method: 'POST' });
+            AnglrToast.success('已设为精华');
             loadPost();
         } catch (error) {
-            alert(error.message);
+            handleError(error, '设置失败');
         }
     }
 
     async function deleteComment(commentId) {
-        if (!confirm('确定要删除这条评论吗？')) return;
-
-        const token = localStorage.getItem('token');
+        const ok = await AnglrConfirm({ title: '删除评论', body: '删除后不可恢复，确认删除这条评论？', okText: '删除', danger: true });
+        if (!ok) return;
         try {
-            const response = await fetch(`/api/forum/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!response.ok) throw new Error('Failed to delete comment');
-
+            await apiFetch(`/api/forum/comments/${commentId}`, { method: 'DELETE' });
+            AnglrToast.success('评论已删除');
             loadPost();
         } catch (error) {
-            console.error('Error:', error);
-            alert('删除失败');
+            handleError(error, '删除失败');
         }
     }
 
     function editComment(commentId) {
         const comment = currentPost?.comments?.find(item => item.id === commentId);
-        if (!comment) return;
-
         const contentEl = document.getElementById(`comment-content-${commentId}`);
-        if (!contentEl) return;
+        if (!comment || !contentEl) return;
 
         contentEl.innerHTML = `
-            <textarea class="form-control mb-2" id="editCommentInput-${commentId}" rows="3">${escapeHTML(comment.content)}</textarea>
-            <button class="btn btn-sm btn-primary" onclick="saveCommentEdit(${commentId})">
-                <i class="fas fa-check"></i> 保存
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="loadPost()">
-                <i class="fas fa-times"></i> 取消
-            </button>
+            <div class="comment__edit">
+                <textarea class="form-control" id="editCommentInput-${commentId}" rows="3" maxlength="2000">${escapeHTML(comment.content)}</textarea>
+                <div class="comment__edit-actions">
+                    <button class="btn btn-sm btn-secondary" type="button" onclick="loadPost()"><i class="fas fa-xmark"></i>取消</button>
+                    <button class="btn btn-sm btn-primary" type="button" onclick="saveCommentEdit(${commentId})"><i class="fas fa-check"></i>保存</button>
+                </div>
+            </div>
         `;
         document.getElementById(`editCommentInput-${commentId}`).focus();
     }
@@ -468,58 +291,38 @@
     async function saveCommentEdit(commentId) {
         const input = document.getElementById(`editCommentInput-${commentId}`);
         if (!input) return;
-
-        const trimmedContent = input.value.trim();
-        if (!trimmedContent) {
-            alert('评论内容不能为空');
+        const content = input.value.trim();
+        if (!content) {
+            AnglrToast.warning('评论内容不能为空');
             return;
         }
-
-        const token = localStorage.getItem('token');
         try {
-            const response = await fetch(`/api/forum/comments/${commentId}`, {
+            await apiFetch(`/api/forum/comments/${commentId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ content: trimmedContent })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
             });
-
-            if (!response.ok) throw new Error('Failed to update comment');
-
+            AnglrToast.success('评论已更新');
             loadPost();
         } catch (error) {
-            console.error('Error:', error);
-            alert('修改失败');
+            handleError(error, '修改失败');
         }
     }
 
     async function deletePost() {
-        if (!confirm('确定要删除这个帖子吗？')) return;
-
-        const token = localStorage.getItem('token');
+        const ok = await AnglrConfirm({ title: '删除帖子', body: '删除后帖子和评论都不可恢复，确认删除？', okText: '删除', danger: true });
+        if (!ok) return;
         try {
-            const response = await fetch(`/api/forum/posts/${postId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!response.ok) throw new Error('Failed to delete post');
-
-            alert('帖子已删除');
+            await apiFetch(`/api/forum/posts/${postId}`, { method: 'DELETE' });
+            try { sessionStorage.setItem('anglr.flash', '帖子已删除'); } catch (e) { /* ignore */ }
             window.location.href = '/forum';
         } catch (error) {
-            console.error('Error:', error);
-            alert('删除失败');
+            handleError(error, '删除失败');
         }
     }
 
-    const POST_TAGS = ['海钓', '路亚', '台钓', '飞钓', '黑坑', '野钓', '技术分享', '装备评测', '钓点攻略', '秀出鱼获'];
-
     function editPost() {
         if (!currentPost) return;
-
         const currentTag = currentPost.tag || '野钓';
         const imageUrlsText = Array.isArray(currentPost.image_urls) ? currentPost.image_urls.join('\n') : '';
         const tagOptions = POST_TAGS.map(tag =>
@@ -527,47 +330,47 @@
         ).join('');
 
         document.getElementById('postContent').innerHTML = `
-            <div class="post-header">
-                <h2 class="post-title">编辑帖子</h2>
-                <div class="mb-3">
-                    <label for="editPostTitle" class="form-label">标题</label>
-                    <input type="text" class="form-control" id="editPostTitle" value="${escapeHTML(currentPost.title)}">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-pen" aria-hidden="true"></i>编辑帖子</h2>
                 </div>
-                <div class="mb-3">
-                    <label for="editPostTag" class="form-label">标签</label>
-                    <select class="form-select" id="editPostTag">${tagOptions}</select>
-                </div>
-                <div class="mb-3">
-                    <label for="editPostContent" class="form-label">内容</label>
-                    <textarea class="form-control" id="editPostContent" rows="8">${escapeHTML(currentPost.content)}</textarea>
-                </div>
-                <div class="mb-3">
-                    <label for="editPostImages" class="form-label">图片地址（一行一个 URL）</label>
-                    <textarea class="form-control" id="editPostImages" rows="3">${escapeHTML(imageUrlsText)}</textarea>
-                </div>
-                <div class="post-actions">
-                    <button class="btn btn-primary" onclick="savePostEdit()">
-                        <i class="fas fa-check"></i> 保存
-                    </button>
-                    <button class="btn btn-outline-secondary" onclick="loadPost()">
-                        <i class="fas fa-times"></i> 取消
-                    </button>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="span-2">
+                            <label for="editPostTitle" class="form-label">标题</label>
+                            <input type="text" class="form-control" id="editPostTitle" maxlength="255" value="${escapeHTML(currentPost.title)}">
+                        </div>
+                        <div class="span-2">
+                            <label for="editPostTag" class="form-label">标签</label>
+                            <select class="form-select" id="editPostTag">${tagOptions}</select>
+                        </div>
+                        <div class="span-2">
+                            <label for="editPostContent" class="form-label">内容</label>
+                            <textarea class="form-control" id="editPostContent" rows="10">${escapeHTML(currentPost.content)}</textarea>
+                        </div>
+                        <div class="span-2">
+                            <label for="editPostImages" class="form-label">图片地址</label>
+                            <textarea class="form-control" id="editPostImages" rows="3" placeholder="一行一个 URL">${escapeHTML(imageUrlsText)}</textarea>
+                            <span class="form-hint">「秀出鱼获」最多 3 张，其他标签最多 5 张。</span>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" type="button" onclick="loadPost()"><i class="fas fa-xmark"></i>取消</button>
+                        <button class="btn btn-primary" type="button" onclick="savePostEdit()"><i class="fas fa-check"></i>保存</button>
+                    </div>
                 </div>
             </div>
         `;
+        document.getElementById('editPostTitle').focus();
     }
 
     function savePostEdit() {
-        const title = document.getElementById('editPostTitle').value;
-        const content = document.getElementById('editPostContent').value;
-        const tag = document.getElementById('editPostTag').value;
-        const imageUrls = document.getElementById('editPostImages').value;
-
+        const tag = document.getElementById('editPostTag').value.trim();
         updatePost({
-            title: title.trim(),
-            content: content.trim(),
-            tag: tag.trim(),
-            image_urls: parseImageUrls(imageUrls, tag.trim())
+            title: document.getElementById('editPostTitle').value.trim(),
+            content: document.getElementById('editPostContent').value.trim(),
+            tag,
+            image_urls: parseImageUrls(document.getElementById('editPostImages').value, tag)
         });
     }
 
@@ -582,48 +385,28 @@
 
     async function updatePost(postData) {
         if (!postData.title || !postData.content) {
-            alert('标题和内容不能为空');
+            AnglrToast.warning('标题和内容不能为空');
             return;
         }
-
-        const token = localStorage.getItem('token');
         try {
-            const response = await fetch(`/api/forum/posts/${postId}`, {
+            await apiFetch(`/api/forum/posts/${postId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(postData)
             });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Failed to update post');
-            }
-
-            alert('帖子已更新');
+            AnglrToast.success('帖子已更新');
             loadPost();
         } catch (error) {
-            console.error('Error:', error);
-            alert(`更新失败：${error.message}`);
+            handleError(error, '更新失败');
         }
     }
 
     document.addEventListener('DOMContentLoaded', async function() {
-        const token = localStorage.getItem('token');
-        if (token) {
+        if (localStorage.getItem('token')) {
             try {
-                const response = await fetch('/api/auth/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    const me = await response.json();
-                    currentUserId = me.id;
-                    currentUserIsAdmin = Boolean(me.is_admin);
-                } else {
-                    localStorage.removeItem('token');
-                }
+                const me = await apiFetch('/api/auth/me');
+                currentUserId = me.id;
+                currentUserIsAdmin = Boolean(me.is_admin);
             } catch (e) {
                 console.error('Failed to fetch current user');
             }

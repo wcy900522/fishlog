@@ -1,0 +1,172 @@
+/* 钓点详情 */
+.spot-map { height: 420px; }
+
+/* 图片：1 张横幅，2-3 张并排 */
+.spot-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-2);
+}
+
+.spot-gallery[hidden] { display: none; }
+
+.spot-gallery img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--r-md);
+    background: var(--s-muted);
+}
+
+.spot-gallery--1 { grid-template-columns: 1fr; }
+.spot-gallery--1 img { aspect-ratio: 21 / 9; }
+.spot-gallery--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* 基础信息 */
+.spot-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--sp-4);
+    margin: 0;
+}
+
+.spot-facts > div { min-width: 0; }
+
+.spot-facts dt {
+    color: var(--t-3);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+}
+
+.spot-facts dd {
+    margin: 2px 0 0;
+    color: var(--t-1);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.spot-facts dd i {
+    margin-right: var(--sp-1);
+    color: var(--c-accent);
+}
+
+.spot-desc {
+    margin: 0;
+    color: var(--t-2);
+    line-height: 1.8;
+    white-space: pre-line;
+}
+
+/* 钓友记录行 */
+.spot-log__weather {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--sp-1) var(--sp-3);
+    color: var(--t-3);
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+}
+
+.spot-log__weather span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+}
+
+.spot-log__note {
+    margin: var(--sp-2) 0 0;
+    color: var(--t-2);
+    font-size: var(--fs-sm);
+}
+
+.spot-log__photos {
+    display: flex;
+    gap: var(--sp-2);
+    margin-top: var(--sp-2);
+}
+
+.spot-log__photos img {
+    width: 72px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: var(--r-sm);
+    background: var(--s-muted);
+}
+
+.section-count {
+    margin-left: var(--sp-1);
+    color: var(--t-3);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+}
+
+/* 侧栏：天气 */
+.spot-weather .stat-grid { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+
+.spot-weather__status {
+    margin: 0;
+    color: var(--t-inverse-2);
+    font-size: var(--fs-sm);
+}
+
+.spot-weather__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-4);
+}
+
+.spot-weather__head h2 {
+    margin: 0 0 var(--sp-1);
+    color: #fff;
+    font-size: var(--fs-lg);
+}
+
+.spot-weather__icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--c-amber);
+    font-size: 1.2rem;
+}
+
+/* 侧栏：统计 */
+.spot-species {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.spot-species li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    font-size: var(--fs-sm);
+    color: var(--t-2);
+}
+
+.spot-species li span { display: inline-flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+.spot-species li span i { color: var(--c-accent); }
+.spot-species li strong { color: var(--t-1); font-variant-numeric: tabular-nums; }
+
+.spot-cta p {
+    margin: var(--sp-3) 0 0;
+    color: var(--t-3);
+    font-size: var(--fs-xs);
+}
+
+@media (max-width: 767.98px) {
+    .spot-map { height: 280px; }
+    .spot-log__weather { justify-content: flex-start; }
+}

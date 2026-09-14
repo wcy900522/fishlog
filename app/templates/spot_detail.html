@@ -1,217 +1,133 @@
 {% extends "base.html" %}
+{% set needs_map = true %}
 
 {% block title %}钓点详情 - AnglrLog{% endblock %}
 
 {% block extra_css %}
-<style>
-    .map-container {
-        height: 400px;
-        border-radius: var(--radius);
-        overflow: hidden;
-    }
-
-    .detail-sidebar {
-        position: sticky;
-        top: 100px;
-    }
-
-    /* 天气数据磁贴 */
-    .weather-metric {
-        text-align: center;
-    }
-
-    .weather-metric__icon {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-    }
-
-    .weather-metric__icon--temp { color: var(--brand-coral); }
-    .weather-metric__icon--wind { color: var(--brand-teal); }
-    .weather-metric__icon--pressure { color: var(--brand-mint); }
-
-    .weather-metric__label {
-        color: var(--text-muted);
-    }
-
-    .weather-metric__value {
-        font-weight: 700;
-        color: var(--brand-deep);
-    }
-
-    /* 社区记录卡片 */
-    .community-log {
-        padding-left: 15px;
-        margin-bottom: 20px;
-        padding-bottom: 20px;
-        border-left: 4px solid var(--brand-teal);
-        border-bottom: 1px solid var(--border-soft);
-    }
-
-    .community-log__head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .community-log__author {
-        margin: 0;
-        color: var(--brand-deep);
-        font-weight: 600;
-    }
-
-    .community-log__date {
-        color: var(--text-muted);
-    }
-
-    .community-log__body {
-        padding: 12px;
-        margin-bottom: 10px;
-        background: var(--surface-soft);
-        border-radius: var(--radius);
-    }
-
-    .community-log__row {
-        margin: 8px 0;
-        color: var(--text-dark);
-    }
-
-    .community-log__key {
-        color: var(--brand-teal);
-    }
-
-    .community-log__env {
-        display: flex;
-        gap: 15px;
-        font-size: 0.9rem;
-        color: var(--text-muted);
-    }
-
-    /* 侧栏统计 */
-    .spot-stats {
-        text-align: center;
-    }
-
-    .spot-stats__number {
-        color: var(--brand-teal);
-        font-weight: 700;
-    }
-
-    .spot-stats__row {
-        margin: 5px 0;
-        color: var(--text-dark);
-    }
-
-    .panel-spinner {
-        color: var(--brand-teal);
-    }
-
-    .panel-loading {
-        padding: 30px;
-        text-align: center;
-    }
-</style>
+<link rel="stylesheet" href="/static/css/pages/spot_detail.css?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <a href="/" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left"></i> 返回首页
-        </a>
+<div class="container-app">
+    <ol class="breadcrumb-app" aria-label="面包屑">
+        <li><a href="/">首页</a></li>
+        <li><a href="/spots">钓点</a></li>
+        <li id="crumb-spot">钓点详情</li>
+    </ol>
+
+    <header class="page-head reveal">
+        <div class="page-head__text">
+            <p class="page-head__eyebrow">钓点档案</p>
+            <h1 class="page-head__title"><i class="fas fa-location-dot" aria-hidden="true"></i><span id="spot-name">加载中…</span></h1>
+            <p class="page-head__sub" id="spot-sub">正在获取钓点信息</p>
+            <div class="chip-row mt-3" id="spot-chips" hidden></div>
+        </div>
+        <div class="page-head__actions">
+            <a class="btn btn-secondary" id="navigateBtn" href="#" target="_blank" rel="noopener" hidden><i class="fas fa-location-arrow"></i>高德导航</a>
+            <button class="btn btn-primary" id="recordBtn" type="button" onclick="recordFishing()"><i class="fas fa-plus"></i>在这里记一笔</button>
+        </div>
+    </header>
+
+    <div class="layout-split">
+        <div class="stack">
+            <div class="spot-gallery reveal" id="spot-gallery" hidden></div>
+
+            <div class="map-frame reveal">
+                <div id="map" class="spot-map" aria-label="钓点位置地图"></div>
+            </div>
+
+            <section class="card reveal" aria-labelledby="infoTitle">
+                <div class="card-header">
+                    <h2 id="infoTitle"><i class="fas fa-circle-info" aria-hidden="true"></i>钓点信息</h2>
+                </div>
+                <div class="card-body stack stack--tight">
+                    <dl class="spot-facts">
+                        <div><dt>省份</dt><dd id="spot-province">—</dd></div>
+                        <div><dt>城市</dt><dd id="spot-city">—</dd></div>
+                        <div><dt>水体类型</dt><dd id="spot-water-type">—</dd></div>
+                        <div><dt>目标鱼种</dt><dd id="spot-target">—</dd></div>
+                        <div><dt>最佳季节</dt><dd id="spot-season">—</dd></div>
+                        <div><dt>坐标</dt><dd class="tabular"><span id="spot-lat">—</span>, <span id="spot-lng">—</span></dd></div>
+                        <div><dt>收录</dt><dd id="spot-source">—</dd></div>
+                    </dl>
+                    <div class="divider my-0"></div>
+                    <p class="spot-desc" id="spot-description">暂无介绍</p>
+                </div>
+            </section>
+
+            <section aria-labelledby="logsTitle">
+                <div class="section-bar reveal">
+                    <h2 class="section-title" id="logsTitle"><i class="fas fa-clipboard-list" aria-hidden="true"></i>钓友记录<span class="section-count" id="log-count"></span></h2>
+                    <div class="section-actions">
+                        <a class="btn btn-ghost" href="/logs/create?spot_id={{ spot_id }}" data-auth-only hidden><i class="fas fa-pen"></i>分享我的渔获</a>
+                    </div>
+                </div>
+                <div class="row-list" id="community-logs">
+                    {% for _ in range(2) %}
+                    <div class="row-item"><span class="skeleton skeleton--circle"></span><div class="row-item__main"><span class="skeleton skeleton--title"></span><span class="skeleton skeleton--text"></span></div><span class="skeleton skeleton--btn"></span></div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+
+        <aside class="layout-split__aside">
+            <section class="card card--inverse spot-weather reveal" aria-labelledby="weatherTitle">
+                <div class="card-body">
+                    <div class="spot-weather__head">
+                        <div>
+                            <h2 id="weatherTitle">实时天气</h2>
+                            <p class="spot-weather__status" id="weather-status">正在获取钓点天气…</p>
+                        </div>
+                        <span class="spot-weather__icon" aria-hidden="true"><i class="fas fa-cloud-sun"></i></span>
+                    </div>
+                    <div class="stat-grid" id="weather-info">
+                        <div class="stat-tile"><span class="stat-tile__label">气温</span><span class="stat-tile__value">--</span></div>
+                        <div class="stat-tile"><span class="stat-tile__label">风速</span><span class="stat-tile__value">--</span></div>
+                        <div class="stat-tile"><span class="stat-tile__label">气压</span><span class="stat-tile__value">--</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card reveal" aria-labelledby="statsTitle">
+                <div class="card-header">
+                    <h2 id="statsTitle"><i class="fas fa-chart-simple" aria-hidden="true"></i>钓点统计</h2>
+                </div>
+                <div class="card-body stack stack--tight" id="spot-stats">
+                    <div class="stat-grid">
+                        <div class="stat-tile"><span class="stat-tile__label">记录数</span><span class="stat-tile__value" id="stat-logs">--</span></div>
+                        <div class="stat-tile"><span class="stat-tile__label">总渔获</span><span class="stat-tile__value" id="stat-fish">--</span></div>
+                    </div>
+                    <div id="stat-species-wrap" hidden>
+                        <p class="form-label mb-2">热门鱼种</p>
+                        <ul class="spot-species" id="stat-species"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card spot-cta reveal" aria-label="快速操作">
+                <div class="card-body">
+                    <button class="btn btn-primary w-100" type="button" onclick="recordFishing()"><i class="fas fa-pen"></i>记录我的出钓</button>
+                    <p>记下这次的天气、饵料与渔获，钓点档案会越来越有参考价值。</p>
+                </div>
+            </section>
+        </aside>
     </div>
 </div>
+{% endblock %}
 
-<div class="row">
-    <div class="col-md-8">
-        <!-- 钓点基本信息 -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h1 id="spot-name" class="mb-0 fs-2 text-white"></h1>
-            </div>
-            <div class="card-body">
-                <div id="map" class="map-container mb-3"></div>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <p><strong><i class="fas fa-map-location-dot"></i> 省份：</strong> <span id="spot-province"></span></p>
-                        <p><strong><i class="fas fa-city"></i> 城市：</strong> <span id="spot-city"></span></p>
-                        <p><strong><i class="fas fa-water"></i> 水体：</strong> <span id="spot-water-type"></span></p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong><i class="fas fa-location-dot"></i> 纬度：</strong> <span id="spot-lat"></span></p>
-                        <p><strong><i class="fas fa-location-dot"></i> 经度：</strong> <span id="spot-lng"></span></p>
-                    </div>
-                </div>
-                <hr>
-                <p><strong><i class="fas fa-info-circle"></i> 钓点介绍：</strong></p>
-                <div id="spot-description" class="lh-lg text-muted"></div>
-            </div>
-        </div>
-
-        <!-- 实时天气 -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-cloud"></i> 实时天气数据</h5>
-            </div>
-            <div class="card-body" id="weather-info">
-                <div class="panel-loading">
-                    <div class="spinner-border panel-spinner" role="status">
-                        <span class="visually-hidden">加载中...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 社区记录 -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-book"></i> 钓友记录（<span id="log-count">加载中</span>条）</h5>
-            </div>
-            <div class="card-body" id="community-logs">
-                <div class="panel-loading">
-                    <div class="spinner-border panel-spinner" role="status">
-                        <span class="visually-hidden">加载中...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 侧边栏 -->
-    <div class="col-md-4">
-        <div class="card detail-sidebar">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-star"></i> 快速操作</h5>
-            </div>
-            <div class="card-body">
-                <button class="btn btn-success w-100 mb-3" id="recordBtn" onclick="recordFishing()">
-                    <i class="fas fa-plus"></i> 记录我的出钓
-                </button>
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>分享钓获：</strong><br>
-                    点击上方按钮记录您在此处的出钓结果，与其他钓友分享！
-                </div>
-                <hr>
-                <div id="spot-stats" class="spot-stats">
-                    <p class="text-muted">统计数据加载中...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_js %}
 <script>
     const spotId = window.location.pathname.split('/').pop();
 
-    function renderPanelError(elementId, message) {
-        document.getElementById(elementId).innerHTML = `
-            <div class="error-state">
-                <i class="fas fa-triangle-exclamation fa-2x mb-3"></i>
-                <p class="mb-0">${escapeHTML(message)}</p>
-            </div>
-        `;
-    }
+    const waterTypeLabels = {
+        sea: '海钓',
+        river: '河流',
+        lake: '湖泊',
+        reservoir: '水库',
+        pond: '池塘',
+        pay_pond: '黑坑',
+        other: '其他'
+    };
 
     function escapeHTML(value) {
         return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -223,189 +139,205 @@
         }[char]));
     }
 
+    function formatNumber(value, digits = 1) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return null;
+        return Number.isInteger(n) ? String(n) : n.toFixed(digits).replace(/\.0$/, '');
+    }
+
     function formatDurationHours(minutes) {
         const hours = Number(minutes || 0) / 60;
         if (!Number.isFinite(hours) || hours <= 0) return '未记录';
-        return `${Number.isInteger(hours) ? hours : hours.toFixed(1).replace(/\.0$/, '')}小时`;
+        return `${Number.isInteger(hours) ? hours : hours.toFixed(1).replace(/\.0$/, '')} 小时`;
+    }
+
+    function parseImageUrls(value) {
+        return String(value || '').split(',').map(url => url.trim()).filter(Boolean).slice(0, 3);
+    }
+
+    function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         loadSpotDetails();
         loadWeather();
         loadCommunityLogs();
-        loadSpotStats();
     });
 
     async function loadSpotDetails() {
         try {
             const spot = await apiFetch(`/api/spots/${spotId}`);
-                document.getElementById('spot-name').textContent = spot.name;
-                document.getElementById('spot-province').textContent = spot.province || '未知';
-                document.getElementById('spot-city').textContent = spot.city || '未知';
-                document.getElementById('spot-water-type').textContent = {
-                    'sea': '海水',
-                    'river': '河流',
-                    'lake': '湖泊',
-                    'reservoir': '水库',
-                    'pond': '池塘',
-                    'pay_pond': '黑坑',
-                    'other': '其他'
-                }[String(spot.water_type || '').toLowerCase()] || spot.water_type || '未知';
-                document.getElementById('spot-lat').textContent = Number(spot.latitude).toFixed(5);
-                document.getElementById('spot-lng').textContent = Number(spot.longitude).toFixed(5);
-                document.getElementById('spot-description').textContent = spot.description || '暂无介绍';
+            const waterType = waterTypeLabels[String(spot.water_type || '').toLowerCase()] || spot.water_type || '未知';
+            const place = [spot.province, spot.city].filter(Boolean).join(' ');
 
-                // 初始化国内地图底图。钓点坐标通常来自用户在国内地图中复制，按原坐标展示。
-                const map = AnglrMap.createMap('map', {
-                    center: [spot.latitude, spot.longitude],
-                    zoom: 13
-                });
-                L.marker([spot.latitude, spot.longitude]).addTo(map).bindPopup(`
-                    <b>${spot.name}</b><br>
-                    <a href="${AnglrMap.amapMarkerUrl(spot.latitude, spot.longitude, spot.name)}" target="_blank" rel="noopener">在高德地图中打开</a>
-                `);
+            document.title = `${spot.name} - 钓点详情 - AnglrLog`;
+            setText('crumb-spot', spot.name);
+            setText('spot-name', spot.name);
+            setText('spot-sub', [place || '位置未知', waterType, spot.user_nickname ? `由 ${spot.user_nickname} 分享` : '系统收录'].join(' · '));
+            setText('spot-province', spot.province || '未知');
+            setText('spot-city', spot.city || '未知');
+            setText('spot-water-type', waterType);
+            setText('spot-target', spot.target_species || '未填写');
+            setText('spot-season', spot.best_season || '未填写');
+            setText('spot-lat', Number(spot.latitude).toFixed(5));
+            setText('spot-lng', Number(spot.longitude).toFixed(5));
+            setText('spot-source', spot.user_nickname || '系统收录');
+            setText('spot-description', spot.description || '暂无介绍');
+
+            const chips = [];
+            String(spot.target_species || '').split(/[,，、]/).map(t => t.trim()).filter(Boolean).slice(0, 6)
+                .forEach(name => chips.push(`<span class="chip chip--sm chip--static"><i class="fas fa-fish"></i>${escapeHTML(name)}</span>`));
+            if (spot.best_season) chips.push(`<span class="chip chip--sm chip--static"><i class="fas fa-calendar-days"></i>${escapeHTML(spot.best_season)}</span>`);
+            String(spot.tags || '').split(/[,，]/).map(t => t.trim()).filter(Boolean).slice(0, 5)
+                .forEach(tag => chips.push(`<span class="chip chip--sm chip--static">${escapeHTML(tag)}</span>`));
+            const chipRow = document.getElementById('spot-chips');
+            chipRow.innerHTML = chips.join('');
+            chipRow.hidden = chips.length === 0;
+
+            const images = parseImageUrls(spot.image_url);
+            const gallery = document.getElementById('spot-gallery');
+            if (images.length) {
+                gallery.className = `spot-gallery spot-gallery--${images.length} reveal`;
+                gallery.innerHTML = images.map(url => `<img src="${escapeHTML(url)}" alt="${escapeHTML(spot.name)} 钓点照片" loading="lazy">`).join('');
+                gallery.hidden = false;
+                window.AnglrReveal(gallery.parentElement);
+            }
+
+            const navigate = document.getElementById('navigateBtn');
+            navigate.href = AnglrMap.amapMarkerUrl(spot.latitude, spot.longitude, spot.name);
+            navigate.hidden = false;
+
+            // 钓点坐标通常来自用户在国内地图中复制，按原坐标展示
+            const map = AnglrMap.createMap('map', {
+                center: [spot.latitude, spot.longitude],
+                zoom: 13
+            });
+            L.marker([spot.latitude, spot.longitude]).addTo(map).bindPopup(`
+                <b>${escapeHTML(spot.name)}</b><br>
+                <a href="${AnglrMap.amapMarkerUrl(spot.latitude, spot.longitude, spot.name)}" target="_blank" rel="noopener">在高德地图中打开</a>
+            `);
         } catch (error) {
             console.error('Error:', error);
-            document.getElementById('spot-name').textContent = '钓点加载失败';
-            renderPanelError('spot-description', error.message);
+            setText('spot-name', '钓点加载失败');
+            setText('spot-sub', error.message);
+            document.getElementById('spot-description').innerHTML = AnglrState({ type: 'error', title: '钓点信息加载失败', text: error.message });
         }
     }
 
     async function loadWeather() {
         try {
             const weather = await apiFetch(`/api/spots/${spotId}/weather`);
-                const weatherInfo = document.getElementById('weather-info');
-                weatherInfo.innerHTML = `
-                    <div class="row text-center">
-                        <div class="col-md-4 weather-metric">
-                            <div class="weather-metric__icon weather-metric__icon--temp">
-                                <i class="fas fa-thermometer-half"></i>
-                            </div>
-                            <p class="weather-metric__label">温度</p>
-                            <h4 class="weather-metric__value">${weather.temperature || '?'}°C</h4>
-                        </div>
-                        <div class="col-md-4 weather-metric">
-                            <div class="weather-metric__icon weather-metric__icon--wind">
-                                <i class="fas fa-wind"></i>
-                            </div>
-                            <p class="weather-metric__label">风速</p>
-                            <h4 class="weather-metric__value">${weather.wind_speed || '?'} m/s</h4>
-                        </div>
-                        <div class="col-md-4 weather-metric">
-                            <div class="weather-metric__icon weather-metric__icon--pressure">
-                                <i class="fas fa-gauge"></i>
-                            </div>
-                            <p class="weather-metric__label">气压</p>
-                            <h4 class="weather-metric__value">${weather.pressure || '?'} hPa</h4>
-                        </div>
-                    </div>
-                `;
+            const tiles = [
+                ['气温', formatNumber(weather.temperature, 0), '°C'],
+                ['风速', formatNumber(weather.wind_speed), 'km/h'],
+                ['气压', formatNumber(weather.pressure, 0), 'hPa'],
+                ['湿度', formatNumber(weather.humidity, 0), '%']
+            ].filter(([, value], index) => index < 3 || value != null);
+            document.getElementById('weather-info').innerHTML = tiles.map(([label, value, unit]) => `
+                <div class="stat-tile">
+                    <span class="stat-tile__label">${label}</span>
+                    <span class="stat-tile__value">${value == null ? '--' : `${value}<small>${unit}</small>`}</span>
+                </div>
+            `).join('');
+            const bits = [weather.city, weather.weather].filter(Boolean);
+            setText('weather-status', bits.length ? `${bits.join(' · ')} · 实时更新` : '钓点所在位置的实时天气');
         } catch (error) {
             console.error('Error:', error);
-            renderPanelError('weather-info', '天气数据加载失败：' + error.message);
+            setText('weather-status', '天气暂时不可用：' + error.message);
         }
+    }
+
+    function renderLog(log) {
+        const date = new Date(log.fishing_at);
+        const valid = !Number.isNaN(date.getTime());
+        const day = valid ? String(date.getDate()).padStart(2, '0') : '--';
+        const month = valid ? `${date.getMonth() + 1}月` : '';
+        const dateText = valid ? date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) : '未知时间';
+        const photos = Array.isArray(log.photo_urls) ? log.photo_urls.slice(0, 3) : [];
+        const weatherBits = [];
+        const temp = formatNumber(log.temperature);
+        const wind = formatNumber(log.wind_speed);
+        const pressure = formatNumber(log.pressure, 0);
+        if (temp != null) weatherBits.push(`<span><i class="fas fa-temperature-half"></i>${temp}°C</span>`);
+        if (wind != null) weatherBits.push(`<span><i class="fas fa-wind"></i>${wind} km/h</span>`);
+        if (pressure != null) weatherBits.push(`<span><i class="fas fa-gauge"></i>${pressure} hPa</span>`);
+
+        return `
+            <article class="row-item">
+                <div class="row-item__lead">
+                    <strong>${day}</strong>
+                    <span>${month}</span>
+                </div>
+                <div class="row-item__main">
+                    <h3 class="row-item__title">
+                        ${escapeHTML(log.species || '未记录鱼种')}
+                        <span class="badge badge-info ms-1">${Number(log.quantity || 0)} 条</span>
+                        ${log.weight ? `<span class="badge badge-muted">${formatNumber(log.weight, 2)} kg</span>` : ''}
+                    </h3>
+                    <div class="row-item__stats">
+                        <span><i class="fas fa-user"></i>${escapeHTML(log.user_nickname || '匿名钓友')}</span>
+                        <span><i class="fas fa-calendar"></i>${dateText}</span>
+                        <span><i class="fas fa-clock"></i>${formatDurationHours(log.duration)}</span>
+                        ${log.bait ? `<span><i class="fas fa-worm"></i>${escapeHTML(log.bait)}</span>` : ''}
+                    </div>
+                    ${log.note ? `<p class="spot-log__note clamp-2">${escapeHTML(log.note)}</p>` : ''}
+                    ${photos.length ? `<div class="spot-log__photos">${photos.map(url => `<img src="${escapeHTML(url)}" alt="渔获照片" loading="lazy">`).join('')}</div>` : ''}
+                </div>
+                <div class="row-item__side">
+                    ${weatherBits.length ? `<div class="spot-log__weather">${weatherBits.join('')}</div>` : '<span></span>'}
+                </div>
+            </article>
+        `;
+    }
+
+    function renderStats(logs) {
+        const totalFish = logs.reduce((sum, log) => sum + Number(log.quantity || 0), 0);
+        const species = {};
+        logs.forEach(log => {
+            if (log.species) species[log.species] = (species[log.species] || 0) + Number(log.quantity || 0);
+        });
+        const top = Object.entries(species).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+        setText('stat-logs', String(logs.length));
+        setText('stat-fish', String(totalFish));
+        const wrap = document.getElementById('stat-species-wrap');
+        document.getElementById('stat-species').innerHTML = top.map(([name, count]) => `
+            <li><span><i class="fas fa-fish"></i>${escapeHTML(name)}</span><strong>${count} 条</strong></li>
+        `).join('');
+        wrap.hidden = top.length === 0;
     }
 
     async function loadCommunityLogs() {
+        const container = document.getElementById('community-logs');
         try {
             const logs = await apiFetch(`/api/spots/${spotId}/catch-logs`);
-                const communityLogs = document.getElementById('community-logs');
-                document.getElementById('log-count').textContent = logs.length;
+            setText('log-count', `· ${logs.length} 条`);
+            renderStats(logs);
 
-                if (logs.length === 0) {
-                    communityLogs.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                            暂无记录，您可以成为第一个分享者！
-                        </div>
-                    `;
-                    return;
-                }
-
-                communityLogs.innerHTML = logs.map(log => `
-                    <div class="community-log">
-                        <div class="community-log__head">
-                            <h6 class="community-log__author">
-                                <i class="fas fa-user-circle"></i> ${escapeHTML(log.user_nickname || '未知用户')}
-                            </h6>
-                            <small class="community-log__date">
-                                <i class="fas fa-calendar"></i> ${new Date(log.fishing_at).toLocaleDateString('zh-CN')}
-                            </small>
-                        </div>
-
-                        <div class="community-log__body">
-                            <p class="community-log__row">
-                                <strong class="community-log__key">鱼种：</strong>${escapeHTML(log.species || '未记录')}
-                                <span class="badge badge-success ms-2">${log.quantity || 0}条</span>
-                            </p>
-                            <p class="community-log__row">
-                                <strong class="community-log__key">饵料：</strong>${escapeHTML(log.bait || '未记录')}
-                            </p>
-                            <p class="community-log__row">
-                                <strong class="community-log__key">时长：</strong>${formatDurationHours(log.duration)}
-                            </p>
-                            ${log.note ? `<p class="community-log__row" style="color: var(--text-muted);"><strong>备注：</strong>${escapeHTML(log.note)}</p>` : ''}
-                        </div>
-
-                        <div class="community-log__env">
-                            <span><i class="fas fa-thermometer-half"></i> ${log.temperature || '?'}°C</span>
-                            <span><i class="fas fa-wind"></i> ${log.wind_speed || '?'} m/s</span>
-                            <span><i class="fas fa-gauge"></i> ${log.pressure || '?'} hPa</span>
-                        </div>
-                    </div>
-                `).join('');
-        } catch (error) {
-            console.error('Error:', error);
-            document.getElementById('log-count').textContent = '0';
-            renderPanelError('community-logs', '钓友记录加载失败：' + error.message);
-        }
-    }
-
-    async function loadSpotStats() {
-        try {
-            const logs = await apiFetch(`/api/spots/${spotId}/catch-logs`);
-                let totalFish = 0;
-                let fishSpecies = {};
-
-                logs.forEach(log => {
-                    totalFish += log.quantity || 0;
-                    if (log.species) {
-                        fishSpecies[log.species] = (fishSpecies[log.species] || 0) + (log.quantity || 0);
-                    }
+            if (logs.length === 0) {
+                container.innerHTML = AnglrState({
+                    title: '还没有人在这里记录',
+                    text: '成为第一个分享者，让这个钓点的档案丰富起来。',
+                    icon: 'fa-clipboard-list'
                 });
+                return;
+            }
 
-                const topSpecies = Object.entries(fishSpecies)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 3);
-
-                let statsHtml = `
-                    <div>
-                        <h4 class="spot-stats__number">${totalFish}</h4>
-                        <p class="text-muted">总渔获数</p>
-                    </div>
-                    <hr>
-                    ${topSpecies.length > 0 ? `
-                        <p class="text-muted fw-semibold mb-2">热门鱼种：</p>
-                        ${topSpecies.map(([species, count]) => `
-                            <p class="spot-stats__row">
-                                <i class="fas fa-fish"></i> ${escapeHTML(species)}: <strong>${count}</strong>条
-                            </p>
-                        `).join('')}
-                    ` : ''}
-                `;
-
-                document.getElementById('spot-stats').innerHTML = statsHtml;
+            container.innerHTML = logs.map(renderLog).join('');
         } catch (error) {
             console.error('Error:', error);
-            document.getElementById('spot-stats').innerHTML = `<p class="text-muted">${escapeHTML(error.message)}</p>`;
+            setText('log-count', '');
+            setText('stat-logs', '--');
+            setText('stat-fish', '--');
+            container.innerHTML = AnglrState({ type: 'error', title: '钓友记录加载失败', text: error.message });
         }
     }
 
     function recordFishing() {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('请先登录');
-            window.location.href = '/login';
+        if (!localStorage.getItem('token')) {
+            redirectToLogin('登录后即可记录这次出钓');
             return;
         }
         window.location.href = `/logs/create?spot_id=${spotId}`;

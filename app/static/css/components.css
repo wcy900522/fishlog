@@ -188,6 +188,9 @@
 
 .card-header h1, .card-header h2, .card-header h3,
 .card-header h4, .card-header h5, .card-header h6 {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
     margin: 0;
     font-size: var(--fs-lg);
     color: inherit;
