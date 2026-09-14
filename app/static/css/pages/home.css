@@ -1,0 +1,315 @@
+/* 首页 */
+body.home .site-main { padding-bottom: 0 !important; }
+
+/* ---- Hero：单层湖景 + 深绿遮罩 ---- */
+.home-hero {
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    background:
+        linear-gradient(100deg, rgba(10, 60, 53, 0.95) 0%, rgba(15, 76, 69, 0.86) 55%, rgba(31, 158, 141, 0.5) 100%),
+        url('/static/fishing-lake-bg.svg') center 40% / cover no-repeat;
+}
+
+.home-hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(300px, 5fr);
+    gap: var(--sp-6);
+    align-items: center;
+    min-height: 560px;
+    padding-block: var(--sp-8);
+}
+
+.home-hero__eyebrow {
+    margin: 0 0 var(--sp-3);
+    color: var(--c-accent-soft);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.home-hero__title {
+    margin: 0 0 var(--sp-4);
+    color: #fff;
+    font-size: var(--fs-4xl);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+}
+
+.home-hero__title small {
+    display: block;
+    margin-top: var(--sp-2);
+    color: var(--t-inverse-2);
+    font-size: var(--fs-xl);
+    letter-spacing: 0.01em;
+}
+
+.home-hero__lead {
+    max-width: 520px;
+    margin: 0 0 var(--sp-5);
+    color: var(--t-inverse-2);
+    font-size: var(--fs-lg);
+    line-height: 1.7;
+}
+
+.home-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+}
+
+/* 天气卡 */
+.hero-weather {
+    gap: var(--sp-4);
+    padding: var(--sp-5);
+}
+
+.hero-weather__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+}
+
+.hero-weather__label {
+    display: block;
+    color: var(--c-accent-soft);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hero-weather__status {
+    margin: var(--sp-1) 0 0;
+    color: var(--t-inverse-2);
+    font-size: var(--fs-sm);
+}
+
+.hero-weather__icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--c-amber);
+    font-size: 1.3rem;
+}
+
+.hero-weather__metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-3);
+}
+
+.hero-weather__metrics .stat-tile { padding: var(--sp-3); }
+.hero-weather__metrics .stat-tile__value { font-size: var(--fs-lg); }
+
+@media (max-width: 991.98px) {
+    .home-hero__inner {
+        grid-template-columns: 1fr;
+        gap: var(--sp-5);
+        min-height: 0;
+        padding-block: var(--sp-7) var(--sp-6);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .home-hero__lead { font-size: var(--fs-md); }
+    .home-hero__actions .btn { flex: 1 1 auto; }
+    .hero-weather { padding: var(--sp-4); }
+    .hero-weather__metrics { gap: var(--sp-2); }
+}
+
+/* ---- 区块节奏：页面底 / 卡片底交替 ---- */
+.home-section { padding-block: var(--sp-8); }
+
+.home-section--card {
+    background: var(--s-card);
+    border-top: 1px solid var(--b-1);
+    border-bottom: 1px solid var(--b-1);
+}
+
+.home-section .section-title { font-size: clamp(1.5rem, 2.6vw, var(--fs-3xl)); }
+
+.home-section .section-bar { margin-bottom: var(--sp-6); }
+
+@media (max-width: 767.98px) {
+    .home-section { padding-block: var(--sp-7); }
+    .home-section .section-bar { margin-bottom: var(--sp-5); }
+}
+
+/* ---- 价值带 ---- */
+.value-band { padding-block: var(--sp-7); }
+.value-band .reveal:nth-child(2) { --i: 1; }
+.value-band .reveal:nth-child(3) { --i: 2; }
+
+/* ---- 我的出钓数据 ---- */
+.stat-tile__value--text { font-size: var(--fs-lg); }
+
+/* ---- 附近钓点面板 ---- */
+.nearby-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(280px, 5fr);
+    gap: var(--sp-4);
+    margin-bottom: var(--sp-5);
+}
+
+.nearby-panel[hidden] { display: none; }
+
+.nearby-map { height: 440px; }
+
+.nearby-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    max-height: 440px;
+    padding: var(--sp-4);
+    overflow-y: auto;
+}
+
+.nearby-sidebar h3 { margin: 0; font-size: var(--fs-lg); }
+
+.nearby-status {
+    margin: 0;
+    color: var(--t-2);
+    font-size: var(--fs-sm);
+}
+
+.nearby-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+}
+
+.manual-location {
+    padding-top: var(--sp-3);
+    border-top: 1px solid var(--b-1);
+}
+
+.manual-location__title {
+    margin: 0 0 var(--sp-2);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--t-1);
+}
+
+.nearby-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+
+.nearby-list:empty { display: none; }
+
+.nearby-item {
+    padding: var(--sp-3);
+    border: 1px solid var(--b-1);
+    border-radius: var(--r-md);
+    background: var(--s-page);
+}
+
+.nearby-item strong {
+    display: block;
+    color: var(--t-1);
+    font-weight: 600;
+}
+
+.nearby-item > span {
+    display: block;
+    margin-top: 2px;
+    color: var(--t-3);
+    font-size: var(--fs-xs);
+}
+
+.nearby-item__links {
+    display: flex;
+    gap: var(--sp-3);
+    margin-top: var(--sp-2);
+    font-size: var(--fs-sm);
+}
+
+@media (max-width: 991.98px) {
+    .nearby-panel { grid-template-columns: 1fr; }
+    .nearby-map { height: 280px; }
+    .nearby-sidebar { max-height: none; }
+}
+
+/* ---- 钓点 / 帖子卡片（首页专属微调） ---- */
+.card--spot .card__media h3 a { color: inherit; }
+.card--spot .card__media[style] { background-size: cover; background-position: center; }
+
+.card--post .card__body { padding: var(--sp-5); }
+.card--post .card__title { line-height: 1.4; }
+.card--post .card__title a { color: inherit; }
+.card--post .card__count {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    color: var(--t-3);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---- Mission band ---- */
+.mission-band {
+    padding-block: var(--sp-8);
+    background: var(--s-inverse);
+    color: var(--t-inverse);
+    text-align: center;
+}
+
+.mission-band__inner { max-width: 640px; }
+
+.mission-band .section-kicker { color: var(--c-accent-soft); }
+
+.mission-band h2 {
+    margin-bottom: var(--sp-3);
+    color: #fff;
+    font-family: var(--ff-display);
+    font-size: clamp(1.75rem, 3vw, var(--fs-3xl));
+    font-weight: 600;
+}
+
+.mission-band p {
+    margin-bottom: var(--sp-5);
+    color: var(--t-inverse-2);
+    font-size: var(--fs-lg);
+}
+
+/* ---- 合规公告弹窗 ---- */
+.compliance-modal__intro { color: var(--t-2); }
+
+.compliance-modal__section + .compliance-modal__section { margin-top: var(--sp-4); }
+
+.compliance-modal__section h3 {
+    margin-bottom: var(--sp-2);
+    color: var(--c-primary);
+    font-size: var(--fs-md);
+}
+
+.compliance-modal__section ul {
+    margin: 0;
+    padding-left: 1.2em;
+    color: var(--t-2);
+    font-size: var(--fs-sm);
+    line-height: 1.75;
+}
+
+.compliance-modal__section li + li { margin-top: var(--sp-1); }
+
+.compliance-modal__section li strong { color: var(--t-1); }
+
+.compliance-modal__note {
+    margin: var(--sp-4) 0 0;
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-md);
+    background: var(--c-amber-soft);
+    color: var(--c-amber-text);
+    font-size: var(--fs-sm);
+}

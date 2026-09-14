@@ -251,7 +251,8 @@
 .feature-card--amber .feature-card__icon { background: var(--c-amber-soft); color: var(--c-amber-text); }
 .feature-card--coral .feature-card__icon { background: var(--c-danger-soft); color: var(--c-danger); }
 
-.feature-card h5, .feature-card h6, .data-card h5, .data-card h6 {
+.feature-card h3, .feature-card h5, .feature-card h6, .data-card h5, .data-card h6 {
+    margin-bottom: var(--sp-2);
     color: var(--t-1);
     font-size: var(--fs-lg);
     font-weight: 700;
@@ -804,6 +805,12 @@ textarea.form-control { min-height: 120px; resize: vertical; }
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: var(--sp-3);
+}
+
+.stat-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 767.98px) {
+    .stat-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .stat-tile {
