@@ -51,3 +51,6 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Node (视觉回归测试工具链)
+node_modules/

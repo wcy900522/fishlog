@@ -489,12 +489,18 @@
 textarea.form-control { min-height: 120px; resize: vertical; }
 
 .form-control.is-invalid,
-.form-select.is-invalid {
+.form-select.is-invalid,
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
     border-color: var(--c-danger);
+    background-image: none;
+    padding-right: var(--sp-3);
 }
 
 .form-control.is-invalid:focus,
-.form-select.is-invalid:focus {
+.form-select.is-invalid:focus,
+.was-validated .form-control:invalid:focus,
+.was-validated .form-select:invalid:focus {
     box-shadow: 0 0 0 3px rgba(201, 79, 61, 0.22);
 }
 

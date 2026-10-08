@@ -251,7 +251,7 @@
             authNav.className = 'dropdown';
             authNav.innerHTML = `
                 <button class="topnav__user dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    ${avatar}<span></span><i class="fas fa-chevron-down fs-xs"></i>
+                    ${avatar}<span class="topnav__name"></span><i class="fas fa-chevron-down fs-xs"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><span class="dropdown-header">我的</span></li>
@@ -269,7 +269,7 @@
                     <li><a class="dropdown-item" href="#" onclick="logout(); return false;"><i class="fas fa-right-from-bracket"></i>退出登录</a></li>
                 </ul>
             `;
-            authNav.querySelector('.topnav__user > span').textContent = name;
+            authNav.querySelector('.topnav__name').textContent = name;
         }
 
         document.addEventListener('DOMContentLoaded', function () {

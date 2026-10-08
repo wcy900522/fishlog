@@ -1,328 +1,274 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 
-{% block title %}新建记录 - AnglrLog{% endblock %}
+{% block title %}记一笔 - AnglrLog{% endblock %}
 
 {% block extra_css %}
-<style>
-    .log-photo-preview {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-        gap: 10px;
-        margin-top: 12px;
-    }
-
-    .log-photo-preview__item {
-        aspect-ratio: 4 / 3;
-        border-radius: var(--radius);
-        overflow: hidden;
-        border: 1px solid var(--border-soft);
-        background: var(--surface-muted);
-    }
-
-    .log-photo-preview__item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
-    .log-card-header {
-        display: flex;
-        justify-content: space-between;
-        gap: 14px;
-        align-items: center;
-    }
-
-    .log-form-tip {
-        max-width: 320px;
-        padding: 8px 10px;
-        border-radius: var(--radius);
-        background: rgba(255, 255, 255, 0.16);
-        border: 1px solid rgba(255, 255, 255, 0.28);
-        color: rgba(255, 255, 255, 0.92);
-        font-size: 0.86rem;
-        font-weight: 700;
-        line-height: 1.45;
-    }
-
-    .log-form-tip a {
-        color: #fff;
-        text-decoration: underline;
-        text-underline-offset: 3px;
-    }
-
-    .species-picker {
-        display: grid;
-        gap: 10px;
-        margin-top: 10px;
-    }
-
-    .species-picker__group {
-        display: grid;
-        gap: 8px;
-    }
-
-    .species-picker__label {
-        color: var(--text-muted);
-        font-size: 0.84rem;
-        font-weight: 800;
-    }
-
-    .species-chip-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    /* 与 spots.html 目标鱼芯片统一，复用全局 token */
-    .species-chip {
-        border: 1px solid rgba(var(--brand-teal-rgb), 0.24);
-        border-radius: var(--radius-pill);
-        background: #fff;
-        color: var(--brand-deep);
-        padding: 6px 11px;
-        font-size: 0.88rem;
-        font-weight: 800;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-    }
-
-    .species-chip:focus-visible {
-        outline: none;
-        box-shadow: var(--focus-ring);
-    }
-
-    .species-chip.active {
-        color: #062b35;
-        background: linear-gradient(135deg, #84ddf2, #8de3ca);
-        border-color: rgba(var(--brand-teal-rgb), 0.34);
-        box-shadow: 0 8px 18px rgba(var(--brand-teal-rgb), 0.14);
-    }
-
-    @media (max-width: 767.98px) {
-        .log-card-header {
-            align-items: flex-start;
-            flex-direction: column;
-        }
-
-        .log-form-tip {
-            max-width: none;
-            width: 100%;
-        }
-    }
-</style>
+<link rel="stylesheet" href="/static/css/pages/forms.css?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header log-card-header">
-                <h4 class="mb-0"><i class="fas fa-pen"></i> 记录一次出钓</h4>
-                <div class="log-form-tip">
-                    <i class="fas fa-circle-info"></i> 如未有钓点信息，请先<a href="/spots">新增钓点</a>后填写。
-                </div>
-            </div>
+<div class="container-app">
+    {% call page_head('记录一次出钓', icon='fa-pen', sub='填好钓点与时间即可保存，天气会自动补全；渔获与装备可以稍后再补。', eyebrow='我的数据') %}
+        <a class="btn btn-secondary" href="/logs"><i class="fas fa-list"></i>我的记录</a>
+    {% endcall %}
+
+    <div class="form-layout">
+        <form id="logForm" class="card reveal" novalidate>
             <div class="card-body">
-                <form id="logForm">
-                    <div class="mb-3">
-                        <label for="spot" class="form-label">钓点 <span class="text-danger">*</span></label>
-                        <select class="form-select" id="spot" name="spot_id" required>
-                            <option value="">请选择钓点</option>
-                        </select>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="fishing_at" class="form-label">出钓时间 <span class="text-danger">*</span></label>
-                                <input type="datetime-local" class="form-control" id="fishing_at" name="fishing_at" required>
-                            </div>
+                <fieldset class="form-section">
+                    <legend><i class="fas fa-location-dot" aria-hidden="true"></i>基本信息<small>必填</small></legend>
+                    <div class="form-grid">
+                        <div class="span-all">
+                            <label for="spot" class="form-label req">钓点</label>
+                            <select class="form-select" id="spot" name="spot_id" required>
+                                <option value="">请选择钓点</option>
+                            </select>
+                            <span class="form-hint">找不到想记的地方？<a href="/spots">先去新增钓点</a>，再回来记录。</span>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="duration" class="form-label">作钓时长(小时) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="duration" name="duration" min="0.1" max="24" step="0.1" placeholder="如：3.5" required>
-                            </div>
+                        <div>
+                            <label for="fishing_at" class="form-label req">出钓时间</label>
+                            <input type="datetime-local" class="form-control" id="fishing_at" name="fishing_at" required>
+                        </div>
+                        <div>
+                            <label for="duration" class="form-label req">作钓时长（小时）</label>
+                            <input type="number" class="form-control" id="duration" name="duration" min="0.1" max="24" step="0.1" placeholder="如：3.5" inputmode="decimal" required>
                         </div>
                     </div>
+                </fieldset>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="species" class="form-label">鱼种</label>
-                                <input type="text" class="form-control" id="species" name="species" placeholder="如：鲤鱼、草鱼">
-                                <div class="species-picker" id="speciesPicker">
-                                    <div class="species-picker__group">
-                                        <span class="species-picker__label">常见台钓鱼种</span>
-                                        <div class="species-chip-row" id="floatSpeciesChips"></div>
-                                    </div>
-                                    <div class="species-picker__group">
-                                        <span class="species-picker__label">常见路亚鱼种</span>
-                                        <div class="species-chip-row" id="lureSpeciesChips"></div>
-                                    </div>
+                <fieldset class="form-section">
+                    <legend><i class="fas fa-fish" aria-hidden="true"></i>渔获<small>选填</small></legend>
+                    <div class="form-grid">
+                        <div class="span-all">
+                            <label for="species" class="form-label">鱼种</label>
+                            <input type="text" class="form-control" id="species" name="species" placeholder="如：鲤鱼、草鱼" autocomplete="off">
+                            <div class="species-picker" id="speciesPicker" aria-label="常见鱼种快选">
+                                <div class="species-picker__group">
+                                    <span class="species-picker__label">常见台钓鱼种</span>
+                                    <div class="chip-row" id="floatSpeciesChips"></div>
+                                </div>
+                                <div class="species-picker__group">
+                                    <span class="species-picker__label">常见路亚鱼种</span>
+                                    <div class="chip-row" id="lureSpeciesChips"></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="bait" class="form-label">饵料</label>
-                                <input type="text" class="form-control" id="bait" name="bait" placeholder="如：玉米、蚯蚓">
-                            </div>
+                        <div>
+                            <label for="quantity" class="form-label">渔获数量（条）</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" min="0" placeholder="0" inputmode="numeric">
+                        </div>
+                        <div>
+                            <label for="weight" class="form-label">总重量（kg）</label>
+                            <input type="number" class="form-control" id="weight" name="weight" min="0" step="0.01" placeholder="如：3.5" inputmode="decimal">
+                        </div>
+                        <div class="span-all">
+                            <label for="bait" class="form-label">饵料</label>
+                            <input type="text" class="form-control" id="bait" name="bait" placeholder="如：玉米、蚯蚓">
                         </div>
                     </div>
+                </fieldset>
 
-                    <div class="mb-3">
-                        <label for="quantity" class="form-label">渔获数量</label>
-                        <input type="number" class="form-control" id="quantity" name="quantity" min="0" placeholder="条数">
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="weight" class="form-label">总重量(kg)</label>
-                                <input type="number" class="form-control" id="weight" name="weight" min="0" step="0.01" placeholder="如：3.5">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="tide" class="form-label">潮汐/水情</label>
-                                <input type="text" class="form-control" id="tide" name="tide" placeholder="如：涨潮、退潮、轻微走水">
-                            </div>
+                <fieldset class="form-section">
+                    <legend><i class="fas fa-water" aria-hidden="true"></i>环境水情<small>天气自动记录</small></legend>
+                    <div class="form-grid">
+                        <div class="span-all">
+                            <label for="tide" class="form-label">潮汐 / 水情</label>
+                            <input type="text" class="form-control" id="tide" name="tide" placeholder="如：涨潮、退潮、轻微走水">
+                            <span class="form-hint">温度、气压、风速会根据钓点与时间自动补全，无需手填。</span>
                         </div>
                     </div>
+                </fieldset>
 
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="rod" class="form-label">鱼竿</label>
-                                <input type="text" class="form-control" id="rod" name="rod" placeholder="如：ML 直柄">
-                            </div>
+                <fieldset class="form-section">
+                    <legend><i class="fas fa-toolbox" aria-hidden="true"></i>装备<small>选填</small></legend>
+                    <div class="form-grid form-grid--3">
+                        <div>
+                            <label for="rod" class="form-label">鱼竿</label>
+                            <input type="text" class="form-control" id="rod" name="rod" placeholder="如：ML 直柄">
                         </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="line_group" class="form-label">线组</label>
-                                <input type="text" class="form-control" id="line_group" name="line_group" placeholder="如：PE 0.8 + 碳线 2.0">
-                            </div>
+                        <div>
+                            <label for="line_group" class="form-label">线组</label>
+                            <input type="text" class="form-control" id="line_group" name="line_group" placeholder="如：PE 0.8 + 碳线 2.0">
                         </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="equipment" class="form-label">装备组合</label>
-                                <input type="text" class="form-control" id="equipment" name="equipment" placeholder="如：水滴轮 + 亮片">
-                            </div>
+                        <div>
+                            <label for="equipment" class="form-label">装备组合</label>
+                            <input type="text" class="form-control" id="equipment" name="equipment" placeholder="如：水滴轮 + 亮片">
                         </div>
                     </div>
+                </fieldset>
 
-                    <div class="mb-3">
-                        <label for="logImages" class="form-label">出钓照片</label>
-                        <input type="file" class="form-control" id="logImages" accept="image/*" capture="environment" multiple>
-                        <small class="form-text text-muted">可拍照或从手机相册选择，最多上传 3 张。</small>
-                        <div class="log-photo-preview" id="logPhotoPreview"></div>
+                <fieldset class="form-section">
+                    <legend><i class="fas fa-camera" aria-hidden="true"></i>照片与备注<small>选填</small></legend>
+                    <div class="form-grid">
+                        <div class="span-all">
+                            <label for="logImages" class="form-label">出钓照片</label>
+                            <label class="dropzone" id="logDropzone">
+                                <i class="fas fa-cloud-arrow-up" aria-hidden="true"></i>
+                                <strong>点击或拖拽照片到这里</strong>
+                                <small>可拍照或从相册选择，最多 3 张</small>
+                                <input type="file" id="logImages" accept="image/*" capture="environment" multiple>
+                            </label>
+                            <div class="photo-preview" id="logPhotoPreview"></div>
+                        </div>
+                        <div class="span-all">
+                            <label for="note" class="form-label">备注</label>
+                            <textarea class="form-control" id="note" name="note" rows="3" placeholder="鱼口时段、钓位、天气变化……记下来方便下次复盘"></textarea>
+                        </div>
                     </div>
+                </fieldset>
 
-                    <div class="mb-3">
-                        <label for="note" class="form-label">备注</label>
-                        <textarea class="form-control" id="note" name="note" rows="3" placeholder="记录更多细节..."></textarea>
-                    </div>
-
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> 提交后，系统将自动记录天气数据（温度、气压、风速）
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> 保存记录
-                        </button>
-                        <a href="/" class="btn btn-secondary">取消</a>
-                    </div>
-                </form>
+                <div class="form-actions">
+                    <a href="/logs" class="btn btn-secondary">取消</a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn"><i class="fas fa-save"></i>保存记录</button>
+                </div>
             </div>
-        </div>
+        </form>
+
+        <aside class="form-layout__aside">
+            <div class="card form-aside-card reveal">
+                <div class="card-body">
+                    <h2 class="form-aside-card__title"><i class="fas fa-location-dot" aria-hidden="true"></i>钓点预览</h2>
+                    <div class="spot-preview" id="spotPreview">
+                        <span class="spot-preview__empty">选择钓点后，这里会显示钓点信息。</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card form-aside-card form-aside-card--secondary reveal">
+                <div class="card-body">
+                    <h2 class="form-aside-card__title"><i class="fas fa-list-check" aria-hidden="true"></i>保存前检查</h2>
+                    <ul class="form-checklist" id="formChecklist">
+                        <li data-field="spot"><i class="fas fa-circle-check" aria-hidden="true"></i>已选择钓点</li>
+                        <li data-field="fishing_at"><i class="fas fa-circle-check" aria-hidden="true"></i>已填写出钓时间</li>
+                        <li data-field="duration"><i class="fas fa-circle-check" aria-hidden="true"></i>已填写作钓时长</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card form-aside-card form-aside-card--secondary card--muted reveal">
+                <div class="card-body">
+                    <h2 class="form-aside-card__title"><i class="fas fa-cloud-sun" aria-hidden="true"></i>天气自动补全</h2>
+                    <p>保存后系统会按钓点坐标与出钓时间拉取当时的温度、气压和风速，写入这条记录。</p>
+                    <p>记录默认仅自己可见，可在记录列表中选择公开。</p>
+                </div>
+            </div>
+        </aside>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
     const MAX_LOG_PHOTOS = 3;
     const COMMON_FLOAT_SPECIES = ['鲫鱼', '鲤鱼', '草鱼', '青鱼', '鳊鱼', '鲢鳙', '翘嘴', '罗非'];
     const COMMON_LURE_SPECIES = ['鲈鱼', '黑鱼', '鳜鱼', '翘嘴', '马口', '军鱼', '鲶鱼', '海鲈'];
     let selectedSpecies = new Set();
+    let spotsById = new Map();
 
     document.addEventListener('DOMContentLoaded', function() {
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('请先登录');
-            window.location.href = '/login';
+            redirectToLogin('请先登录');
             return;
         }
 
         loadSpots();
         renderSpeciesChips();
+        setupDropzone();
         document.getElementById('logImages').addEventListener('change', previewLogImages);
         document.getElementById('species').addEventListener('input', syncSpeciesFromInput);
-
-        // Set default datetime to now
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const date = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        document.getElementById('fishing_at').value = `${year}-${month}-${date}T${hours}:${minutes}`;
-
-        // Form submission
-        document.getElementById('logForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const spotId = parseInt(document.getElementById('spot').value);
-            const fishingAt = document.getElementById('fishing_at').value;
-            const species = document.getElementById('species').value;
-            const bait = document.getElementById('bait').value;
-            const quantity = document.getElementById('quantity').value ? parseInt(document.getElementById('quantity').value) : null;
-            const weight = document.getElementById('weight').value ? parseFloat(document.getElementById('weight').value) : null;
-            const tide = document.getElementById('tide').value;
-            const equipment = document.getElementById('equipment').value;
-            const rod = document.getElementById('rod').value;
-            const lineGroup = document.getElementById('line_group').value;
-            const note = document.getElementById('note').value;
-
-            try {
-                const duration = hoursToMinutes(document.getElementById('duration').value);
-                const photoUrls = await uploadLogImages();
-                const payload = {
-                    spot_id: spotId,
-                    fishing_at: new Date(fishingAt).toISOString(),
-                    duration,
-                    species: species || null,
-                    bait: bait || null,
-                    quantity: quantity,
-                    weight: weight,
-                    tide: tide || null,
-                    equipment: equipment || null,
-                    rod: rod || null,
-                    line_group: lineGroup || null,
-                    photo_urls: photoUrls.length ? photoUrls : null,
-                    note: note || null
-                };
-
-                await apiFetch('/api/logs', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                alert('记录保存成功！');
-                window.location.href = '/logs';
-            } catch (error) {
-                console.error('Error:', error);
-                if (error.message.includes('登录状态已失效')) {
-                    redirectToLogin(error.message);
-                    return;
-                }
-                alert('保存失败：' + error.message);
-            }
+        document.getElementById('spot').addEventListener('change', renderSpotPreview);
+        ['spot', 'fishing_at', 'duration'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('input', updateChecklist);
+            el.addEventListener('change', updateChecklist);
         });
+
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        document.getElementById('fishing_at').value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        updateChecklist();
+
+        document.getElementById('logForm').addEventListener('submit', handleSubmit);
     });
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        const form = e.currentTarget;
+        form.classList.remove('was-validated');
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            const firstInvalid = form.querySelector(':invalid');
+            if (firstInvalid) firstInvalid.focus();
+            AnglrToast.warning('请先补全必填项');
+            return;
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+        const value = id => document.getElementById(id).value;
+        submitBtn.disabled = true;
+
+        try {
+            const duration = hoursToMinutes(value('duration'));
+            const photoUrls = await uploadLogImages();
+            const payload = {
+                spot_id: parseInt(value('spot')),
+                fishing_at: new Date(value('fishing_at')).toISOString(),
+                duration,
+                species: value('species') || null,
+                bait: value('bait') || null,
+                quantity: value('quantity') ? parseInt(value('quantity')) : null,
+                weight: value('weight') ? parseFloat(value('weight')) : null,
+                tide: value('tide') || null,
+                equipment: value('equipment') || null,
+                rod: value('rod') || null,
+                line_group: value('line_group') || null,
+                photo_urls: photoUrls.length ? photoUrls : null,
+                note: value('note') || null
+            };
+
+            await apiFetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            try { sessionStorage.setItem('anglr.flash', '记录已保存'); } catch (err) { /* ignore */ }
+            window.location.href = '/logs';
+        } catch (error) {
+            console.error('Error:', error);
+            if (error.message.includes('登录状态已失效')) {
+                redirectToLogin(error.message);
+                return;
+            }
+            AnglrToast.error('保存失败：' + error.message);
+            submitBtn.disabled = false;
+        }
+    }
+
+    function updateChecklist() {
+        document.querySelectorAll('#formChecklist li').forEach(li => {
+            const el = document.getElementById(li.dataset.field);
+            li.classList.toggle('is-done', !!(el && el.value && el.checkValidity()));
+        });
+    }
+
+    function renderSpotPreview() {
+        const box = document.getElementById('spotPreview');
+        const spot = spotsById.get(String(document.getElementById('spot').value));
+        if (!spot) {
+            box.innerHTML = '<span class="spot-preview__empty">选择钓点后，这里会显示钓点信息。</span>';
+            return;
+        }
+        const meta = [];
+        if (spot.city || spot.province) meta.push(`<span><i class="fas fa-map-pin"></i>${escapeHTML([spot.province, spot.city].filter(Boolean).join(' · '))}</span>`);
+        if (spot.water_type) meta.push(`<span><i class="fas fa-water"></i>${escapeHTML(spot.water_type)}</span>`);
+        if (spot.target_species) meta.push(`<span><i class="fas fa-fish"></i>${escapeHTML(spot.target_species)}</span>`);
+        box.innerHTML = `
+            <span class="spot-preview__name">${escapeHTML(spot.name)}</span>
+            <div class="spot-preview__meta">${meta.join('')}</div>
+            <a class="btn btn-ghost btn-sm" href="/spots/${spot.id}"><i class="fas fa-arrow-up-right-from-square"></i>查看钓点</a>
+        `;
+    }
 
     function renderSpeciesChips() {
         renderSpeciesChipGroup('floatSpeciesChips', COMMON_FLOAT_SPECIES);
@@ -332,25 +278,18 @@
     function renderSpeciesChipGroup(containerId, speciesList) {
         const container = document.getElementById(containerId);
         container.innerHTML = speciesList.map(species => `
-            <button type="button" class="species-chip" data-species="${escapeHTML(species)}">${escapeHTML(species)}</button>
+            <button type="button" class="chip chip--sm" aria-pressed="false" data-species="${escapeHTML(species)}">${escapeHTML(species)}</button>
         `).join('');
-        container.querySelectorAll('.species-chip').forEach(button => {
+        container.querySelectorAll('.chip').forEach(button => {
             button.addEventListener('click', () => toggleSpecies(button.dataset.species));
         });
     }
 
     function toggleSpecies(species) {
-        if (selectedSpecies.has(species)) {
-            selectedSpecies.delete(species);
-        } else {
-            selectedSpecies.add(species);
-        }
-        updateSpeciesInput();
-        updateSpeciesChipState();
-    }
-
-    function updateSpeciesInput() {
+        if (selectedSpecies.has(species)) selectedSpecies.delete(species);
+        else selectedSpecies.add(species);
         document.getElementById('species').value = Array.from(selectedSpecies).join('、');
+        updateSpeciesChipState();
     }
 
     function syncSpeciesFromInput() {
@@ -363,17 +302,26 @@
     }
 
     function updateSpeciesChipState() {
-        document.querySelectorAll('.species-chip').forEach(button => {
-            button.classList.toggle('active', selectedSpecies.has(button.dataset.species));
+        document.querySelectorAll('#speciesPicker .chip').forEach(button => {
+            button.setAttribute('aria-pressed', selectedSpecies.has(button.dataset.species) ? 'true' : 'false');
+        });
+    }
+
+    function setupDropzone() {
+        const zone = document.getElementById('logDropzone');
+        const input = document.getElementById('logImages');
+        ['dragenter', 'dragover'].forEach(evt => zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.add('is-over'); }));
+        ['dragleave', 'drop'].forEach(evt => zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.remove('is-over'); }));
+        zone.addEventListener('drop', e => {
+            if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+            input.files = e.dataTransfer.files;
+            previewLogImages();
         });
     }
 
     function renderLogPhotoPreview(urls) {
-        const preview = document.getElementById('logPhotoPreview');
-        preview.innerHTML = urls.map(url => `
-            <div class="log-photo-preview__item">
-                <img src="${escapeHTML(url)}" alt="出钓照片">
-            </div>
+        document.getElementById('logPhotoPreview').innerHTML = urls.map(url => `
+            <div class="photo-preview__item"><img src="${escapeHTML(url)}" alt="出钓照片"></div>
         `).join('');
     }
 
@@ -389,7 +337,7 @@
         const input = document.getElementById('logImages');
         const files = Array.from(input.files || []);
         if (files.length > MAX_LOG_PHOTOS) {
-            alert(`最多上传 ${MAX_LOG_PHOTOS} 张出钓照片`);
+            AnglrToast.warning(`最多上传 ${MAX_LOG_PHOTOS} 张出钓照片`);
             input.value = '';
             renderLogPhotoPreview([]);
             return;
@@ -398,20 +346,15 @@
     }
 
     async function uploadLogImages() {
-        const input = document.getElementById('logImages');
-        const files = Array.from(input.files || []);
+        const files = Array.from(document.getElementById('logImages').files || []);
         if (files.length > MAX_LOG_PHOTOS) {
             throw new Error(`最多上传 ${MAX_LOG_PHOTOS} 张出钓照片`);
         }
-
         const urls = [];
         for (const file of files) {
             const formData = new FormData();
             formData.append('image', file);
-            const result = await apiFetch('/api/logs/images', {
-                method: 'POST',
-                body: formData
-            });
+            const result = await apiFetch('/api/logs/images', { method: 'POST', body: formData });
             urls.push(result.url);
         }
         return urls;
@@ -419,11 +362,7 @@
 
     function escapeHTML(value) {
         return String(value ?? '').replace(/[&<>"']/g, char => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         }[char]));
     }
 
@@ -432,24 +371,26 @@
             const spots = await apiFetch('/api/spots');
             const spotSelect = document.getElementById('spot');
             spots.forEach(spot => {
+                spotsById.set(String(spot.id), spot);
                 const option = document.createElement('option');
                 option.value = spot.id;
                 option.textContent = `${spot.name} (${spot.city || '未知'})`;
                 spotSelect.appendChild(option);
             });
 
-            const params = new URLSearchParams(window.location.search);
-            const spotId = params.get('spot_id');
-            if (spotId) {
+            const spotId = new URLSearchParams(window.location.search).get('spot_id');
+            if (spotId && spotsById.has(spotId)) {
                 spotSelect.value = spotId;
             }
+            renderSpotPreview();
+            updateChecklist();
         } catch (error) {
             console.error('Error:', error);
             if (error.message.includes('登录状态已失效')) {
                 redirectToLogin(error.message);
                 return;
             }
-            alert('加载钓点失败：' + error.message);
+            AnglrToast.error('加载钓点失败：' + error.message);
         }
     }
 </script>

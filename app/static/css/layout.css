@@ -154,6 +154,7 @@
 .topnav__user::after { display: none; }
 
 .topnav__avatar {
+    flex: none;
     width: 28px;
     height: 28px;
     border-radius: 50%;
@@ -164,6 +165,13 @@
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
+}
+
+.topnav__name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .topnav__toggle {
@@ -204,7 +212,7 @@
     .topnav__toggle { display: inline-flex; }
     .topnav__inner { min-height: 56px; gap: var(--sp-3); }
     .topnav__brand { font-size: 1.15rem; }
-    .topnav__user span { display: none; }
+    .topnav__name { display: none; }
     .topnav__user { padding: 0 var(--sp-1); border: 0; background: transparent; }
 
     .topnav__mobile {

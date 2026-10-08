@@ -1,0 +1,149 @@
+/* 关于页：复用 home.css 的 hero / section / mission-band，这里只放页面私有部分 */
+
+/* hero 右侧「数据控制台」示意 */
+.about-console {
+    padding: var(--sp-5);
+    border-radius: var(--r-lg);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--b-inverse);
+    backdrop-filter: none;
+}
+
+.about-console__map {
+    position: relative;
+    height: 150px;
+    margin-bottom: var(--sp-4);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px) 0 0 / 100% 30px,
+        linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px) 0 0 / 30px 100%,
+        rgba(10, 60, 53, 0.6);
+}
+
+.about-console__pin {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--c-accent);
+    color: #fff;
+    font-size: 0.85rem;
+    box-shadow: 0 0 0 6px rgba(31, 158, 141, 0.22);
+}
+
+.about-console__pin:nth-child(1) { left: 22%; top: 30%; }
+.about-console__pin:nth-child(2) { left: 58%; top: 52%; background: var(--c-amber); box-shadow: 0 0 0 6px rgba(217, 149, 63, 0.22); }
+.about-console__pin:nth-child(3) { left: 78%; top: 22%; }
+
+.about-console__rows {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+}
+
+.about-console__rows div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid var(--b-inverse);
+}
+
+.about-console__rows div:last-child { border-bottom: 0; }
+
+.about-console__rows dt {
+    margin: 0;
+    color: var(--t-inverse-2);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+}
+
+.about-console__rows dd {
+    margin: 0;
+    color: #fff;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    text-align: right;
+}
+
+/* 四步流程：feature-card 加步骤号 */
+.about-step {
+    position: relative;
+    padding-top: var(--sp-6);
+}
+
+.about-step::before {
+    content: attr(data-step);
+    position: absolute;
+    right: var(--sp-5);
+    top: var(--sp-4);
+    font-family: var(--ff-display);
+    font-size: var(--fs-2xl);
+    font-weight: 600;
+    line-height: 1;
+    color: var(--b-2);
+}
+
+.about-steps .reveal:nth-child(2) { --i: 1; }
+.about-steps .reveal:nth-child(3) { --i: 2; }
+.about-steps .reveal:nth-child(4) { --i: 3; }
+
+/* 功能列表：图标 + 文案 */
+.about-features {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+}
+
+.about-feature {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: var(--sp-4);
+    align-items: start;
+    padding: var(--sp-5);
+    border: 1px solid var(--b-1);
+    border-radius: var(--r-lg);
+    background: var(--s-page);
+}
+
+.about-feature__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-md);
+    background: var(--c-accent-soft);
+    color: var(--c-accent);
+    font-size: 1.1rem;
+}
+
+.about-feature h3 {
+    margin: 0 0 var(--sp-1);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--t-1);
+}
+
+.about-feature p {
+    margin: 0;
+    color: var(--t-2);
+    font-size: var(--fs-sm);
+    line-height: 1.7;
+}
+
+.about-features .reveal:nth-child(2) { --i: 1; }
+.about-features .reveal:nth-child(3) { --i: 2; }
+.about-features .reveal:nth-child(4) { --i: 3; }
+
+@media (max-width: 767.98px) {
+    .about-features { grid-template-columns: 1fr; }
+    .about-console { padding: var(--sp-4); }
+    .about-console__map { height: 120px; }
+}

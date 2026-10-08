@@ -1,112 +1,105 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 
 {% block title %}发布帖子 - AnglrLog{% endblock %}
 
 {% block extra_css %}
-<style>
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        font-weight: 600;
-        margin-bottom: 10px;
-        color: var(--brand-deep);
-    }
-
-    .post-content-input {
-        resize: vertical;
-        min-height: 300px;
-    }
-
-    .post-image-preview {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 8px;
-        margin-top: 10px;
-    }
-
-    .post-image-preview__item {
-        aspect-ratio: 1;
-        border: 1px solid var(--border-soft);
-        border-radius: var(--radius);
-        overflow: hidden;
-        background: var(--surface-soft);
-    }
-
-    .post-image-preview__item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
-    @media (max-width: 576px) {
-        .post-image-preview {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-    }
-</style>
+<link rel="stylesheet" href="/static/css/pages/forms.css?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h1 class="page-title">
-        <i class="fas fa-pen"></i> 发布新帖
-    </h1>
-</div>
+<div class="container-app">
+    <ol class="breadcrumb-app" aria-label="面包屑">
+        <li><a href="/">首页</a></li>
+        <li><a href="/forum">讨论</a></li>
+        <li>发布新帖</li>
+    </ol>
 
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        <div class="card">
+    {% call page_head('发布新帖', icon='fa-pen', sub='分享钓点攻略、装备心得或今天的渔获，给钓友一点参考。', eyebrow='讨论区') %}
+        <a class="btn btn-secondary" href="/forum"><i class="fas fa-arrow-left"></i>返回讨论区</a>
+    {% endcall %}
+
+    <div class="form-layout">
+        <form id="postForm" class="card reveal" novalidate>
             <div class="card-body">
-                <div class="form-group">
-                    <label for="title" class="form-label">帖子标题</label>
-                    <input type="text" class="form-control" id="title" placeholder="请输入帖子标题" required>
-                </div>
+                <fieldset class="form-section">
+                    <legend><i class="fas fa-heading" aria-hidden="true"></i>标题与话题</legend>
+                    <div class="form-grid">
+                        <div class="span-all">
+                            <label for="title" class="form-label req visually-hidden">帖子标题</label>
+                            <input type="text" class="form-control post-title-input" id="title" placeholder="写一个能一眼看懂的标题" maxlength="80" required>
+                            <span class="char-count" id="titleCount">0 / 80</span>
+                        </div>
+                        <div class="span-all">
+                            <span class="form-label req">话题标签</span>
+                            <div class="chip-row" id="tagChips" role="radiogroup" aria-label="话题标签"></div>
+                            <select class="form-select visually-hidden" id="tag" tabindex="-1" aria-hidden="true">
+                                <option value="海钓">海钓</option>
+                                <option value="路亚">路亚</option>
+                                <option value="台钓">台钓</option>
+                                <option value="飞钓">飞钓</option>
+                                <option value="黑坑">黑坑</option>
+                                <option value="野钓" selected>野钓</option>
+                                <option value="技术分享">技术分享</option>
+                                <option value="装备评测">装备评测</option>
+                                <option value="钓点攻略">钓点攻略</option>
+                                <option value="秀出鱼获">秀出鱼获</option>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
 
-                <div class="form-group">
-                    <label for="tag" class="form-label">话题标签</label>
-                    <select class="form-select" id="tag" required>
-                        <option value="海钓">海钓</option>
-                        <option value="路亚">路亚</option>
-                        <option value="台钓">台钓</option>
-                        <option value="飞钓">飞钓</option>
-                        <option value="黑坑">黑坑</option>
-                        <option value="野钓" selected>野钓</option>
-                        <option value="技术分享">技术分享</option>
-                        <option value="装备评测">装备评测</option>
-                        <option value="钓点攻略">钓点攻略</option>
-                        <option value="秀出鱼获">秀出鱼获</option>
-                    </select>
-                </div>
+                <fieldset class="form-section">
+                    <legend><i class="fas fa-align-left" aria-hidden="true"></i>正文</legend>
+                    <label for="content" class="form-label req visually-hidden">内容</label>
+                    <textarea class="form-control post-content-input" id="content" placeholder="把过程写清楚：时间、钓点、水情、用饵、鱼口……越具体越有用。" required></textarea>
+                </fieldset>
 
-                <div class="form-group">
-                    <label for="content" class="form-label">内容</label>
-                    <textarea class="form-control post-content-input" id="content" placeholder="请输入帖子内容" required></textarea>
-                </div>
+                <fieldset class="form-section">
+                    <legend><i class="fas fa-camera" aria-hidden="true"></i>照片<small id="postImageLimitText">最多 5 张</small></legend>
+                    <label class="dropzone" id="postDropzone">
+                        <i class="fas fa-cloud-arrow-up" aria-hidden="true"></i>
+                        <strong>点击或拖拽照片到这里</strong>
+                        <small>可拍照或从相册选择</small>
+                        <input type="file" id="postImages" accept="image/*" capture="environment" multiple>
+                    </label>
+                    <div class="photo-preview" id="postImagePreview"></div>
+                </fieldset>
 
-                <div class="form-group">
-                    <label for="postImages" class="form-label">帖子照片</label>
-                    <input type="file" class="form-control" id="postImages" accept="image/*" capture="environment" multiple>
-                    <small class="form-text text-muted" id="postImageLimitText">可拍照或从手机相册选择，最多上传 5 张</small>
-                    <div class="post-image-preview" id="postImagePreview"></div>
-                </div>
-
-                <div class="form-group">
-                    <button class="btn btn-success" onclick="submitPost()" id="submitBtn">
-                        <i class="fas fa-check"></i> 发布
-                    </button>
-                    <a href="/forum" class="btn btn-secondary ms-2">
-                        <i class="fas fa-times"></i> 取消
-                    </a>
+                <div class="form-actions">
+                    <a href="/forum" class="btn btn-secondary">取消</a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn"><i class="fas fa-paper-plane"></i>发布</button>
                 </div>
             </div>
-        </div>
+        </form>
+
+        <aside class="form-layout__aside">
+            <div class="card form-aside-card form-aside-card--secondary reveal">
+                <div class="card-body">
+                    <h2 class="form-aside-card__title"><i class="fas fa-lightbulb" aria-hidden="true"></i>写得更有用</h2>
+                    <ul class="form-checklist">
+                        <li class="is-done"><i class="fas fa-circle-check" aria-hidden="true"></i>标题写清楚地点或主题</li>
+                        <li class="is-done"><i class="fas fa-circle-check" aria-hidden="true"></i>交代时间、水情与用饵</li>
+                        <li class="is-done"><i class="fas fa-circle-check" aria-hidden="true"></i>配一两张现场照片</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card form-aside-card form-aside-card--secondary card--muted reveal">
+                <div class="card-body">
+                    <h2 class="form-aside-card__title"><i class="fas fa-shield-halved" aria-hidden="true"></i>发帖须知</h2>
+                    <p>请勿发布禁渔期、禁渔区作钓内容或电毒炸等违法方式；涉及他人隐私的信息请自行打码。</p>
+                    <p>「秀出鱼获」话题最多上传 3 张鱼获照片。</p>
+                </div>
+            </div>
+        </aside>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
+    const TITLE_MAX = 80;
+
     function getPostImageLimit() {
         return document.getElementById('tag').value === '秀出鱼获' ? 3 : 5;
     }
@@ -114,55 +107,85 @@
     function updatePostImageLimitText() {
         const limit = getPostImageLimit();
         document.getElementById('postImageLimitText').textContent = limit === 3
-            ? '秀出鱼获最多上传 3 张鱼获照片'
-            : '可拍照或从手机相册选择，最多上传 5 张';
+            ? '秀出鱼获最多 3 张'
+            : '最多 5 张';
         renderPostImagePreview();
     }
 
-    async function submitPost() {
+    function renderTagChips() {
+        const select = document.getElementById('tag');
+        const container = document.getElementById('tagChips');
+        container.innerHTML = Array.from(select.options).map(opt => `
+            <button type="button" class="chip" role="radio" aria-checked="${opt.selected}" data-tag="${opt.value}">${opt.textContent}</button>
+        `).join('');
+        container.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                select.value = chip.dataset.tag;
+                container.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-checked', c === chip ? 'true' : 'false'));
+                syncChipActive();
+                updatePostImageLimitText();
+            });
+        });
+        syncChipActive();
+    }
+
+    function syncChipActive() {
+        document.querySelectorAll('#tagChips .chip').forEach(c => {
+            c.classList.toggle('chip--active', c.getAttribute('aria-checked') === 'true');
+        });
+    }
+
+    function updateTitleCount() {
+        const len = document.getElementById('title').value.length;
+        const el = document.getElementById('titleCount');
+        el.textContent = `${len} / ${TITLE_MAX}`;
+        el.classList.toggle('is-over', len >= TITLE_MAX);
+    }
+
+    async function submitPost(e) {
+        e.preventDefault();
+        const form = e.currentTarget;
         const title = document.getElementById('title').value.trim();
         const tag = document.getElementById('tag').value;
         const content = document.getElementById('content').value.trim();
-        const token = localStorage.getItem('token');
 
+        form.classList.remove('was-validated');
         if (!title || !content) {
-            alert('标题和内容不能为空');
+            form.classList.add('was-validated');
+            AnglrToast.warning('标题和内容不能为空');
+            (title ? document.getElementById('content') : document.getElementById('title')).focus();
             return;
         }
 
-        if (!token) {
-            alert('请先登录');
-            window.location.href = '/login';
+        if (!localStorage.getItem('token')) {
+            redirectToLogin('请先登录');
             return;
         }
 
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
         try {
             const imageUrls = await uploadPostImages();
-            const response = await fetch('/api/forum/posts', {
+            const post = await apiFetch('/api/forum/posts', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: title,
-                    tag: tag,
-                    content: content,
+                    title,
+                    tag,
+                    content,
                     image_urls: imageUrls.length ? imageUrls : null
                 })
             });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Failed to create post');
-            }
-
-            const post = await response.json();
-            alert('帖子发布成功');
+            try { sessionStorage.setItem('anglr.flash', '帖子已发布'); } catch (err) { /* ignore */ }
             window.location.href = `/forum/posts/${post.id}`;
         } catch (error) {
             console.error('Error:', error);
-            alert('发布失败: ' + error.message);
+            if (error.message.includes('登录状态已失效')) {
+                redirectToLogin(error.message);
+                return;
+            }
+            AnglrToast.error('发布失败：' + error.message);
+            submitBtn.disabled = false;
         }
     }
 
@@ -172,55 +195,55 @@
         const files = Array.from(input.files || []);
         const limit = getPostImageLimit();
         if (files.length > limit) {
-            alert(limit === 3 ? '秀出鱼获最多上传 3 张鱼获照片' : '最多上传 5 张帖子照片');
+            AnglrToast.warning(limit === 3 ? '秀出鱼获最多上传 3 张鱼获照片' : '最多上传 5 张帖子照片');
             input.value = '';
             preview.innerHTML = '';
             return;
         }
         preview.innerHTML = files.map(file => `
-            <div class="post-image-preview__item">
-                <img src="${URL.createObjectURL(file)}" alt="帖子照片">
-            </div>
+            <div class="photo-preview__item"><img src="${URL.createObjectURL(file)}" alt="帖子照片"></div>
         `).join('');
     }
 
     async function uploadPostImages() {
-        const input = document.getElementById('postImages');
-        const files = Array.from(input.files || []);
+        const files = Array.from(document.getElementById('postImages').files || []);
         const limit = getPostImageLimit();
         if (files.length > limit) {
             throw new Error(limit === 3 ? '秀出鱼获最多上传 3 张鱼获照片' : '最多上传 5 张帖子照片');
         }
-        const token = localStorage.getItem('token');
         const urls = [];
         for (const file of files) {
             const formData = new FormData();
             formData.append('image', file);
-            const response = await fetch('/api/forum/images', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({}));
-                throw new Error(error.detail || '图片上传失败');
-            }
-            const result = await response.json();
+            const result = await apiFetch('/api/forum/images', { method: 'POST', body: formData });
             urls.push(result.url);
         }
         return urls;
     }
 
+    function setupDropzone() {
+        const zone = document.getElementById('postDropzone');
+        const input = document.getElementById('postImages');
+        ['dragenter', 'dragover'].forEach(evt => zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.add('is-over'); }));
+        ['dragleave', 'drop'].forEach(evt => zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.remove('is-over'); }));
+        zone.addEventListener('drop', e => {
+            if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+            input.files = e.dataTransfer.files;
+            renderPostImagePreview();
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('请先登录');
-            window.location.href = '/login';
+        if (!localStorage.getItem('token')) {
+            redirectToLogin('请先登录');
+            return;
         }
+        renderTagChips();
+        setupDropzone();
+        document.getElementById('postForm').addEventListener('submit', submitPost);
         document.getElementById('postImages').addEventListener('change', renderPostImagePreview);
-        document.getElementById('tag').addEventListener('change', updatePostImageLimitText);
+        document.getElementById('title').addEventListener('input', updateTitleCount);
+        updateTitleCount();
         updatePostImageLimitText();
     });
 </script>

@@ -1,297 +1,116 @@
 {% extends "base.html" %}
+{% from "_macros.html" import page_head %}
 
 {% block title %}个人中心 - AnglrLog{% endblock %}
 
 {% block extra_css %}
-<style>
-    .profile-hero {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 22px;
-        align-items: center;
-        padding: 30px;
-        border-radius: var(--radius);
-        background:
-            linear-gradient(135deg, rgba(var(--brand-deep-rgb), 0.96), rgba(var(--brand-teal-rgb), 0.88)),
-            url('/static/fishing-lake-bg.svg') center 52%/cover;
-        color: #fff;
-        box-shadow: var(--shadow-strong);
-        margin-bottom: 28px;
-    }
-
-    .profile-avatar {
-        width: 86px;
-        height: 86px;
-        border-radius: 50%;
-        display: inline-grid;
-        place-items: center;
-        background: linear-gradient(135deg, var(--brand-amber), var(--brand-mint));
-        color: var(--brand-ink);
-        font-size: 2.2rem;
-        font-weight: 900;
-        box-shadow: 0 12px 26px rgba(7, 52, 66, 0.18);
-        overflow: hidden;
-        border: 3px solid rgba(255, 255, 255, 0.72);
-    }
-
-    .profile-avatar img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
-    .profile-avatar-wrap {
-        display: grid;
-        gap: 10px;
-        justify-items: center;
-    }
-
-    .avatar-upload-btn {
-        border: 1px solid rgba(255, 255, 255, 0.46);
-        background: rgba(255, 255, 255, 0.16);
-        color: #fff;
-        border-radius: var(--radius);
-        padding: 6px 10px;
-        font-size: 0.82rem;
-        font-weight: 700;
-    }
-
-    .avatar-upload-btn:hover {
-        background: rgba(255, 255, 255, 0.24);
-        color: #fff;
-    }
-
-    .avatar-upload-btn:focus-visible {
-        outline: 2px solid rgba(255, 255, 255, 0.9);
-        outline-offset: 2px;
-    }
-
-    .avatar-upload-status {
-        min-height: 18px;
-        color: rgba(255, 255, 255, 0.82);
-        font-size: 0.78rem;
-        text-align: center;
-    }
-
-    .profile-name-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-
-    .profile-name-row h2 {
-        margin: 0;
-    }
-
-    .nickname-edit-btn {
-        border: 1px solid rgba(255, 255, 255, 0.42);
-        background: rgba(255, 255, 255, 0.14);
-        color: #fff;
-        border-radius: var(--radius);
-        padding: 6px 10px;
-        font-size: 0.82rem;
-        font-weight: 800;
-    }
-
-    .nickname-edit-btn:hover {
-        background: rgba(255, 255, 255, 0.24);
-        color: #fff;
-    }
-
-    .nickname-edit-btn:focus-visible {
-        outline: 2px solid rgba(255, 255, 255, 0.9);
-        outline-offset: 2px;
-    }
-
-    .nickname-edit-panel {
-        display: none;
-        grid-template-columns: minmax(180px, 280px) auto auto;
-        gap: 8px;
-        align-items: center;
-        margin: 10px 0;
-    }
-
-    .nickname-edit-panel.is-open {
-        display: grid;
-    }
-
-    .nickname-edit-status {
-        min-height: 20px;
-        color: rgba(255, 255, 255, 0.84);
-        font-size: 0.84rem;
-    }
-
-    .dashboard-card {
-        height: 100%;
-        padding: 24px;
-        border-radius: var(--radius);
-        background: rgba(255, 255, 255, 0.94);
-        border: 1px solid var(--border-soft);
-        box-shadow: var(--shadow-soft);
-    }
-
-    .dashboard-card strong {
-        display: block;
-        font-size: 2rem;
-        color: var(--brand-deep);
-    }
-
-    .dashboard-card strong.dashboard-card__date {
-        font-size: 1.1rem;
-    }
-
-    .mini-list {
-        display: grid;
-        gap: 10px;
-    }
-
-    .mini-list div {
-        display: flex;
-        justify-content: space-between;
-        border-bottom: 1px solid var(--border-soft);
-        padding-bottom: 8px;
-    }
-
-    @media (max-width: 767.98px) {
-        .profile-hero {
-            grid-template-columns: 1fr;
-            justify-items: center;
-            text-align: center;
-            padding: 22px 16px;
-            gap: 16px;
-        }
-
-        .profile-avatar {
-            width: 78px;
-            height: 78px;
-            font-size: 2rem;
-        }
-
-        .dashboard-card {
-            padding: 18px;
-        }
-
-        .dashboard-card strong {
-            font-size: 1.55rem;
-        }
-
-        .mini-list div {
-            gap: 10px;
-            align-items: center;
-        }
-
-        .profile-name-row {
-            justify-content: center;
-        }
-
-        .nickname-edit-panel {
-            grid-template-columns: 1fr;
-            width: min(100%, 320px);
-            margin-left: auto;
-            margin-right: auto;
-        }
-    }
-</style>
+<link rel="stylesheet" href="/static/css/pages/profile.css?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h1 class="page-title"><i class="fas fa-user-circle"></i> 个人中心</h1>
-    <p class="page-subtitle">查看你的出钓数据、经验等级和常用作钓模式。</p>
-</div>
+<div class="container-app">
+    {% call page_head('个人中心', icon='fa-user-circle', sub='查看你的出钓数据、经验等级和常用作钓模式。', eyebrow='我的') %}
+        <a class="btn btn-secondary" href="/level"><i class="fas fa-ranking-star"></i>等级详情</a>
+        <a class="btn btn-primary" href="/logs/create"><i class="fas fa-plus"></i>记一笔</a>
+    {% endcall %}
 
-<section class="profile-hero" id="profileHero">
-    <div class="profile-avatar-wrap">
-        <div class="profile-avatar">F</div>
-    </div>
-    <div>
-        <p class="mb-1">加载中...</p>
-    </div>
-</section>
+    <div class="stack">
+        <section class="identity-card reveal" id="profileHero" aria-live="polite">
+            <div class="identity-card__avatar-wrap">
+                <div class="identity-card__avatar skeleton skeleton--circle"></div>
+            </div>
+            <div>
+                <div class="skeleton skeleton--title"></div>
+                <div class="skeleton skeleton--text"></div>
+            </div>
+        </section>
 
-<div class="row g-4 mb-4" id="dashboardCards"></div>
-
-<div class="row g-4">
-    <div class="col-lg-4">
-        <div class="dashboard-card">
-            <h5><i class="fas fa-location-dot"></i> 常用钓点</h5>
-            <div class="mini-list mt-3" id="commonSpots"></div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="dashboard-card">
-            <h5><i class="fas fa-fish"></i> 常用鱼种</h5>
-            <div class="mini-list mt-3" id="commonSpecies"></div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="dashboard-card">
-            <h5><i class="fas fa-worm"></i> 常用饵料</h5>
-            <div class="mini-list mt-3" id="commonBaits"></div>
+        <div class="profile-grid">
+            <section class="card reveal" aria-labelledby="commonSpotsTitle">
+                <div class="card-header"><h2 id="commonSpotsTitle"><i class="fas fa-location-dot" aria-hidden="true"></i>常用钓点</h2></div>
+                <div class="card-body"><div class="mini-list" id="commonSpots"></div></div>
+            </section>
+            <section class="card reveal" aria-labelledby="commonSpeciesTitle">
+                <div class="card-header"><h2 id="commonSpeciesTitle"><i class="fas fa-fish" aria-hidden="true"></i>常用鱼种</h2></div>
+                <div class="card-body"><div class="mini-list" id="commonSpecies"></div></div>
+            </section>
+            <section class="card reveal" aria-labelledby="commonBaitsTitle">
+                <div class="card-header"><h2 id="commonBaitsTitle"><i class="fas fa-worm" aria-hidden="true"></i>常用饵料</h2></div>
+                <div class="card-body"><div class="mini-list" id="commonBaits"></div></div>
+            </section>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[char]));
 }
 
 function renderList(id, rows, emptyText) {
     document.getElementById(id).innerHTML = rows.length
-        ? rows.map(row => `<div><span>${escapeHTML(row.name)}</span><strong>${row.count}</strong></div>`).join('')
-        : `<p class="text-muted mb-0">${escapeHTML(emptyText)}</p>`;
+        ? rows.map(row => `<div class="mini-list__row"><span>${escapeHTML(row.name)}</span><strong>${row.count}</strong></div>`).join('')
+        : `<p class="mini-list__empty mb-0">${escapeHTML(emptyText)}</p>`;
 }
 
 function renderAvatar(user) {
     const initial = escapeHTML((user.nickname || 'F').slice(0, 1).toUpperCase());
-    if (user.avatar) {
-        return `<div class="profile-avatar"><img src="${escapeHTML(user.avatar)}" alt="${escapeHTML(user.nickname || '用户头像')}"></div>`;
-    }
-    return `<div class="profile-avatar">${initial}</div>`;
+    return `<div class="identity-card__avatar">${user.avatar ? `<img src="${escapeHTML(user.avatar)}" alt="${escapeHTML(user.nickname || '用户头像')}">` : initial}</div>`;
 }
 
-function renderProfileHero(me, level) {
+function renderProfileHero(me, level, dashboard) {
+    const latest = dashboard.latest_log;
     document.getElementById('profileHero').innerHTML = `
-        <div class="profile-avatar-wrap">
+        <div class="identity-card__avatar-wrap">
             ${renderAvatar(me)}
-            <button class="avatar-upload-btn" type="button" id="avatarUploadBtn">
-                <i class="fas fa-camera"></i> 更换头像
-            </button>
+            <button class="btn btn-on-dark-ghost btn-sm" type="button" id="avatarUploadBtn"><i class="fas fa-camera"></i>更换头像</button>
             <input type="file" id="avatarInput" accept="image/*" hidden>
-            <div class="avatar-upload-status" id="avatarUploadStatus"></div>
+            <div class="identity-card__status" id="avatarUploadStatus"></div>
         </div>
         <div>
-            <div class="profile-name-row">
-                <h2>${escapeHTML(me.nickname)}</h2>
-                <button class="nickname-edit-btn" type="button" id="nicknameEditBtn">
-                    <i class="fas fa-pen"></i> 修改昵称
-                </button>
+            <h2 class="identity-card__name">
+                <span id="nicknameText">${escapeHTML(me.nickname)}</span>
+                <span class="level-badge"><i class="fas fa-star"></i>Lv${level.level} ${escapeHTML(level.title)}</span>
+                <button class="btn btn-on-dark-ghost btn-sm" type="button" id="nicknameEditBtn"><i class="fas fa-pen"></i>修改昵称</button>
+            </h2>
+            <div class="nickname-edit" id="nicknameEditPanel">
+                <input class="form-control" id="nicknameInput" maxlength="50" value="${escapeHTML(me.nickname)}" aria-label="新昵称">
+                <button class="btn btn-on-dark btn-sm" type="button" id="nicknameSaveBtn">保存</button>
+                <button class="btn btn-on-dark-ghost btn-sm" type="button" id="nicknameCancelBtn">取消</button>
             </div>
-            <div class="nickname-edit-panel" id="nicknameEditPanel">
-                <input class="form-control form-control-sm" id="nicknameInput" maxlength="50" value="${escapeHTML(me.nickname)}">
-                <button class="btn btn-sm btn-light" type="button" id="nicknameSaveBtn">保存</button>
-                <button class="btn btn-sm btn-outline-light" type="button" id="nicknameCancelBtn">取消</button>
+            <div class="identity-card__status" id="nicknameEditStatus"></div>
+            <div class="identity-card__meta">
+                <span><i class="fas fa-star"></i> ${level.xp} XP</span>
+                <span><i class="fas fa-medal"></i> ${level.badges.length} 枚勋章</span>
+                ${me.email ? `<span><i class="fas fa-envelope"></i> ${escapeHTML(me.email)}</span>` : ''}
             </div>
-            <div class="nickname-edit-status" id="nicknameEditStatus"></div>
-            <p class="mb-2">Lv${level.level} ${escapeHTML(level.title)} · ${level.xp} XP</p>
-            <a class="btn btn-sm btn-primary" href="/level"><i class="fas fa-ranking-star"></i> 查看等级详情</a>
+        </div>
+        <div class="identity-card__progress">
+            <div class="identity-card__progress-text">
+                <span>${level.xp} / ${level.next_level_xp || level.xp} XP</span>
+                <span>${level.next_level_xp ? `距下一级还需 ${level.xp_to_next} XP` : '已满级'}</span>
+            </div>
+            <div class="progress" role="progressbar" aria-label="经验进度" aria-valuenow="${level.xp}" aria-valuemin="0" aria-valuemax="${level.next_level_xp || level.xp}">
+                <div class="progress-bar" id="xpBar"></div>
+            </div>
+        </div>
+        <div class="identity-card__stats stat-grid stat-grid--4">
+            <div class="stat-tile"><span class="stat-tile__label">出钓次数</span><span class="stat-tile__value">${dashboard.trip_count}<small>次</small></span></div>
+            <div class="stat-tile"><span class="stat-tile__label">累计渔获</span><span class="stat-tile__value">${dashboard.total_quantity}<small>条</small></span></div>
+            <div class="stat-tile"><span class="stat-tile__label">最近出钓</span><span class="stat-tile__value">${latest ? new Date(latest.fishing_at).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }) : '—'}<small>${latest ? escapeHTML(latest.species || '未知鱼种') : '暂无记录'}</small></span></div>
+            <div class="stat-tile"><span class="stat-tile__label">当前等级</span><span class="stat-tile__value">Lv${level.level}<small>${escapeHTML(level.title)}</small></span></div>
         </div>
     `;
-    bindAvatarUpload(me, level);
-    bindNicknameEdit(me, level);
+    requestAnimationFrame(() => { document.getElementById('xpBar').style.width = `${level.progress_percent}%`; });
+    bindAvatarUpload(me, level, dashboard);
+    bindNicknameEdit(me, level, dashboard);
 }
 
-function bindAvatarUpload(me, level) {
+function bindAvatarUpload(me, level, dashboard) {
     const input = document.getElementById('avatarInput');
     const button = document.getElementById('avatarUploadBtn');
     const status = document.getElementById('avatarUploadStatus');
@@ -300,26 +119,26 @@ function bindAvatarUpload(me, level) {
         const file = input.files && input.files[0];
         if (!file) return;
         if (file.size > 3 * 1024 * 1024) {
-            status.textContent = '头像不能超过 3MB';
+            AnglrToast.warning('头像不能超过 3MB');
             input.value = '';
             return;
         }
-        status.textContent = '正在上传...';
+        status.textContent = '正在上传…';
+        status.classList.remove('is-error');
         button.disabled = true;
         try {
             const formData = new FormData();
             formData.append('avatar', file);
-            const updatedUser = await apiFetch('/api/users/me/avatar', {
-                method: 'POST',
-                body: formData
-            });
-            renderProfileHero(updatedUser, level);
+            const updatedUser = await apiFetch('/api/users/me/avatar', { method: 'POST', body: formData });
+            renderProfileHero(updatedUser, level, dashboard);
+            AnglrToast.success('头像已更新');
         } catch (error) {
             if (error.message.includes('登录状态已失效')) {
                 redirectToLogin(error.message);
                 return;
             }
             status.textContent = '上传失败：' + error.message;
+            status.classList.add('is-error');
             button.disabled = false;
         } finally {
             input.value = '';
@@ -327,7 +146,7 @@ function bindAvatarUpload(me, level) {
     });
 }
 
-function bindNicknameEdit(me, level) {
+function bindNicknameEdit(me, level, dashboard) {
     const editButton = document.getElementById('nicknameEditBtn');
     const panel = document.getElementById('nicknameEditPanel');
     const input = document.getElementById('nicknameInput');
@@ -351,26 +170,27 @@ function bindNicknameEdit(me, level) {
         const nickname = input.value.trim();
         if (!nickname) {
             status.textContent = '昵称不能为空';
+            status.classList.add('is-error');
             return;
         }
-
         saveButton.disabled = true;
-        status.textContent = '正在保存...';
+        status.textContent = '正在保存…';
+        status.classList.remove('is-error');
         try {
             const updatedUser = await apiFetch('/api/users/me', {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nickname })
             });
-            renderProfileHero(updatedUser, level);
+            renderProfileHero(updatedUser, level, dashboard);
+            AnglrToast.success('昵称已更新');
         } catch (error) {
             if (error.message.includes('登录状态已失效')) {
                 redirectToLogin(error.message);
                 return;
             }
             status.textContent = '保存失败：' + error.message;
+            status.classList.add('is-error');
             saveButton.disabled = false;
         }
     });
@@ -389,26 +209,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             apiFetch('/api/users/me/level')
         ]);
 
-        renderProfileHero(me, level);
-
-        const latest = dashboard.latest_log;
-        document.getElementById('dashboardCards').innerHTML = `
-            <div class="col-md-4">
-                <div class="dashboard-card"><span>我的出钓次数</span><strong>${dashboard.trip_count}</strong></div>
-            </div>
-            <div class="col-md-4">
-                <div class="dashboard-card"><span>累计鱼获数量</span><strong>${dashboard.total_quantity}</strong></div>
-            </div>
-            <div class="col-md-4">
-                <div class="dashboard-card">
-                    <span>最近一次出钓</span>
-                    <strong class="dashboard-card__date">${latest ? new Date(latest.fishing_at).toLocaleDateString('zh-CN') : '暂无记录'}</strong>
-                    ${latest ? `<small>${escapeHTML(latest.species || '未知鱼种')} · ${latest.quantity || 0} 条</small>` : ''}
-                </div>
-            </div>
-        `;
-
-        renderList('commonSpots', dashboard.common_spots || [], '暂无钓点数据');
+        renderProfileHero(me, level, dashboard);
+        renderList('commonSpots', dashboard.common_spots || [], '暂无钓点数据，记几笔出钓后会自动统计。');
         renderList('commonSpecies', dashboard.common_species || [], '暂无鱼种数据');
         renderList('commonBaits', dashboard.common_baits || [], '暂无饵料数据');
     } catch (error) {
@@ -416,7 +218,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             redirectToLogin(error.message);
             return;
         }
-        document.getElementById('profileHero').innerHTML = `<p class="mb-0">加载失败：${escapeHTML(error.message)}</p>`;
+        document.getElementById('profileHero').innerHTML = `<p class="identity-card__error">加载失败：${escapeHTML(error.message)}</p>`;
     }
 });
 </script>
