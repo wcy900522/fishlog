@@ -1,0 +1,27 @@
+{
+  "name": "fishlog",
+  "version": "1.0.0",
+  "description": "FishLog 是一个面向钓鱼爱好者的数字化钓鱼记录平台。核心目标是记录每一次出钓，把钓点、天气、装备、饵料、鱼获、经验分享和用户成长沉淀成个人钓鱼数据库。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wcy900522/fishlog.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wcy900522/fishlog/issues"
+  },
+  "homepage": "https://github.com/wcy900522/fishlog#readme",
+  "dependencies": {
+    "playwright": "^1.63.0"
+  }
+}

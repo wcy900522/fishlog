@@ -1,4 +1,4 @@
-{% set asset_v = '20260911a' %}
+{% set asset_v = '20261012a' %}
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -219,6 +219,13 @@
             const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
             const action = o.actionHref ? `<a class="btn btn-secondary btn-sm" href="${esc(o.actionHref)}">${esc(o.actionText || '去看看')}</a>` : '';
             return `<div class="${cls}"><i class="fas ${esc(icon)}"></i>${o.title ? `<p class="state__title">${esc(o.title)}</p>` : ''}${o.text ? `<p>${esc(o.text)}</p>` : ''}${action}</div>`;
+        };
+
+        // ——— 把用户图片地址包成 CSS url()：只放行 http(s) / 站内相对路径，并转义引号与括号 ———
+        window.cssImageUrl = function (url) {
+            const raw = String(url ?? '').trim();
+            if (!/^(https?:\/\/|\/)/i.test(raw)) return 'none';
+            return `url("${raw.replace(/[\\"()\s]/g, c => encodeURIComponent(c))}")`;
         };
 
         // ——— 导航状态 ———

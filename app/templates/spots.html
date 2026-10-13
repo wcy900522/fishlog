@@ -925,7 +925,7 @@ function renderSpotCards(spots) {
         return `
             <div class="col-md-6 col-xxl-4">
                 <article class="card card--spot h-100" data-spot-id="${spot.id}">
-                    <div class="card__media"${images.length ? ` style="background-image: linear-gradient(180deg, rgba(10,60,53,0.1), rgba(10,60,53,0.82)), url('${escapeHTML(images[0])}')"` : ''}>
+                    <div class="card__media${images.length ? ' card__media--photo' : ''}">
                         <div class="card__eyebrow">
                             <span class="card__tag"><i class="fas fa-water"></i>${escapeHTML(getWaterTypePlainLabel(spot.water_type))}</span>
                             <span class="card__tag"><i class="fas fa-location-dot"></i>${escapeHTML([spot.province, spot.city].filter(Boolean).join(' ') || '未知位置')}</span>
@@ -953,6 +953,13 @@ function renderSpotCards(spots) {
             </div>
         `;
     }).join('');
+
+    spots.forEach(spot => {
+        const images = parseSpotImageUrls(spot.image_url);
+        if (!images.length) return;
+        const media = container.querySelector(`.card[data-spot-id="${spot.id}"] .card__media--photo`);
+        if (media) media.style.setProperty('--card-img', cssImageUrl(images[0]));
+    });
 }
 
 function focusSpotOnMap(spotId) {

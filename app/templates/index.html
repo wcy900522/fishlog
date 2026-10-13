@@ -551,7 +551,7 @@
         col.style.setProperty('--i', index);
         col.innerHTML = `
             <article class="card card--spot card--interactive h-100" data-href="/spots/${spot.id}">
-                <div class="card__media"${images.length ? ` style="background-image: linear-gradient(180deg, rgba(10,60,53,0.1), rgba(10,60,53,0.82)), url('${escapeHTML(images[0])}')"` : ''}>
+                <div class="card__media${images.length ? ' card__media--photo' : ''}">
                     <div class="card__eyebrow">
                         <span class="card__tag"><i class="fas ${waterType.icon}"></i>${waterType.label}</span>
                         <span class="card__tag"><i class="fas fa-location-dot"></i>${place}</span>
@@ -572,6 +572,9 @@
                 </div>
             </article>
         `;
+        if (images.length) {
+            col.querySelector('.card__media').style.setProperty('--card-img', cssImageUrl(images[0]));
+        }
         bindCardLink(col.querySelector('.card'));
         return col;
     }

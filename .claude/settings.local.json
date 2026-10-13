@@ -58,7 +58,10 @@
       "Bash(pkill -f \"uvicorn app.main:app\")",
       "Read(//tmp/**)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Read(//root/.cache/ms-playwright/**)",
+      "Bash(node -e \"require\\('playwright'\\); console.log\\('playwright node ok'\\)\")",
+      "Bash(npx --no-install playwright --version)"
     ]
   }
 }

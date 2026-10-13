@@ -21,7 +21,6 @@
 
 .card--spot .card__media h3 a { color: inherit; }
 .card--spot .card__media h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.card--spot .card__media[style] { background-size: cover; background-position: center; }
 
 @media (max-width: 991.98px) {
     .spots-layout { grid-template-columns: 1fr; }

@@ -6,7 +6,6 @@
     border-radius: var(--r-lg);
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid var(--b-inverse);
-    backdrop-filter: none;
 }
 
 .about-console__map {
